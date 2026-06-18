@@ -1,0 +1,47 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Abilities/GameplayAbility.h"
+#include "CoreGameplayAbility.generated.h"
+
+/**
+ * 
+ */
+UCLASS()
+class GASCORE_API UCoreGameplayAbility : public UGameplayAbility
+{
+	GENERATED_BODY()
+
+public:
+	UCoreGameplayAbility();
+
+	/** Casts to our base character */
+	UFUNCTION(BlueprintCallable, Category = "Ability")
+	ACoreCharacterBase* GetCoreCharacterFromActorInfo() const;
+
+	/** UI icon */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	TObjectPtr<class UTexture2D> AbilityIcon;
+	
+protected:
+	/** Play montage, nothing else */
+	UFUNCTION(BlueprintCallable, Category = "Animation")
+	void PlayAbilityMontage(UAnimMontage* MontageToPlay);
+
+	/** Play montage and listen for notify */
+	UFUNCTION(BlueprintCallable, Category = "Animation")
+	void PlayAbilityMontageAndWaitForEvent(UAnimMontage* MontageToPlay, FGameplayTag EventTag);
+
+	/** What happens when notify is received */
+	UFUNCTION()
+	virtual void OnMontageEventReceived(FGameplayEventData Payload);
+
+private:
+	UFUNCTION()
+	void OnMontageCompleted();
+
+	UFUNCTION()
+	void OnMontageCancelled();
+};

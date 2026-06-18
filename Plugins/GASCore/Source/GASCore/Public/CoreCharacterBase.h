@@ -1,0 +1,51 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameFramework/Character.h"
+#include "AbilitySystemInterface.h"
+#include "CoreCharacterBase.generated.h"
+
+class UAbilitySystemComponent;
+class UCoreAttributeSet;
+class UCoreAbilitySet;
+struct FStreamableHandle;
+
+UCLASS(Abstract)
+class GASCORE_API ACoreCharacterBase : public ACharacter, public IAbilitySystemInterface
+{
+	GENERATED_BODY()
+
+public:
+	// Sets default values for this character's properties
+	ACoreCharacterBase();
+
+	virtual void Tick(float DeltaTime) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	// IAbilitySystemInterface requirement
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+	UCoreAttributeSet* GetAttributeSet() const { return AttributeSet; }
+
+protected:
+	// Pointers are set by child classes, so the base class can just use them
+	UPROPERTY(BlueprintReadOnly, Category = "GAS")
+	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+
+	UPROPERTY(BlueprintReadOnly, Category = "GAS")
+	TObjectPtr<UCoreAttributeSet> AttributeSet;
+
+	UPROPERTY(EditAnywhere, Category = "GAS")
+	TObjectPtr<UCoreAbilitySet> StartingAbilities;
+
+	virtual void GiveStartingAbilities();
+
+	// Called by child classes once their ASC is valid
+	virtual void InitAbilitySystem();
+
+	virtual void BeginPlay() override;
+
+	virtual void PossessedBy(AController* NewController) override;
+};
