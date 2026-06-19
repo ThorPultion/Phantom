@@ -20,17 +20,23 @@ ACorePlayerCharacter::ACorePlayerCharacter()
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = DefaultCameraDistance; // Distance from character
-
 	// IMPORTANT! This connects Look input to the camera boom
 	CameraBoom->bUsePawnControlRotation = true;
 
-	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-
+	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	// Attach the camera to the end of the boom
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
-
+	Camera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	// The boom handles the rotation, the camera just goes along for the ride
-	FollowCamera->bUsePawnControlRotation = false;
+	Camera->bUsePawnControlRotation = false;
+
+	FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FirstPersonMesh"));
+	FirstPersonMesh->SetupAttachment(GetMesh());
+	FirstPersonMesh->SetOnlyOwnerSee(true);
+	FirstPersonMesh->bCastDynamicShadow = false;
+	FirstPersonMesh->SetCastShadow(false);
+
+	GetMesh()->SetOwnerNoSee(true);
+	GetMesh()->SetCastHiddenShadow(true);
 
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 }
