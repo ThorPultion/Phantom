@@ -33,6 +33,9 @@ public:
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
+	// Overrides the base class to provide our actual 1P mesh to the equipment system
+	virtual USkeletalMeshComponent* GetFirstPersonMesh() const override { return FirstPersonMesh; }
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -83,6 +86,7 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> FirstPersonMesh;
+
 
 public:	
 	// Called every frame

@@ -26,6 +26,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	void UnequipItem();
 
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	void AddItemToLoadout(UEquipmentDefinition* NewItem);
+
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	void EquipItemFromSlot(int32 SlotIndex);
+
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	void EquipNextWeapon();
+
 protected:
 	// The physically spawned weapon actor
 	UPROPERTY()
@@ -33,6 +42,27 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<UEquipmentDefinition> CurrentEquipmentDefinition;
+
+	// The items the player is currently carrying in their invisible backpack
+	UPROPERTY(Replicated)
+	TArray<TObjectPtr<UEquipmentDefinition>> Loadout;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Equipment")
+	TArray<TObjectPtr<UEquipmentDefinition>> DefaultLoadout;
+
+	// Which slot in the Loadout array is currently spawned in the players hands?
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentSlotIndex)
+	int32 CurrentSlotIndex = -1;
+
+	UFUNCTION()
+	void OnRep_CurrentSlotIndex();
+
+	// Required for network replication
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	// Max number of equipment they can carry
+	UPROPERTY(EditDefaultsOnly, Category = "Equipment")
+	int32 MaxLoadoutSlots = 2;
 
 	// Helper function to find the owner's ASC
 	UCoreAbilitySystemComponent* GetOwnerASC() const;

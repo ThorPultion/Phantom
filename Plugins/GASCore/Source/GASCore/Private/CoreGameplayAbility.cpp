@@ -63,7 +63,7 @@ void UCoreGameplayAbility::OnMontageCancelled()
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
-void UCoreGameplayAbility::OnMontageEventReceived(FGameplayEventData Payload)
+void UCoreGameplayAbility::OnMontageEventReceived_Implementation(FGameplayEventData Payload)
 {
 	// Child classes will override this for functionality that occurs when an AnimNotify is received
 }

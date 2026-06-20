@@ -4,18 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "CoreGameplayAbility.h"
-#include "CoreAbility_Jump.generated.h"
+#include "GA_Jump.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class GAMEPLAYCORE_API UCoreAbility_Jump : public UCoreGameplayAbility
+class GAMEPLAYCORE_API UGA_Jump : public UCoreGameplayAbility
 {
 	GENERATED_BODY()
 	
 public:
-	UCoreAbility_Jump();
+	UGA_Jump();
 
 protected:
 	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle,

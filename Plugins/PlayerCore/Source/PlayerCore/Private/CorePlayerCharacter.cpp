@@ -145,24 +145,56 @@ void ACorePlayerCharacter::BindASCInput()
 void ACorePlayerCharacter::Input_AbilityInputTagPressed(FGameplayTag InputTag)
 {
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	if (ASC)
+	if (!ASC) return;
+
+	// 1. We still tell GAS the button is physically pressed down (for internal state tracking)
+	for (FGameplayAbilitySpec& Spec : ASC->GetActivatableAbilities())
 	{
-		// Automatically activates any ability holding this exact tag
-		ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(InputTag));
+		if (Spec.Ability && Spec.Ability->AbilityTags.HasTagExact(InputTag))
+		{
+			// 1. Tell GAS the button is physically held down
+			ASC->AbilitySpecInputPressed(Spec);
+
+			// 2. Turn the ability on natively
+			if (!Spec.IsActive())
+			{
+				ASC->TryActivateAbility(Spec.Handle);
+			}
+		}
 	}
 }
 
 void ACorePlayerCharacter::Input_AbilityInputTagReleased(FGameplayTag InputTag)
 {
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	if (ASC)
+	if (!ASC) return;
+
+	// Loops through active specs to tell them the button was released (for abilities that wait for release)
+	for (FGameplayAbilitySpec& Spec : ASC->GetActivatableAbilities())
 	{
-		// Loops through active specs to tell them the button was released (for abilities that wait for release)
-		for (FGameplayAbilitySpec& Spec : ASC->GetActivatableAbilities())
+		if (Spec.Ability && Spec.Ability->AbilityTags.HasTagExact(InputTag))
 		{
-			if (Spec.Ability && Spec.GetDynamicSpecSourceTags().HasTagExact(InputTag))
+			// Only send input release to abilities that are actually running
+			if (Spec.IsActive())
 			{
+				// 1. Update the internal GAS boolean
 				ASC->AbilitySpecInputReleased(Spec);
+
+				// 2. THE UE5 FIX: Manually broadcast the missing Replicated Event!
+				// The WaitInputRelease task specifically listens for this broadcast to wake up.
+				TArray<UGameplayAbility*> Instances = Spec.GetAbilityInstances();
+				if (Instances.Num() > 0 && Instances.Last())
+				{
+					// Extract the Prediction Key from the active instance
+					const FGameplayAbilityActivationInfo& ActivationInfo = Instances.Last()->GetCurrentActivationInfoRef();
+
+					// Shout it into the GAS networking system
+					ASC->InvokeReplicatedEvent(
+						EAbilityGenericReplicatedEvent::InputReleased,
+						Spec.Handle,
+						ActivationInfo.GetActivationPredictionKey()
+					);
+				}
 			}
 		}
 	}

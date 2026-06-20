@@ -4,18 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "CoreGameplayAbility.h"
-#include "CoreAbility_Crouch.generated.h"
+#include "GA_Crouch.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class GAMEPLAYCORE_API UCoreAbility_Crouch : public UCoreGameplayAbility
+class GAMEPLAYCORE_API UGA_Crouch : public UCoreGameplayAbility
 {
 	GENERATED_BODY()
 	
 public:
-	UCoreAbility_Crouch();
+	UGA_Crouch();
 
 protected:
 	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle,

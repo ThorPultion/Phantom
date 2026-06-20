@@ -5,6 +5,7 @@
 #include "AbilitySystemComponent.h"
 #include "CoreAbilitySet.h"
 #include "CoreAbilitySystemComponent.h"
+#include "EquipmentComponent.h"
 
 // Sets default values
 ACoreCharacterBase::ACoreCharacterBase()
@@ -12,6 +13,7 @@ ACoreCharacterBase::ACoreCharacterBase()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	EquipmentComponent = CreateDefaultSubobject<UEquipmentComponent>(TEXT("EquipmentManager"));
 }
 
 UAbilitySystemComponent* ACoreCharacterBase::GetAbilitySystemComponent() const

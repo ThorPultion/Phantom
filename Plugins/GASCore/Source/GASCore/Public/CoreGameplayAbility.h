@@ -31,8 +31,8 @@ protected:
 	void PlayAbilityMontageAndWaitForEvent(UAnimMontage* MontageToPlay, FGameplayTag EventTag);
 
 	/** What happens when notify is received */
-	UFUNCTION()
-	virtual void OnMontageEventReceived(FGameplayEventData Payload);
+	UFUNCTION(BlueprintNativeEvent, Category = "Animation")
+	void OnMontageEventReceived(FGameplayEventData Payload);
 
 private:
 	UFUNCTION()
