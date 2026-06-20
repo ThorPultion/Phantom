@@ -4,26 +4,12 @@
 #include "CoreGameplayAbility.h"
 #include "AnimNotify_GameplayEvent.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
-#include "CoreCharacterBase.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 
 UCoreGameplayAbility::UCoreGameplayAbility()
 {
 	// Set safe defaults so designers don't break multiplayer
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
-}
-
-ACoreCharacterBase* UCoreGameplayAbility::GetCoreCharacterFromActorInfo() const
-{
-	// Prevents crashes during edge-case initialization
-	if (CurrentActorInfo)
-	{
-		// Getting the Avatar (the physical body in the world), not the Owner (which might be the PlayerState)
-		// Casting it to our base character
-		return Cast<ACoreCharacterBase>(CurrentActorInfo->AvatarActor.Get());
-	}
-
-	return nullptr;
 }
 
 void UCoreGameplayAbility::PlayAbilityMontage(UAnimMontage* MontageToPlay)

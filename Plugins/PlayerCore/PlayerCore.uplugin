@@ -3,7 +3,7 @@
 	"Version": 1,
 	"VersionName": "1.0",
 	"FriendlyName": "PlayerCore",
-	"Description": "Includes all player systems. Depends on GASCore.",
+	"Description": "Includes all player systems. Depends on GASCore and GameplayCore.",
 	"Category": "Reusable",
 	"CreatedBy": "Jeremias Kullberg",
 	"CreatedByURL": "https://thorpultion.itch.io/",

@@ -28,6 +28,7 @@ public class PlayerCore : ModuleRules
 				"Core",
 				"EnhancedInput",
 				"GASCore",
+				"GameplayCore",
 				"GameplayAbilities",
                 "GameplayTags"
 				// ... add other public dependencies that you statically link with here ...
