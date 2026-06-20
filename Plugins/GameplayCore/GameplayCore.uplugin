@@ -2,8 +2,8 @@
 	"FileVersion": 3,
 	"Version": 1,
 	"VersionName": "1.0",
-	"FriendlyName": "AICore",
-	"Description": "Base AI system made by utilizing Unreal Engines AI systems.  Depends on GASCore and GameplayCore.",
+	"FriendlyName": "GameplayCore",
+	"Description": "Shared functionalities for AICore, PlayerCore and general purpose. Depends on GASCore.",
 	"Category": "Reusable",
 	"CreatedBy": "Jeremias Kullberg",
 	"CreatedByURL": "https://thorpultion.itch.io/",
@@ -16,7 +16,7 @@
 	"Installed": false,
 	"Modules": [
 		{
-			"Name": "AICore",
+			"Name": "GameplayCore",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
 		}
@@ -24,14 +24,6 @@
 	"Plugins": [
 		{
 			"Name": "GASCore",
-			"Enabled": true
-		},
-		{
-			"Name": "StateTree",
-			"Enabled": true
-		},
-		{
-			"Name": "GameplayStateTree",
 			"Enabled": true
 		}
 	]

@@ -113,6 +113,17 @@ void UCoreAbilitySystemComponent::RemoveAbilityByClass(TSubclassOf<UCoreGameplay
 	}
 }
 
+void UCoreAbilitySystemComponent::RemoveAbilitySet(UCoreAbilitySet* AbilitySet)
+{
+	if (!AbilitySet) return;
+
+	for (const FCoreGameplayAbilityBindInfo& BindInfo : AbilitySet->Abilities)
+	{
+		// Resolve the Soft Pointer to a Hard Pointer using .Get()
+		RemoveAbilityByClass(BindInfo.AbilityClass.Get());
+	}
+}
+
 void UCoreAbilitySystemComponent::RemoveAllAbilities()
 {
 	if (GetOwnerRole() == ROLE_Authority)

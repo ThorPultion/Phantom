@@ -17,10 +17,6 @@ class GASCORE_API UCoreGameplayAbility : public UGameplayAbility
 public:
 	UCoreGameplayAbility();
 
-	/** Casts to our base character */
-	UFUNCTION(BlueprintCallable, Category = "Ability")
-	ACoreCharacterBase* GetCoreCharacterFromActorInfo() const;
-
 	/** UI icon */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
 	TObjectPtr<class UTexture2D> AbilityIcon;

@@ -43,6 +43,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Abilities")
 	void RemoveAbilityByClass(TSubclassOf<UCoreGameplayAbility> AbilityClass);
 
+	/** Removes all abilities contained within an ability set */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Abilities")
+	void RemoveAbilitySet(UCoreAbilitySet* AbilitySet);
+
 	/** Remove all abilities */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Abilities")
 	void RemoveAllAbilities();

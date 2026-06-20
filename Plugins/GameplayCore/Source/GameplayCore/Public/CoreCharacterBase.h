@@ -13,7 +13,7 @@ class UCoreAbilitySet;
 struct FStreamableHandle;
 
 UCLASS(Abstract)
-class GASCORE_API ACoreCharacterBase : public ACharacter, public IAbilitySystemInterface
+class GAMEPLAYCORE_API ACoreCharacterBase : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 

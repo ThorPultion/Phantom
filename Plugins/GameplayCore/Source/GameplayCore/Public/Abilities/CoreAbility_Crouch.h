@@ -10,7 +10,7 @@
  * 
  */
 UCLASS()
-class GASCORE_API UCoreAbility_Crouch : public UCoreGameplayAbility
+class GAMEPLAYCORE_API UCoreAbility_Crouch : public UCoreGameplayAbility
 {
 	GENERATED_BODY()
 	

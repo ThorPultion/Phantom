@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class AICore : ModuleRules
+public class GameplayCore : ModuleRules
 {
-	public AICore(ReadOnlyTargetRules Target) : base(Target)
+	public GameplayCore(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
@@ -26,11 +26,6 @@ public class AICore : ModuleRules
 			new string[]
 			{
 				"Core",
-				"AIModule",
-				"GASCore",
-				"GameplayCore",
-                "StateTreeModule",          // The core StateTree engine
-				"GameplayStateTreeModule"   // Required for Gameplay-specific Tasks/Evaluators
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -43,6 +38,10 @@ public class AICore : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
+				"GASCore",
+                "GameplayAbilities",
+                "GameplayTags",
+                "GameplayTasks"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
