@@ -7,6 +7,8 @@
 #include "WeaponBase.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
+#include "Net/UnrealNetwork.h"
+#include "CoreCharacterBase.h"
 
 // Sets default values for this component's properties
 UEquipmentComponent::UEquipmentComponent()
@@ -18,12 +20,21 @@ UEquipmentComponent::UEquipmentComponent()
 	// ...
 }
 
+void UEquipmentComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    // Register the variables to replicate to all clients
+    DOREPLIFETIME(UEquipmentComponent, Loadout);
+    DOREPLIFETIME(UEquipmentComponent, CurrentSlotIndex);
+}
+
 void UEquipmentComponent::EquipItem(UEquipmentDefinition* EquipmentDef)
 {
     if (!EquipmentDef || !EquipmentDef->WeaponActorClass) return;
 
     AActor* OwningActor = GetOwner();
-    ACharacter* OwningCharacter = Cast<ACharacter>(OwningActor);
+    ACoreCharacterBase* OwningCharacter = Cast<ACoreCharacterBase>(OwningActor);
     if (!IsValid(OwningCharacter)) return;
 
     if (!OwningActor->HasAuthority()) return;
@@ -42,9 +53,9 @@ void UEquipmentComponent::EquipItem(UEquipmentDefinition* EquipmentDef)
         CurrentWeapon->ThirdPersonMesh->AttachToComponent(OwningCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, EquipmentDef->AttachmentSocket);
     }
 
-    if (CurrentWeapon && CurrentWeapon->FirstPersonMesh && OwningCharacter->GetMesh())
+    if (CurrentWeapon && CurrentWeapon->FirstPersonMesh && OwningCharacter->GetFirstPersonMesh())
     {
-        CurrentWeapon->FirstPersonMesh->AttachToComponent(OwningCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, EquipmentDef->AttachmentSocket);
+        CurrentWeapon->FirstPersonMesh->AttachToComponent(OwningCharacter->GetFirstPersonMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, EquipmentDef->AttachmentSocket);
     }
 
     // Granting abilities
@@ -89,6 +100,49 @@ void UEquipmentComponent::UnequipItem()
     CurrentEquipmentDefinition = nullptr;
 }
 
+void UEquipmentComponent::AddItemToLoadout(UEquipmentDefinition* NewItem)
+{
+    if (!GetOwner()->HasAuthority() || !NewItem) return;
+
+    // Do we have space?
+    if (Loadout.Num() < MaxLoadoutSlots)
+    {
+        Loadout.Add(NewItem);
+
+        // If our hands are empty, auto-equip it!
+        if (CurrentSlotIndex == -1)
+        {
+            EquipItemFromSlot(Loadout.Num() - 1);
+        }
+    }
+    else
+    {
+        // Optional: Swap the current weapon for the one on the ground
+    }
+}
+
+void UEquipmentComponent::EquipItemFromSlot(int32 SlotIndex)
+{
+    // 1. Validate the index
+    if (!Loadout.IsValidIndex(SlotIndex)) return;
+
+    // 2. Update our tracker
+    CurrentSlotIndex = SlotIndex;
+
+    // 3. Call the exact EquipItem() logic you already wrote!
+    EquipItem(Loadout[CurrentSlotIndex]);
+}
+
+void UEquipmentComponent::EquipNextWeapon()
+{
+    if (!GetOwner()->HasAuthority() || Loadout.IsEmpty()) return;
+
+    // Calculate the next index (loop back to 0 if we hit the end)
+    int32 NextIndex = (CurrentSlotIndex + 1) % Loadout.Num();
+
+    EquipItemFromSlot(NextIndex);
+}
+
 UCoreAbilitySystemComponent* UEquipmentComponent::GetOwnerASC() const
 {
     // Get the Actor this component is attached to
@@ -104,13 +158,30 @@ UCoreAbilitySystemComponent* UEquipmentComponent::GetOwnerASC() const
     return nullptr;
 }
 
+void UEquipmentComponent::OnRep_CurrentSlotIndex()
+{
+    // The server changed our weapon slot. 
+    // This is where you would update the UI or play a weapon-swap sound on the client!
+}
 
 // Called when the game starts
 void UEquipmentComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
+    // 1. Only the Server sets up the initial inventory
+    if (GetOwner()->HasAuthority())
+    {
+        // 2. Loop through our default items
+        for (UEquipmentDefinition* StartingItem : DefaultLoadout)
+        {
+            if (StartingItem)
+            {
+                // 3. Funnel them right into the exact same logic we use for pickups!
+                AddItemToLoadout(StartingItem);
+            }
+        }
+    }
 	
 }
 

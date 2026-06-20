@@ -11,6 +11,7 @@ class UAbilitySystemComponent;
 class UCoreAttributeSet;
 class UCoreAbilitySet;
 struct FStreamableHandle;
+class UEquipmentComponent;
 
 UCLASS(Abstract)
 class GAMEPLAYCORE_API ACoreCharacterBase : public ACharacter, public IAbilitySystemInterface
@@ -29,6 +30,13 @@ public:
 
 	UCoreAttributeSet* GetAttributeSet() const { return AttributeSet; }
 
+	/** Public getter for our equipment manager */
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	UEquipmentComponent* GetEquipmentComponent() const { return EquipmentComponent; }
+
+	// Virtual getter so child classes can provide a 1P mesh if they have one
+	virtual class USkeletalMeshComponent* GetFirstPersonMesh() const { return nullptr; }
+
 protected:
 	// Pointers are set by child classes, so the base class can just use them
 	UPROPERTY(BlueprintReadOnly, Category = "GAS")
@@ -39,6 +47,10 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "GAS")
 	TObjectPtr<UCoreAbilitySet> StartingAbilities;
+
+	/** Manages equipment */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UEquipmentComponent> EquipmentComponent;
 
 	virtual void GiveStartingAbilities();
 
