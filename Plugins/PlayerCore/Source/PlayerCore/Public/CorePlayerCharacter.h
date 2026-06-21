@@ -33,8 +33,11 @@ public:
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
-	// Overrides the base class to provide our actual 1P mesh to the equipment system
+	/** Overrides base class. Returns actual 1P mesh to the equipment system */
 	virtual USkeletalMeshComponent* GetFirstPersonMesh() const override { return FirstPersonMesh; }
+
+	/** Overrides base class. Returns focused interactable object */
+	virtual AActor* GetFocusedInteractable() const override { return FocusedInteractable; }
 
 protected:
 	// Called when the game starts or when spawned
@@ -77,7 +80,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> Camera;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Camera|Settings")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Camera")
 	float DefaultCameraDistance = 0.0f;
 
 	virtual void OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
@@ -86,6 +89,17 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> FirstPersonMesh;
+
+	/** How far the players interaction can reach */
+	UPROPERTY(EditDefaultsOnly, Category = "Interaction")
+	float InteractTraceDistance = 500.0f;
+
+	// A pointer to hold whatever object we are currently looking at
+	UPROPERTY()
+	TObjectPtr<AActor> FocusedInteractable;
+
+	// Fires continuously to check what the interaction line trace hits
+	void PerformInteractionCheck();
 
 
 public:	

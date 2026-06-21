@@ -7,23 +7,23 @@ bool UCameraModifier_Zoom::ModifyCamera(float DeltaTime, FMinimalViewInfo& InOut
 {
     Super::ModifyCamera(DeltaTime, InOutPOV);
 
-    // 1. On the very first frame, capture the camera's original FOV
-    if (DefaultFOV == 0.0f)
+    // Capture pre modifier FOV
+    if (OriginalFOV == 0.0f)
     {
-        DefaultFOV = InOutPOV.FOV;
-        CurrentFOV = DefaultFOV;
+        OriginalFOV = InOutPOV.FOV;
+        InterpolatedFOV = OriginalFOV;
     }
 
-    // 2. Interpolate
-    CurrentFOV = FMath::FInterpTo(CurrentFOV, TargetFOV, DeltaTime, ZoomSpeed);
-    InOutPOV.FOV = CurrentFOV;
+    // Interpolate FOV (zoom)
+    InterpolatedFOV = FMath::FInterpTo(InterpolatedFOV, TargetFOV, DeltaTime, ZoomSpeed);
+    InOutPOV.FOV = InterpolatedFOV;
 
-    // 3. Self-Destruct Logic: If we are zooming out, and we are practically back at the default FOV...
-    if (bIsReverting && FMath::IsNearlyEqual(CurrentFOV, TargetFOV, 0.5f))
+    // If modifier effect is being reverted, and we are practically back at original FOV
+    if (bIsReverting && FMath::IsNearlyEqual(InterpolatedFOV, TargetFOV, 0.1f))
     {
         if (CameraOwner)
         {
-            // Remove ourselves from the camera manager
+            // Remove this modifier from the camera manager
             CameraOwner->RemoveCameraModifier(this);
         }
     }
@@ -33,7 +33,7 @@ bool UCameraModifier_Zoom::ModifyCamera(float DeltaTime, FMinimalViewInfo& InOut
 
 void UCameraModifier_Zoom::ReverseModifier()
 {
-    // Tell the modifier to start heading back to where it started
+    // Reversing back to OriginalFOV
     bIsReverting = true;
-    TargetFOV = DefaultFOV;
+    TargetFOV = OriginalFOV;
 }

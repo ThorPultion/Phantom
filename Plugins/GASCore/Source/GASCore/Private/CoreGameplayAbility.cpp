@@ -8,8 +8,9 @@
 
 UCoreGameplayAbility::UCoreGameplayAbility()
 {
-	// Set safe defaults so designers don't break multiplayer
+	// Set safe defaults so designers dont break multiplayer
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
+	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 }
 
 void UCoreGameplayAbility::PlayAbilityMontage(UAnimMontage* MontageToPlay)

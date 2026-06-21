@@ -12,6 +12,7 @@ class UCoreAttributeSet;
 class UCoreAbilitySet;
 struct FStreamableHandle;
 class UEquipmentComponent;
+class USkeletalMeshComponent;
 
 UCLASS(Abstract)
 class GAMEPLAYCORE_API ACoreCharacterBase : public ACharacter, public IAbilitySystemInterface
@@ -34,8 +35,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	UEquipmentComponent* GetEquipmentComponent() const { return EquipmentComponent; }
 
-	// Virtual getter so child classes can provide a 1P mesh if they have one
-	virtual class USkeletalMeshComponent* GetFirstPersonMesh() const { return nullptr; }
+	/** Virtual public getter so child classes can provide a 1P mesh if they have one */ 
+	virtual USkeletalMeshComponent* GetFirstPersonMesh() const { return nullptr; }
+
+	/** Virtual public getter for players currently focused interactable object */
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	virtual AActor* GetFocusedInteractable() const { return nullptr; }
 
 protected:
 	// Pointers are set by child classes, so the base class can just use them

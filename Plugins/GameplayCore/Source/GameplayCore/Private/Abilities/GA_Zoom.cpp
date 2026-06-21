@@ -6,7 +6,6 @@
 #include "Abilities/Tasks/AbilityTask_WaitInputRelease.h"
 #include "AbilitySystemComponent.h"
 
-UGA_Zoom::UGA_Zoom() { InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor; }
 
 void UGA_Zoom::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
@@ -22,31 +21,29 @@ void UGA_Zoom::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FG
 	{
 		if (PC->PlayerCameraManager && ZoomModifierClass)
 		{
-			// Find any old, zooming-out modifiers and execute them so they dont fight us
+			// Remove old zoom modifier if exists
 			if (UCameraModifier* LingeringModifier = PC->PlayerCameraManager->FindCameraModifierByClass(ZoomModifierClass))
 			{
 				PC->PlayerCameraManager->RemoveCameraModifier(LingeringModifier);
 			}
 
-			// 1. Create the modifier
-			UCameraModifier* CreatedModifier = PC->PlayerCameraManager->AddNewCameraModifier(ZoomModifierClass);
+			// Create zoom modifier
+			UCameraModifier* CameraModifier = PC->PlayerCameraManager->AddNewCameraModifier(ZoomModifierClass);
 
-			// 2. Cast it to our specific class so we can access our custom variables
-			if (UCameraModifier_Zoom* ZoomMod = Cast<UCameraModifier_Zoom>(CreatedModifier))
+			// Zoom modifier has default variable values already, but we can modify them
+			if (UCameraModifier_Zoom* ZoomModifier = Cast<UCameraModifier_Zoom>(CameraModifier))
 			{
-				// 3. Inject the variable! 
-				ZoomMod->TargetFOV = 45.0f; // (You could even make THIS a variable in GA_Zoom.h)
-				ZoomMod->ZoomSpeed = 12.0f;
+				// Can modify variables within this GAs BP
+				ZoomModifier->TargetFOV = TargetFOV;
+				ZoomModifier->ZoomSpeed = ZoomSpeed;
 
-				// 4. Save the reference so we can delete it later
-				ActiveZoomModifier = ZoomMod;
+				// Saving the reference so we can delete it later
+				ActiveZoomModifier = ZoomModifier;
 			}
 		}
 	}
 
-	// Applying zooming GE. Might be useful later. Could bind the actual zoom effect to GE. Might be unnecessary.
-	// Zoom GE can say lower movement speed attribute
-
+	// Applying zooming GE. Could bind the actual zoom effect to GE. Might be unnecessary.
 	FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(ZoomingEffectClass, 1.0f);
 
 	if (SpecHandle.IsValid())
@@ -54,6 +51,7 @@ void UGA_Zoom::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FG
 		ActiveEffectHandle = ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
 	}
 
+	// Waiting for input release to stop zooming
 	UAbilityTask_WaitInputRelease* InputReleaseTask = UAbilityTask_WaitInputRelease::WaitInputRelease(this, false);
 	if (InputReleaseTask)
 	{
@@ -64,7 +62,6 @@ void UGA_Zoom::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FG
 
 void UGA_Zoom::OnInputReleased(float TimeHeld)
 {
-	// Simply ending the ability will now trigger our EndAbility override below
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
@@ -72,11 +69,13 @@ void UGA_Zoom::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGamepl
 {
 	if (ActiveZoomModifier)
 	{
+		// ReverseModifier() reverses the zoom effect on the camera inside the CameraModifier.
+		// Camera modifier removes itself when done reversing so we can forget about it
 		ActiveZoomModifier->ReverseModifier();
-		ActiveZoomModifier = nullptr; // We let it go, it will handle its own destruction
+		ActiveZoomModifier = nullptr;
 	}
 
-	// 2. Cleanup: Remove the effect if it's still active
+	// Cleaning up zoom GE
 	if (ActiveEffectHandle.IsValid())
 	{
 		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())

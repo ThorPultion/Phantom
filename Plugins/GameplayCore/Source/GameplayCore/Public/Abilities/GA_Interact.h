@@ -4,23 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "CoreGameplayAbility.h"
-#include "GA_Crouch.generated.h"
+#include "GA_Interact.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class GAMEPLAYCORE_API UGA_Crouch : public UCoreGameplayAbility
+class GAMEPLAYCORE_API UGA_Interact : public UCoreGameplayAbility
 {
 	GENERATED_BODY()
 
 protected:
-	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle,
-		const FGameplayAbilityActorInfo* ActorInfo,
-		const FGameplayTagContainer* SourceTags = nullptr,
-		const FGameplayTagContainer* TargetTags = nullptr,
-		FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
-
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		const FGameplayAbilityActorInfo* ActorInfo,
 		const FGameplayAbilityActivationInfo ActivationInfo,

@@ -4,12 +4,6 @@
 #include "Abilities/GA_Jump.h"
 #include "GameFramework/Character.h"
 
-UGA_Jump::UGA_Jump()
-{
-	// Must be instanced so it can stay active and listen for the InputReleased event
-	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
-	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
-}
 
 bool UGA_Jump::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
 {

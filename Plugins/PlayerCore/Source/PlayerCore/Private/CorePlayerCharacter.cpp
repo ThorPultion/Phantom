@@ -10,6 +10,7 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GASCoreTags.h"
+#include "Interactable.h"
 
 // Sets default values
 ACorePlayerCharacter::ACorePlayerCharacter()
@@ -24,7 +25,7 @@ ACorePlayerCharacter::ACorePlayerCharacter()
 	CameraBoom->bUsePawnControlRotation = true;
 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	// Attach the camera to the end of the boom
+	// Attaching the camera to the end of the boom
 	Camera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	// The boom handles the rotation, the camera just goes along for the ride
 	Camera->bUsePawnControlRotation = false;
@@ -147,15 +148,14 @@ void ACorePlayerCharacter::Input_AbilityInputTagPressed(FGameplayTag InputTag)
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	if (!ASC) return;
 
-	// 1. We still tell GAS the button is physically pressed down (for internal state tracking)
 	for (FGameplayAbilitySpec& Spec : ASC->GetActivatableAbilities())
 	{
-		if (Spec.Ability && Spec.Ability->AbilityTags.HasTagExact(InputTag))
+		if (Spec.Ability && Spec.Ability->GetAssetTags().HasTagExact(InputTag))
 		{
-			// 1. Tell GAS the button is physically held down
+			// Tell GAS the button is physically held down, could be useful due to internal state tracking
 			ASC->AbilitySpecInputPressed(Spec);
 
-			// 2. Turn the ability on natively
+			// Turn on the ability
 			if (!Spec.IsActive())
 			{
 				ASC->TryActivateAbility(Spec.Handle);
@@ -172,16 +172,16 @@ void ACorePlayerCharacter::Input_AbilityInputTagReleased(FGameplayTag InputTag)
 	// Loops through active specs to tell them the button was released (for abilities that wait for release)
 	for (FGameplayAbilitySpec& Spec : ASC->GetActivatableAbilities())
 	{
-		if (Spec.Ability && Spec.Ability->AbilityTags.HasTagExact(InputTag))
+		if (Spec.Ability && Spec.Ability->GetAssetTags().HasTagExact(InputTag))
 		{
 			// Only send input release to abilities that are actually running
 			if (Spec.IsActive())
 			{
-				// 1. Update the internal GAS boolean
+				// Updating the internal GAS boolean
 				ASC->AbilitySpecInputReleased(Spec);
 
-				// 2. THE UE5 FIX: Manually broadcast the missing Replicated Event!
-				// The WaitInputRelease task specifically listens for this broadcast to wake up.
+				// FIX: Manually broadcasting Replicated Event
+				// The WaitInputRelease task specifically listens for this broadcast
 				TArray<UGameplayAbility*> Instances = Spec.GetAbilityInstances();
 				if (Instances.Num() > 0 && Instances.Last())
 				{
@@ -212,13 +212,6 @@ UAbilitySystemComponent* ACorePlayerCharacter::GetAbilitySystemComponent() const
 {
 	ACorePlayerState* PS = GetPlayerState<ACorePlayerState>();
 	return PS ? PS->GetAbilitySystemComponent() : nullptr;
-}
-
-// Called every frame
-void ACorePlayerCharacter::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
 }
 
 void ACorePlayerCharacter::Move(const FInputActionValue& Value)
@@ -278,3 +271,62 @@ void ACorePlayerCharacter::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfH
 	}
 }
 
+// Called every frame
+void ACorePlayerCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	// Only the local player needs to trace for UI prompts
+	// The server and other clients dont care
+	if (IsLocallyControlled())
+	{
+		PerformInteractionCheck();
+	}
+}
+
+void ACorePlayerCharacter::PerformInteractionCheck()
+{
+	// Get camera transforms
+	FVector TraceStart;
+	FRotator TraceRot;
+	GetController()->GetPlayerViewPoint(TraceStart, TraceRot);
+
+	FVector TraceEnd = TraceStart + (TraceRot.Vector() * InteractTraceDistance);
+
+	// Ignore self
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+
+	FHitResult HitResult;
+	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility, QueryParams);
+
+	if (bHit && HitResult.GetActor())
+	{
+		AActor* HitActor = HitResult.GetActor();
+
+		if (HitActor->Implements<UInteractable>())
+		{
+			// If HitActor is not already our focus
+			if (HitActor != FocusedInteractable)
+			{
+				FocusedInteractable = HitActor;
+
+				// Grab text from interactable
+				FText PromptText = IInteractable::Execute_GetInteractText(FocusedInteractable);
+
+				// TODO: Send PromptText to your HUD Widget!
+				GEngine->AddOnScreenDebugMessage(1, 0.1f, FColor::Cyan, PromptText.ToString());
+			}
+			return; // We found an interactable, exit early
+		}
+	}
+
+	// If we missed, hit something thats not an actor or something that doesnt implement UInteractable
+	if (FocusedInteractable)
+	{
+		FocusedInteractable = nullptr;
+
+		// TODO: Tell your HUD Widget to hide the text!
+		GEngine->AddOnScreenDebugMessage(1, 0.1f, FColor::Cyan, TEXT(""));
+	}
+}
