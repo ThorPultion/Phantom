@@ -11,6 +11,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GASCoreTags.h"
 #include "Interactable.h"
+#include "CoreHUD.h"
 
 // Sets default values
 ACorePlayerCharacter::ACorePlayerCharacter()
@@ -63,8 +64,8 @@ void ACorePlayerCharacter::OnRep_PlayerState()
 	InitAbilitySystem();
 
 	// CLIENT INPUT RACE FIX:
-	// Attempt to bind input now that the ASC is ready
-	BindASCInput();
+	// ASC is ready, attempt setting up local player systems
+	TryInitializeLocalPlayer();
 }
 
 void ACorePlayerCharacter::InitAbilitySystem()
@@ -105,7 +106,7 @@ void ACorePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		}
 	}
 
-	// Binding continuous inputs
+	// Binding continuous inputs and Gameplay Event triggered abilities
 	if (UEnhancedInputComponent* IC = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		// Bind the Move action (Triggered fires every frame the input is held)
@@ -113,33 +114,43 @@ void ACorePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 
 		// Bind the Look action
 		IC->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
+
+		// Bind interact action
+		IC->BindAction(InteractAction, ETriggerEvent::Started, this, &ThisClass::Input_Interact);
 	}
 
-	// CLIENT INPUT RACE FIX: 
-	// Attempt to bind input now that the Input Component is ready
-	BindASCInput();
+	// CLIENT INPUT RACE FIX:
+	// InputComponent is ready, attempt setting up local player systems
+	TryInitializeLocalPlayer();
 }
 
-void ACorePlayerCharacter::BindASCInput()
+void ACorePlayerCharacter::TryInitializeLocalPlayer()
 {
-	// If we already bound it, bail out
-	if (bIsInputBound)
-	{
-		return;
-	}
+	// If we already initialized, bail out
+	if (bIsClientInitialized) return;
 
 	// We can only bind if BOTH the ASC and the InputComponent are ready
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	if (ASC && InputComponent)
 	{
+		// 1. BIND INPUT
 		UCoreInputComponent* CoreIC = Cast<UCoreInputComponent>(InputComponent);
 		if (CoreIC && InputConfigDataAsset)
 		{
 			CoreIC->BindAbilityActions(InputConfigDataAsset, this, &ThisClass::Input_AbilityInputTagPressed, &ThisClass::Input_AbilityInputTagReleased);
 		}
 
-		// Lock the latch so we dont bind twice
-		bIsInputBound = true;
+		// 2. INITIALIZE HUD
+		if (APlayerController* PC = Cast<APlayerController>(GetController()))
+		{
+			if (ACoreHUD* HUD = Cast<ACoreHUD>(PC->GetHUD()))
+			{
+				HUD->InitHUD();
+			}
+		}
+
+		// Lock the latch so we dont init twice
+		bIsClientInitialized = true;
 	}
 }
 
@@ -248,6 +259,20 @@ void ACorePlayerCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
+void ACorePlayerCharacter::Input_Interact(const FInputActionValue& Value)
+{
+	// Only proceed if our looked at interactable actor is still valid
+	if (IsValid(FocusedInteractable) && AbilitySystemComponent)
+	{
+		FGameplayEventData Payload;
+		Payload.Instigator = this;
+		Payload.Target = FocusedInteractable;
+
+		// Triggering Input GA with Gameplay Event
+		AbilitySystemComponent->HandleGameplayEvent(GASCoreTags::Input_Interact, &Payload);
+	}
+}
+
 void ACorePlayerCharacter::OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
 {
 	Super::OnStartCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
@@ -313,11 +338,11 @@ void ACorePlayerCharacter::PerformInteractionCheck()
 
 				// Grab text from interactable
 				FText PromptText = IInteractable::Execute_GetInteractText(FocusedInteractable);
-
-				// TODO: Send PromptText to your HUD Widget!
-				GEngine->AddOnScreenDebugMessage(1, 0.1f, FColor::Cyan, PromptText.ToString());
+				OnInteractionFocusChanged.Broadcast(true, PromptText);
 			}
-			return; // We found an interactable, exit early
+
+			// We found an interactable, exit early so we dont clear FocusedInteractable
+			return; 
 		}
 	}
 
@@ -325,8 +350,6 @@ void ACorePlayerCharacter::PerformInteractionCheck()
 	if (FocusedInteractable)
 	{
 		FocusedInteractable = nullptr;
-
-		// TODO: Tell your HUD Widget to hide the text!
-		GEngine->AddOnScreenDebugMessage(1, 0.1f, FColor::Cyan, TEXT(""));
+		OnInteractionFocusChanged.Broadcast(false, FText::GetEmpty());
 	}
 }

@@ -13,6 +13,8 @@ UCLASS()
 class GAMEPLAYCORE_API APickupEquipment : public APickupBase
 {
 	GENERATED_BODY()
+
+	APickupEquipment();
 	
 public:
 	virtual void Interact_Implementation(AActor* Interactor) override;

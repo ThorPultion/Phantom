@@ -37,8 +37,12 @@ public:
 
 protected:
 	// The physically spawned weapon actor
-	UPROPERTY()
+	// Replicate weapon, and run a function when it arrives
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentWeapon)
 	TObjectPtr<AWeaponBase> CurrentWeapon;
+
+	UFUNCTION()
+	void OnRep_CurrentWeapon(AWeaponBase* OldWeapon);
 
 	UPROPERTY()
 	TObjectPtr<UEquipmentDefinition> CurrentEquipmentDefinition;

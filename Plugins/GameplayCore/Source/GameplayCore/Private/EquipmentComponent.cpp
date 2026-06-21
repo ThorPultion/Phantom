@@ -17,6 +17,7 @@ UEquipmentComponent::UEquipmentComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 
+    SetIsReplicatedByDefault(true);
 	// ...
 }
 
@@ -27,6 +28,7 @@ void UEquipmentComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
     // Register the variables to replicate to all clients
     DOREPLIFETIME(UEquipmentComponent, Loadout);
     DOREPLIFETIME(UEquipmentComponent, CurrentSlotIndex);
+    DOREPLIFETIME(UEquipmentComponent, CurrentWeapon);
 }
 
 void UEquipmentComponent::EquipItem(UEquipmentDefinition* EquipmentDef)
@@ -47,6 +49,8 @@ void UEquipmentComponent::EquipItem(UEquipmentDefinition* EquipmentDef)
     SpawnParams.Instigator = OwningCharacter;
 
     CurrentWeapon = GetWorld()->SpawnActor<AWeaponBase>(EquipmentDef->WeaponActorClass, SpawnParams);
+
+    CurrentWeapon->AttachToComponent(OwningCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, EquipmentDef->AttachmentSocket);
 
     if (CurrentWeapon && CurrentWeapon->ThirdPersonMesh && OwningCharacter->GetMesh())
     {
@@ -162,6 +166,27 @@ void UEquipmentComponent::OnRep_CurrentSlotIndex()
 {
     // The server changed our weapon slot. 
     // This is where you would update the UI or play a weapon-swap sound on the client!
+}
+
+void UEquipmentComponent::OnRep_CurrentWeapon(AWeaponBase* OldWeapon)
+{
+    if (!CurrentWeapon) return;
+
+    ACoreCharacterBase* OwningCharacter = Cast<ACoreCharacterBase>(GetOwner());
+    if (!IsValid(OwningCharacter)) return;
+
+    // Only the person playing the game needs to attach the First Person mesh
+    if (OwningCharacter->IsLocallyControlled() && Loadout.IsValidIndex(CurrentSlotIndex))
+    {
+        if (UEquipmentDefinition* Def = Loadout[CurrentSlotIndex])
+        {
+            // 2. Client explicitly glues the FP Weapon Mesh to the local FP Arms!
+            if (CurrentWeapon->FirstPersonMesh && OwningCharacter->GetFirstPersonMesh())
+            {
+                CurrentWeapon->FirstPersonMesh->AttachToComponent(OwningCharacter->GetFirstPersonMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Def->AttachmentSocket);
+            }
+        }
+    }
 }
 
 // Called when the game starts

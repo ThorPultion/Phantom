@@ -14,6 +14,9 @@ struct FInputActionValue;
 class USpringArmComponent;
 class UCameraComponent;
 
+// Broadcasting when the player looks at or looks away from an interactable
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInteractionFocusChanged, bool, bIsLookingAtItem, const FText&, PromptText);
+
 UCLASS()
 class PLAYERCORE_API ACorePlayerCharacter : public ACoreCharacterBase
 {
@@ -36,8 +39,9 @@ public:
 	/** Overrides base class. Returns actual 1P mesh to the equipment system */
 	virtual USkeletalMeshComponent* GetFirstPersonMesh() const override { return FirstPersonMesh; }
 
-	/** Overrides base class. Returns focused interactable object */
-	virtual AActor* GetFocusedInteractable() const override { return FocusedInteractable; }
+	/** Broadcasts when the player looks at or looks away from an interactable */
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
+	FOnInteractionFocusChanged OnInteractionFocusChanged;
 
 protected:
 	// Called when the game starts or when spawned
@@ -47,10 +51,10 @@ protected:
 	virtual void InitAbilitySystem() override;
 
 	/** The flag to solve the client input race condition */ 
-	bool bIsInputBound = false;
+	bool bIsClientInitialized = false;
 
-	/** A dedicated function to handle input binding safely */
-	void BindASCInput();
+	/** A dedicated function to handle post GAS and input component setup */
+	void TryInitializeLocalPlayer();
 
 	/** List of input actions mapped to Gameplay Tags, used by the custom Input Component to trigger abilities */
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
@@ -100,6 +104,13 @@ protected:
 
 	// Fires continuously to check what the interaction line trace hits
 	void PerformInteractionCheck();
+
+	/** Input Action for Interacting */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> InteractAction;
+
+	// The dedicated function for the Interact button
+	void Input_Interact(const FInputActionValue& Value);
 
 
 public:	

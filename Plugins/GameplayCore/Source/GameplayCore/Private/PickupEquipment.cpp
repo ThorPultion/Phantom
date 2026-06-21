@@ -5,6 +5,11 @@
 #include "EquipmentComponent.h"
 #include "EquipmentDefinition.h" // Assuming this is where your definition lives
 
+APickupEquipment::APickupEquipment()
+{
+    SetReplicates(true);
+}
+
 void APickupEquipment::Interact_Implementation(AActor* Interactor)
 {
     // Only server manages inventory

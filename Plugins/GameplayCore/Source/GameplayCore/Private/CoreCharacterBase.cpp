@@ -14,6 +14,7 @@ ACoreCharacterBase::ACoreCharacterBase()
 	PrimaryActorTick.bCanEverTick = true;
 
 	EquipmentComponent = CreateDefaultSubobject<UEquipmentComponent>(TEXT("EquipmentManager"));
+	EquipmentComponent->SetIsReplicated(true);
 }
 
 UAbilitySystemComponent* ACoreCharacterBase::GetAbilitySystemComponent() const
