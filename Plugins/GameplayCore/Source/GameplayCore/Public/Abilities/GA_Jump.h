@@ -13,9 +13,6 @@ UCLASS()
 class GAMEPLAYCORE_API UGA_Jump : public UCoreGameplayAbility
 {
 	GENERATED_BODY()
-	
-public:
-	UGA_Jump();
 
 protected:
 	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle,

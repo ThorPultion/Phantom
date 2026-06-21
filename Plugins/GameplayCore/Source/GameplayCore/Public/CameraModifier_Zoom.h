@@ -21,23 +21,22 @@ public:
 public:
 	void ReverseModifier();
 
+	/** Zoom amount in FOV */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera Settings")
 	float TargetFOV = 45.0f;
 
+	/** Speed of zoom interpolation */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera Settings")
 	float ZoomSpeed = 10.0f;
 
 protected:
 
-	// Add this to remember our state
-	UPROPERTY()
-	float CurrentFOV = 0.0f;
+	// Tracks the progress of the zooms interpolation
+	float InterpolatedFOV = 0.0f;
 
-	// Remembers where we started
-	UPROPERTY()
-	float DefaultFOV = 0.0f;
+	// Storing pre modifier FOV
+	float OriginalFOV = 0.0f;
 
 	// Are we currently zooming out?
-	UPROPERTY()
 	bool bIsReverting = false; 
 };

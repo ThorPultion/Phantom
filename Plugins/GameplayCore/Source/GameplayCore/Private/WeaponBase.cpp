@@ -9,7 +9,7 @@ AWeaponBase::AWeaponBase()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	bReplicates = true;
+	SetReplicates(true);
 
 	// Dummy root component
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
@@ -17,16 +17,16 @@ AWeaponBase::AWeaponBase()
 	ThirdPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ThirdPersonMesh"));
 	ThirdPersonMesh->SetupAttachment(RootComponent);
 
-	ThirdPersonMesh->bOwnerNoSee = true;
-	ThirdPersonMesh->CastShadow = true;
+	ThirdPersonMesh->SetOwnerNoSee(true);
+	ThirdPersonMesh->SetCastHiddenShadow(true);
 
 	FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FirstPersonMesh"));
 	FirstPersonMesh->SetupAttachment(RootComponent);
 
 	// Could create a high and low res version of each weapon, so that
 	// first person is optimized but other players see an optimized version.
-	FirstPersonMesh->bOnlyOwnerSee = true;
-	FirstPersonMesh->CastShadow = false;
+	FirstPersonMesh->SetOnlyOwnerSee(true);
+	FirstPersonMesh->SetCastShadow(false);
 }
 
 // Called when the game starts or when spawned

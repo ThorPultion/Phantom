@@ -27,6 +27,18 @@
 			"Enabled": true
 		},
 		{
+			"Name": "GASCore",
+			"Enabled": true
+		},
+		{
+			"Name": "GameplayCore",
+			"Enabled": true
+		},
+		{
+			"Name": "PlayerCore",
+			"Enabled": true
+		},
+		{
 			"Name": "GameplayAbilities",
 			"Enabled": true
 		}
