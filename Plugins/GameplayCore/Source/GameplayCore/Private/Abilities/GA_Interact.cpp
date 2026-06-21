@@ -2,7 +2,6 @@
 
 
 #include "Abilities/GA_Interact.h"
-#include "CoreCharacterBase.h"
 #include "Interactable.h"
 
 
@@ -14,19 +13,16 @@ void UGA_Interact::ActivateAbility(const FGameplayAbilitySpecHandle Handle, cons
         return;
     }
 
-    // Casting to base character due to Plugin include limitations
-    if (ACoreCharacterBase* BaseCharacter = Cast<ACoreCharacterBase>(ActorInfo->AvatarActor.Get()))
-    {
-        // Asking base character to get focused interactable.
-        // PlayerCharacter from PlayerCore implements the function for real
-        if (AActor* Target = BaseCharacter->GetFocusedInteractable())
-        {
-            if (Target->Implements<UInteractable>())
-            {
-                IInteractable::Execute_Interact(Target, BaseCharacter);
-            }
-        }
-    }
+	// Taking target from payload and making sure its interactable
+	if (TriggerEventData && TriggerEventData->Target)
+	{
+		if (TriggerEventData->Target->Implements<UInteractable>())
+		{
+			// Interface function execute requires UObject* so we have to const_cast from payload data
+			// to get a non read only pointer.
+			IInteractable::Execute_Interact(const_cast<AActor*>(TriggerEventData->Target.Get()), ActorInfo->AvatarActor.Get());
+		}
+	}
 
     EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }

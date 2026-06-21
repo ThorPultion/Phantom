@@ -38,10 +38,6 @@ public:
 	/** Virtual public getter so child classes can provide a 1P mesh if they have one */ 
 	virtual USkeletalMeshComponent* GetFirstPersonMesh() const { return nullptr; }
 
-	/** Virtual public getter for players currently focused interactable object */
-	UFUNCTION(BlueprintCallable, Category = "Interaction")
-	virtual AActor* GetFocusedInteractable() const { return nullptr; }
-
 protected:
 	// Pointers are set by child classes, so the base class can just use them
 	UPROPERTY(BlueprintReadOnly, Category = "GAS")
