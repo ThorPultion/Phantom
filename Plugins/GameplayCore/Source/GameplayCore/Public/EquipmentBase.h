@@ -4,18 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "WeaponBase.generated.h"
+#include "EquipmentBase.generated.h"
 
 class USkeletalMeshComponent;
 
 UCLASS()
-class GAMEPLAYCORE_API AWeaponBase : public AActor
+class GAMEPLAYCORE_API AEquipmentBase : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	AWeaponBase();
+	AEquipmentBase();
 
 protected:
 	// Called when the game starts or when spawned
@@ -31,4 +31,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> ThirdPersonMesh;
 
+	/** The socket on the characters mesh the equipment attaches to */
+	UPROPERTY(EditDefaultsOnly, Category = "Equipment")
+	FName AttachmentSocket;
 };
