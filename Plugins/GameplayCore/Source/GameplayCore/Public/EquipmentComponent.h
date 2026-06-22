@@ -9,7 +9,7 @@
 class UEquipmentDefinition;
 class UCoreAbilitySystemComponent;
 class UCoreAbilitySet;
-class AWeaponBase;
+class AEquipmentBase;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class GAMEPLAYCORE_API UEquipmentComponent : public UActorComponent
@@ -20,37 +20,54 @@ public:
 	// Sets default values for this component's properties
 	UEquipmentComponent();
 
-	UFUNCTION(BlueprintCallable, Category = "Equipment")
-	void EquipItem(UEquipmentDefinition* WeaponData);
+	/** Equip item defined in DataAsset field */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
+	void EquipItem(UEquipmentDefinition* EquipmentDefinition, int32 SlotIndex = -1);
 
-	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	/** Unequip and clean up equipped item */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
 	void UnequipItem();
 
-	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Equipment")
+	void Server_UnequipItem();
+
+	/** Add item to possible equippables */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
 	void AddItemToLoadout(UEquipmentDefinition* NewItem);
 
-	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	/** Equip item by slot index */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
 	void EquipItemFromSlot(int32 SlotIndex);
 
-	UFUNCTION(BlueprintCallable, Category = "Equipment")
-	void EquipNextWeapon();
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Equipment")
+	void Server_EquipItemFromSlot(int32 SlotIndex);
+
+	/** Equip next weapon (wraps to start at end) */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Equipment")
+	void EquipNextItem();
+
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Equipment")
+	void Server_EquipNextItem();
 
 protected:
 	// The physically spawned weapon actor
-	// Replicate weapon, and run a function when it arrives
-	UPROPERTY(ReplicatedUsing = OnRep_CurrentWeapon)
-	TObjectPtr<AWeaponBase> CurrentWeapon;
+	// Replicating weapon swap to local player for first person visual matching
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentItem)
+	TObjectPtr<AEquipmentBase> CurrentItem;
 
+	/** Currently used for weapon first person mesh attachment for local player */
 	UFUNCTION()
-	void OnRep_CurrentWeapon(AWeaponBase* OldWeapon);
+	void OnRep_CurrentItem(AEquipmentBase* OldItem);
 
+	// Tracks current equipment DataAsset for unequipping
 	UPROPERTY()
 	TObjectPtr<UEquipmentDefinition> CurrentEquipmentDefinition;
 
-	// The items the player is currently carrying in their invisible backpack
+	// The items the player is "carrying", what can be equipped
 	UPROPERTY(Replicated)
 	TArray<TObjectPtr<UEquipmentDefinition>> Loadout;
 
+	/** Default loadout of equipment */
 	UPROPERTY(EditDefaultsOnly, Category = "Equipment")
 	TArray<TObjectPtr<UEquipmentDefinition>> DefaultLoadout;
 
@@ -64,20 +81,15 @@ protected:
 	// Required for network replication
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	// Max number of equipment they can carry
+	// Max number of carriable equipment
 	UPROPERTY(EditDefaultsOnly, Category = "Equipment")
 	int32 MaxLoadoutSlots = 2;
 
-	// Helper function to find the owner's ASC
+	// Helper function to find the owners ASC
 	UCoreAbilitySystemComponent* GetOwnerASC() const;
 
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
 		
 };
