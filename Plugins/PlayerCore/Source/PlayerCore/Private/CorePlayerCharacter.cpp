@@ -117,6 +117,12 @@ void ACorePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 
 		// Bind interact action
 		IC->BindAction(InteractAction, ETriggerEvent::Started, this, &ThisClass::Input_Interact);
+
+		// Bind interact action
+		IC->BindAction(SelectAmmoAction, ETriggerEvent::Started, this, &ThisClass::Input_SelectAmmo);
+
+		// Bind interact action
+		IC->BindAction(CycleAmmoAction, ETriggerEvent::Triggered, this, &ThisClass::Input_CycleAmmo);
 	}
 
 	// CLIENT INPUT RACE FIX:
@@ -271,6 +277,34 @@ void ACorePlayerCharacter::Input_Interact(const FInputActionValue& Value)
 		// Triggering Input GA with Gameplay Event
 		AbilitySystemComponent->HandleGameplayEvent(GASCoreTags::Input_Interact, &Payload);
 	}
+}
+
+void ACorePlayerCharacter::Input_SelectAmmo(const FInputActionValue& Value)
+{
+	if (!AbilitySystemComponent) return;
+
+	// Float value set up in Mapping Context Modifiers
+	float ArrowIndex = Value.Get<float>();
+
+	FGameplayEventData Payload;
+	Payload.EventMagnitude = ArrowIndex;
+
+	// Triggering Input GA with Gameplay Event
+	AbilitySystemComponent->HandleGameplayEvent(GASCoreTags::Input_SwapAmmo_SetIndex, &Payload);
+}
+
+void ACorePlayerCharacter::Input_CycleAmmo(const FInputActionValue& Value)
+{
+	if (!AbilitySystemComponent) return;
+
+	// Will be 1.0 or -1.0, set up in Mappin Context Modifiers
+	float ScrollDirection = Value.Get<float>();
+
+	FGameplayEventData Payload;
+	Payload.EventMagnitude = ScrollDirection;
+
+	// Triggering Input GA with Gameplay Event
+	AbilitySystemComponent->HandleGameplayEvent(GASCoreTags::Input_SwapAmmo_Cycle, &Payload);
 }
 
 void ACorePlayerCharacter::OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)

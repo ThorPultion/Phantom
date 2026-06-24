@@ -8,7 +8,6 @@
 
 class UEquipmentDefinition;
 class UCoreAbilitySystemComponent;
-class UCoreAbilitySet;
 class AEquipmentBase;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -48,6 +47,16 @@ public:
 
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Equipment")
 	void Server_EquipNextItem();
+
+	/** Gets currently equipped weapons active projectile. Returns nullptr if none or invalid. */
+	UFUNCTION(BlueprintCallable, Category = "Projectile")
+	TSubclassOf<AActor> GetCurrentProjectileClass() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Ammo")
+	void CycleActiveItemAmmo(int32 Direction);
+
+	UFUNCTION(BlueprintCallable, Category = "Ammo")
+	void SetItemAmmoIndex(int32 AmmoIndex);
 
 protected:
 	// The physically spawned weapon actor

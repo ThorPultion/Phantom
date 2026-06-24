@@ -109,9 +109,22 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> InteractAction;
 
-	// The dedicated function for the Interact button
+	// Interaction through GameplayEvent to GA
 	void Input_Interact(const FInputActionValue& Value);
 
+	/** Input Action for selecting ammo by index */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> SelectAmmoAction;
+
+	// Ammo selection by index through GameplayEvent to GA
+	void Input_SelectAmmo(const FInputActionValue& Value);
+
+	/** Input Action for cycling between ammo */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> CycleAmmoAction;
+
+	// Ammo cycling through GameplayEvent to GA
+	void Input_CycleAmmo(const FInputActionValue& Value);
 
 public:	
 	// Called every frame

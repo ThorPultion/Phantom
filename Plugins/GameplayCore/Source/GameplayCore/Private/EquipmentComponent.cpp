@@ -9,6 +9,8 @@
 #include "AbilitySystemInterface.h"
 #include "Net/UnrealNetwork.h"
 #include "CoreCharacterBase.h"
+#include "ProjectileProvider.h"
+#include "AmmoCycler.h"
 
 // Sets default values for this component's properties
 UEquipmentComponent::UEquipmentComponent()
@@ -58,16 +60,6 @@ void UEquipmentComponent::EquipItem(UEquipmentDefinition* EquipmentDefinition, i
         OwningCharacter->GetMesh(),
         FAttachmentTransformRules::SnapToTargetNotIncludingScale,
         CurrentItem->AttachmentSocket);
-
-    /* might be needless?
-    // Attaching first and third person weapon meshes to respective meshes
-    if (CurrentItem && CurrentItem->ThirdPersonMesh && OwningCharacter->GetMesh())
-    {
-        CurrentItem->ThirdPersonMesh->AttachToComponent(
-            OwningCharacter->GetMesh(),
-            FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-            CurrentItem->AttachmentSocket);
-    }*/
 
     // No need to attach first person if not local player
     if (OwningCharacter->IsLocallyControlled() && CurrentItem && CurrentItem->FirstPersonMesh && OwningCharacter->GetFirstPersonMesh())
@@ -217,6 +209,32 @@ void UEquipmentComponent::OnRep_CurrentItem(AEquipmentBase* OldItem)
                 FAttachmentTransformRules::SnapToTargetNotIncludingScale,
                 CurrentItem->AttachmentSocket);
         }
+    }
+}
+
+TSubclassOf<AActor> UEquipmentComponent::GetCurrentProjectileClass() const
+{
+    if (CurrentItem && CurrentItem->Implements<UProjectileProvider>())
+    {
+        // MUST use the Execute_ prefix for BlueprintNativeEvent interfaces!
+        return IProjectileProvider::Execute_GetCurrentProjectileClass(CurrentItem);
+    }
+    return nullptr;
+}
+
+void UEquipmentComponent::CycleActiveItemAmmo(int32 Direction)
+{
+    if (CurrentItem && CurrentItem->Implements<UAmmoCycler>())
+    {
+        IAmmoCycler::Execute_CycleAmmo(CurrentItem, Direction);
+    }
+}
+
+void UEquipmentComponent::SetItemAmmoIndex(int32 AmmoIndex)
+{
+    if (CurrentItem && CurrentItem->Implements<UAmmoCycler>())
+    {
+        IAmmoCycler::Execute_SetAmmoIndex(CurrentItem, AmmoIndex);
     }
 }
 
