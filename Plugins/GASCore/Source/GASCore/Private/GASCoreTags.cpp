@@ -10,4 +10,6 @@ namespace GASCoreTags
 
 	// --- Input tags ---
 	UE_DEFINE_GAMEPLAY_TAG(Input_Interact, "Input.Interact");
+	UE_DEFINE_GAMEPLAY_TAG(Input_SwapAmmo_SetIndex, "Input.SwapAmmo.SetIndex");
+	UE_DEFINE_GAMEPLAY_TAG(Input_SwapAmmo_Cycle, "Input.SwapAmmo.Cycle");
 }

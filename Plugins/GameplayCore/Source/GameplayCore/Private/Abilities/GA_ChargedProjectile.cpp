@@ -60,23 +60,24 @@ void UGA_ChargedProjectile::OnMontageEventReceived_Implementation(FGameplayEvent
 	AActor* Avatar = GetAvatarActorFromActorInfo();
 
 	// Finding EquipmentComponent.
-	// We could technically cache this in OnAvatarSet, but with the current amount of actor components finding is
-	// not expensive, and other problems could occur with caching
+	// We could technically cache this in OnAvatarSet to avoid findcomponent time cost,
+	// but with the current amount of actor components finding is
+	// not expensive, and other problems could occur with caching.
 	if (UEquipmentComponent* EquipComp = Avatar->FindComponentByClass<UEquipmentComponent>())
 	{
-		// Get current projectile from EquipmentComponent
-		/*TSubclassOf<AActor> ClassToSpawn = EquipComp->GetCurrentProjectileClass();
+		TSubclassOf<AActor> ClassToSpawn = EquipComp->GetCurrentProjectileClass();
 
 		if (ClassToSpawn)
 		{
+			// TODO: Spawning logic
 			FTransform SpawnTransform = Avatar->GetActorTransform();
 			GetWorld()->SpawnActor<AActor>(ClassToSpawn, SpawnTransform);
-		}*/
+		}
 	}
-
 	// We dont call EndAbility here because the wrapper handles it via 
 	// the Montage Completed delegate, but we could in order to stop it early
 }
+
 
 void UGA_ChargedProjectile::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
