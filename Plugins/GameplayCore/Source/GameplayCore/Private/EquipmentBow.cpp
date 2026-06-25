@@ -4,6 +4,7 @@
 #include "EquipmentBow.h"
 #include "Net/UnrealNetwork.h"
 #include "Components/StaticMeshComponent.h"
+#include "ArrowProjectile.h"
 
 AEquipmentBow::AEquipmentBow()
 {
@@ -81,7 +82,8 @@ void AEquipmentBow::CycleAmmo_Implementation(int32 Direction)
 		NewIndex = 0;
 	}
 
-	// Updating index and visuals on network
+	// Update the authoritative state (which triggers replication to clients)
+	// and update the visuals locally if the server is also a playing host.
 	CurrentArrowIndex = NewIndex;
 	OnArrowVisualsChanged(CurrentArrowIndex);
 }
@@ -96,7 +98,8 @@ void AEquipmentBow::SetAmmoIndex_Implementation(int32 SpecificIndex)
 	// Dont do anything if we are already holding the same index
 	if (CurrentArrowIndex == SpecificIndex) return;
 
-	// Network prediction for index and visual changes
+	// Update the authoritative state (which triggers replication to clients)
+	// and update the visuals locally if the server is also a playing host.
 	CurrentArrowIndex = SpecificIndex;
 	OnArrowVisualsChanged(CurrentArrowIndex);
 }
