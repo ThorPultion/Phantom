@@ -8,6 +8,7 @@
 #include "AmmoCycler.h"
 #include "EquipmentBow.generated.h"
 
+class AArrowProjectile;
 class UStaticMeshComponent;
 
 /**
@@ -45,8 +46,8 @@ protected:
 	TObjectPtr<UStaticMeshComponent> ThirdPersonLoadedArrowMesh;
 
 	/** The types of arrows this bow can fire. Order matters for cycling! */
-	UPROPERTY(EditDefaultsOnly, Category = "Ammo")
-	TArray<TSubclassOf<AActor>> AvailableArrowClasses;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ammo")
+	TArray<TSubclassOf<AArrowProjectile>> AvailableArrowClasses;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Socket")
 	FName ShootingPointSocket;

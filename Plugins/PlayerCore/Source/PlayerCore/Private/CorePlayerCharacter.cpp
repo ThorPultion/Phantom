@@ -118,10 +118,10 @@ void ACorePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		// Bind interact action
 		IC->BindAction(InteractAction, ETriggerEvent::Started, this, &ThisClass::Input_Interact);
 
-		// Bind interact action
+		// Bind ammo selection
 		IC->BindAction(SelectAmmoAction, ETriggerEvent::Started, this, &ThisClass::Input_SelectAmmo);
 
-		// Bind interact action
+		// Bind ammo cycling
 		IC->BindAction(CycleAmmoAction, ETriggerEvent::Triggered, this, &ThisClass::Input_CycleAmmo);
 	}
 
@@ -284,7 +284,10 @@ void ACorePlayerCharacter::Input_SelectAmmo(const FInputActionValue& Value)
 	if (!AbilitySystemComponent) return;
 
 	// Float value set up in Mapping Context Modifiers
-	float ArrowIndex = Value.Get<float>();
+	float IMCScalar = Value.Get<float>();
+
+	// We subtract gotten value by 1 due to 0 Scalar value in IMC being ignored, have to use greater than 0
+	float ArrowIndex = IMCScalar - 1.0f;
 
 	FGameplayEventData Payload;
 	Payload.EventMagnitude = ArrowIndex;
