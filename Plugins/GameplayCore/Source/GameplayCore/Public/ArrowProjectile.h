@@ -24,4 +24,5 @@ protected:
 	/** How deep should the arrow sink into the target visually? */
 	UPROPERTY(EditDefaultsOnly, Category = "Arrow")
 	float PenetrationDepth = 10.0f;
+
 };

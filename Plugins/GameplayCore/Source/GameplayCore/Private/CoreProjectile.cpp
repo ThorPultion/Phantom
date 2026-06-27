@@ -5,6 +5,7 @@
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "NiagaraComponent.h"
 
 ACoreProjectile::ACoreProjectile()
 {
@@ -25,6 +26,8 @@ ACoreProjectile::ACoreProjectile()
 	ProjectileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ProjectileMesh"));
 	ProjectileMesh->SetupAttachment(RootComponent);
 	ProjectileMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision); // Only the sphere handles collision
+	ProjectileMesh->SetGenerateOverlapEvents(false);
+	ProjectileMesh->CanCharacterStepUpOn = ECB_No;
 
 	// Movement
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
@@ -33,6 +36,9 @@ ACoreProjectile::ACoreProjectile()
 	ProjectileMovement->MaxSpeed = 3000.f;
 	ProjectileMovement->bRotationFollowsVelocity = true; // Crucial for arrows to point forward!
 	ProjectileMovement->bShouldBounce = false;
+
+	ParticleSystem = CreateDefaultSubobject<UNiagaraComponent>(TEXT("ParticleSystem"));
+	ParticleSystem->SetupAttachment(RootComponent);
 
 	InitialLifeSpan = 30.0f;
 }
