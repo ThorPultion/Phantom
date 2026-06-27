@@ -5,11 +5,21 @@
 #include "AbilitySystemComponent.h"
 #include "GameFramework/Actor.h"
 #include "EquipmentComponent.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "EquipmentBase.h"
+#include "ProjectileProvider.h"
 
 
 void UGA_ChargedProjectile::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+
+	// Officially commits the ability (checks cost, cooldowns, etc.)
+	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
 
 	PlayAbilityMontage(ChargeMontage);
 
@@ -35,7 +45,10 @@ void UGA_ChargedProjectile::OnInputReleased(float TimeHeld)
 	// Minimal draw time
 	if (TimeHeld >= MinChargeTime && ReleaseMontage)
 	{
+		// This bool prevents montage cancellation due to "chaining" a montage after another
+		bIsChainingMontages = true;
 		PlayAbilityMontageAndWaitForEvent(ReleaseMontage, SpawnEventTag);
+		bIsChainingMontages = false;
 	}
 	else
 	{
@@ -58,22 +71,74 @@ void UGA_ChargedProjectile::OnMontageEventReceived_Implementation(FGameplayEvent
 
 	// Getting player
 	AActor* Avatar = GetAvatarActorFromActorInfo();
+	if (!IsValid(Avatar)) return;
 
 	// Finding EquipmentComponent.
 	// We could technically cache this in OnAvatarSet to avoid findcomponent time cost,
 	// but with the current amount of actor components finding is
 	// not expensive, and other problems could occur with caching.
-	if (UEquipmentComponent* EquipComp = Avatar->FindComponentByClass<UEquipmentComponent>())
-	{
-		TSubclassOf<AActor> ClassToSpawn = EquipComp->GetCurrentProjectileClass();
+	UEquipmentComponent* EquipComp = Avatar->FindComponentByClass<UEquipmentComponent>();
+	if (!EquipComp) return;
 
-		if (ClassToSpawn)
+	AEquipmentBase* EquippedWeapon = EquipComp->GetCurrentItem();
+	if (!IsValid(EquippedWeapon)) return;
+	if (!EquippedWeapon->Implements<UProjectileProvider>()) return;
+
+	TSubclassOf<AActor> ProjectileToSpawn = IProjectileProvider::Execute_GetCurrentProjectileClass(EquippedWeapon);
+	if (!ProjectileToSpawn) return;
+
+	FVector SpawnLocation = Avatar->GetActorLocation();
+	FTransform SocketTransform = IProjectileProvider::Execute_GetProjectileSpawnTransform(EquippedWeapon);
+	SpawnLocation = SocketTransform.GetLocation();
+
+	APawn* AvatarPawn = Cast<APawn>(Avatar);
+
+	FRotator SpawnRotation;
+
+	if (AvatarPawn)
+	{
+		// If AI, use this rotation
+		SpawnRotation = AvatarPawn->GetBaseAimRotation();
+
+		if (APlayerController* PC = Cast<APlayerController>(AvatarPawn->GetController()))
 		{
-			// TODO: Spawning logic
-			FTransform SpawnTransform = Avatar->GetActorTransform();
-			GetWorld()->SpawnActor<AActor>(ClassToSpawn, SpawnTransform);
+			// --- PLAYER LOGIC: Camera Line Trace ---
+			FVector CameraLoc;
+			FRotator CameraRot;
+
+			// Extract location and rotation from camera
+			PC->GetPlayerViewPoint(CameraLoc, CameraRot);
+
+			// Trace way out into the distance (e.g., 10,000 units = 100 meters)
+			FVector TraceEnd = CameraLoc + (CameraRot.Vector() * 10000.0f);
+
+			FHitResult HitResult;
+			FCollisionQueryParams QueryParams;
+			QueryParams.AddIgnoredActor(Avatar);
+
+			bool bHit = GetWorld()->LineTraceSingleByChannel(
+				HitResult,
+				CameraLoc,
+				TraceEnd,
+				ECC_Visibility, // Could make a new trace channel for aiming?
+				QueryParams
+			);
+
+			// If trace hit something, aim at the impact point. 
+			// If trace hit nothing, aim at the end of the trace
+			FVector TargetLocation = bHit ? HitResult.ImpactPoint : TraceEnd;
+
+			// Angle the arrow from the bow socket to the target
+			SpawnRotation = UKismetMathLibrary::FindLookAtRotation(SpawnLocation, TargetLocation);
 		}
 	}
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = Avatar;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	GetWorld()->SpawnActor<AActor>(ProjectileToSpawn, SpawnLocation, SpawnRotation, SpawnParams);
+
 	// We dont call EndAbility here because the wrapper handles it via 
 	// the Montage Completed delegate, but we could in order to stop it early
 }

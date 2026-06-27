@@ -33,19 +33,19 @@ ACoreProjectile::ACoreProjectile()
 	ProjectileMovement->MaxSpeed = 3000.f;
 	ProjectileMovement->bRotationFollowsVelocity = true; // Crucial for arrows to point forward!
 	ProjectileMovement->bShouldBounce = false;
+
+	InitialLifeSpan = 30.0f;
 }
 
-void ACoreProjectile::BeginPlay()
+void ACoreProjectile::OnConstruction(const FTransform& Transform)
 {
-	Super::BeginPlay();
+	Super::OnConstruction(Transform);
 
-	if (GetOwner())
+	// Updating meshcomponent to use our meshasset
+	if (ProjectileMesh && ProjectileMeshAsset)
 	{
-		CollisionComponent->IgnoreActorWhenMoving(GetOwner(), true);
+		ProjectileMesh->SetStaticMesh(ProjectileMeshAsset);
 	}
-
-	// Optional safety net: Destroy the projectile after 10 seconds if it flies off into the void
-	SetLifeSpan(10.0f);
 }
 
 void ACoreProjectile::OnProjectileHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -58,8 +58,4 @@ void ACoreProjectile::OnProjectileHit(UPrimitiveComponent* HitComponent, AActor*
 
 	// Let Blueprints handle the sparks/sounds locally
 	OnImpact(Hit);
-
-	// Default behavior: destroy on impact. 
-	// (We will override this in the Arrow subclass to make them stick into walls instead)
-	Destroy();
 }

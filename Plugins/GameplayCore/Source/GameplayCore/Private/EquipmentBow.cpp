@@ -19,6 +19,24 @@ AEquipmentBow::AEquipmentBow()
 
 	FirstPersonLoadedArrowMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	ThirdPersonLoadedArrowMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	FirstPersonLoadedArrowMesh->SetOnlyOwnerSee(true);
+	FirstPersonLoadedArrowMesh->SetCastShadow(false);
+
+	ThirdPersonLoadedArrowMesh->SetOwnerNoSee(true);
+	ThirdPersonLoadedArrowMesh->SetCastHiddenShadow(true);
+}
+
+void AEquipmentBow::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// Kickstart the visual update so the nocked arrow appears immediately
+	if (!AvailableArrowClasses.IsEmpty())
+	{
+		// Force the visual update (Server and Client)
+		OnArrowVisualsChanged(CurrentArrowIndex);
+	}
 }
 
 void AEquipmentBow::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
