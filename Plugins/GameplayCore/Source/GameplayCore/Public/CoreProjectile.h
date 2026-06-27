@@ -21,16 +21,21 @@ public:
 	ACoreProjectile();
 
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
 
-	/** The main collision shape */
+	// On blueprint construction
+	virtual void OnConstruction(const FTransform& Transform) override;
+
+	/** Main collision shape */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<USphereComponent> CollisionComponent;
 
-	/** The visual representation */
+	/** Arrow mesh component */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UStaticMeshComponent> ProjectileMesh;
+
+	/** Arrow mesh asset */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UStaticMesh> ProjectileMeshAsset;
 
 	/** Handles movement, gravity, and bouncing */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")

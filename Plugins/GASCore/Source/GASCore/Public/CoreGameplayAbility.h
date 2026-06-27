@@ -34,6 +34,9 @@ protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "Animation")
 	void OnMontageEventReceived(FGameplayEventData Payload);
 
+	/** Prevents the ability from ending if we intentionally interrupt our own montage to play another one */
+	bool bIsChainingMontages = false;
+
 private:
 	UFUNCTION()
 	void OnMontageCompleted();

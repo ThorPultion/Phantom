@@ -59,6 +59,9 @@ void UCoreGameplayAbility::OnMontageCompleted()
 
 void UCoreGameplayAbility::OnMontageCancelled()
 {
+	// If we are intentionally chaining to a new montage, do not kill the ability
+	if (bIsChainingMontages) return;
+
 	bool bReplicateEndAbility = true;
 	bool bWasCancelled = true;
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicateEndAbility, bWasCancelled);

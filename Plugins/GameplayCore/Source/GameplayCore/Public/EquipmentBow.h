@@ -35,6 +35,8 @@ public:
 	virtual void SetAmmoIndex_Implementation(int32 SpecificIndex) override;
 
 protected:
+	virtual void BeginPlay() override;
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	/** The dummy 1p mesh representing the nocked arrow before it is fired */

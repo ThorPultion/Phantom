@@ -212,16 +212,6 @@ void UEquipmentComponent::OnRep_CurrentItem(AEquipmentBase* OldItem)
     }
 }
 
-TSubclassOf<AActor> UEquipmentComponent::GetCurrentProjectileClass() const
-{
-    if (CurrentItem && CurrentItem->Implements<UProjectileProvider>())
-    {
-        // MUST use the Execute_ prefix for BlueprintNativeEvent interfaces!
-        return IProjectileProvider::Execute_GetCurrentProjectileClass(CurrentItem);
-    }
-    return nullptr;
-}
-
 void UEquipmentComponent::CycleActiveItemAmmo(int32 Direction)
 {
     if (CurrentItem && CurrentItem->Implements<UAmmoCycler>())
