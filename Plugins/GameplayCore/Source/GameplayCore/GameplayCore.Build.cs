@@ -41,7 +41,8 @@ public class GameplayCore : ModuleRules
 				"GASCore",
                 "GameplayAbilities",
                 "GameplayTags",
-                "GameplayTasks"
+                "GameplayTasks",
+                "Niagara"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

@@ -10,6 +10,7 @@
 class USphereComponent;
 class UProjectileMovementComponent;
 class UGameplayEffect;
+class UNiagaraComponent;
 
 UCLASS()
 class GAMEPLAYCORE_API ACoreProjectile : public AActor
@@ -60,4 +61,8 @@ protected:
 	/** The Gameplay Cue tag to trigger sounds and particles on impact */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
 	FGameplayTag ImpactGameplayCue;
+
+	/** Projectiles defining particle effect */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Effects")
+	TObjectPtr<UNiagaraComponent> ParticleSystem;
 };
