@@ -25,4 +25,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Arrow")
 	float PenetrationDepth = 10.0f;
 
+	/** How long should the arrow stick onto hit object for? */
+	UPROPERTY(EditDefaultsOnly, Category = "Arrow")
+	float ArrowLifeSpanAfterCollision = 60.0f;
+
 };

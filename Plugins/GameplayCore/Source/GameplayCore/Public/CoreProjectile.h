@@ -11,6 +11,7 @@ class USphereComponent;
 class UProjectileMovementComponent;
 class UGameplayEffect;
 class UNiagaraComponent;
+class UAmmoData;
 
 UCLASS()
 class GAMEPLAYCORE_API ACoreProjectile : public AActor
@@ -36,7 +37,7 @@ protected:
 
 	/** Arrow mesh asset */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
-	TObjectPtr<UStaticMesh> ProjectileMeshAsset;
+	TObjectPtr<UAmmoData> ProjectileData;
 
 	/** Handles movement, gravity, and bouncing */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -63,6 +64,12 @@ protected:
 	FGameplayTag ImpactGameplayCue;
 
 	/** Projectiles defining particle effect */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Effects")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
 	TObjectPtr<UNiagaraComponent> ParticleSystem;
+
+	virtual void BeginPlay() override;
+
+	/** Letting the projectile hit the owner again */
+	UFUNCTION()
+	void UnIgnoreOwner();
 };

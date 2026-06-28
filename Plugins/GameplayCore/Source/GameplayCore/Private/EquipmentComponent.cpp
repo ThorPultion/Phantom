@@ -227,21 +227,3 @@ void UEquipmentComponent::SetItemAmmoIndex(int32 AmmoIndex)
         IAmmoCycler::Execute_SetAmmoIndex(CurrentItem, AmmoIndex);
     }
 }
-
-void UEquipmentComponent::BeginPlay()
-{
-	Super::BeginPlay();
-
-    // Granting starting items
-    if (GetOwner()->HasAuthority())
-    {
-        for (UEquipmentDefinition* StartingItem : DefaultLoadout)
-        {
-            if (StartingItem)
-            {
-                AddItemToLoadout(StartingItem);
-            }
-        }
-    }
-	
-}
