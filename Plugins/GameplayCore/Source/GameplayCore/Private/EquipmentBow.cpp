@@ -4,7 +4,9 @@
 #include "EquipmentBow.h"
 #include "Net/UnrealNetwork.h"
 #include "Components/StaticMeshComponent.h"
-#include "ArrowProjectile.h"
+#include "NiagaraComponent.h"
+#include "AmmoData.h"
+#include "CoreProjectile.h"
 
 AEquipmentBow::AEquipmentBow()
 {
@@ -22,9 +24,18 @@ AEquipmentBow::AEquipmentBow()
 
 	FirstPersonLoadedArrowMesh->SetOnlyOwnerSee(true);
 	FirstPersonLoadedArrowMesh->SetCastShadow(false);
-
 	ThirdPersonLoadedArrowMesh->SetOwnerNoSee(true);
 	ThirdPersonLoadedArrowMesh->SetCastHiddenShadow(true);
+
+	FirstPersonParticleSystem = CreateDefaultSubobject<UNiagaraComponent>(TEXT("FirstPersonParticleSystem"));
+	ThirdPersonParticleSystem = CreateDefaultSubobject<UNiagaraComponent>(TEXT("ThirdPersonParticleSystem"));
+	FirstPersonParticleSystem->SetupAttachment(FirstPersonLoadedArrowMesh);
+	ThirdPersonParticleSystem->SetupAttachment(ThirdPersonLoadedArrowMesh);
+
+	FirstPersonParticleSystem->SetOnlyOwnerSee(true);
+	FirstPersonParticleSystem->SetCastShadow(false);
+	ThirdPersonParticleSystem->SetOwnerNoSee(true);
+	ThirdPersonParticleSystem->SetCastHiddenShadow(true);
 }
 
 void AEquipmentBow::BeginPlay()
@@ -32,7 +43,7 @@ void AEquipmentBow::BeginPlay()
 	Super::BeginPlay();
 
 	// Kickstart the visual update so the nocked arrow appears immediately
-	if (!AvailableArrowClasses.IsEmpty())
+	if (!AvailableArrows.IsEmpty())
 	{
 		// Force the visual update (Server and Client)
 		OnArrowVisualsChanged(CurrentArrowIndex);
@@ -48,9 +59,9 @@ void AEquipmentBow::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 
 TSubclassOf<AActor> AEquipmentBow::GetCurrentProjectileClass_Implementation() const
 {
-	if (AvailableArrowClasses.IsValidIndex(CurrentArrowIndex))
+	if (AvailableArrows.IsValidIndex(CurrentArrowIndex))
 	{
-		return AvailableArrowClasses[CurrentArrowIndex];
+		return AvailableArrows[CurrentArrowIndex]->AmmoClass;
 	}
 	return nullptr;
 }
@@ -83,7 +94,7 @@ void AEquipmentBow::CycleAmmo_Implementation(int32 Direction)
 	// Strict Server Authority check
 	if (!HasAuthority()) return;
 
-	if (AvailableArrowClasses.IsEmpty()) return;
+	if (AvailableArrows.IsEmpty()) return;
 
 	// Add the direction (-1 or 1)
 	int32 NewIndex = CurrentArrowIndex + Direction;
@@ -92,9 +103,9 @@ void AEquipmentBow::CycleAmmo_Implementation(int32 Direction)
 	if (NewIndex < 0)
 	{
 		// Wrap to the end
-		NewIndex = AvailableArrowClasses.Num() - 1;
+		NewIndex = AvailableArrows.Num() - 1;
 	}
-	else if (NewIndex >= AvailableArrowClasses.Num())
+	else if (NewIndex >= AvailableArrows.Num())
 	{
 		// Wrap to the start
 		NewIndex = 0;
@@ -111,7 +122,7 @@ void AEquipmentBow::SetAmmoIndex_Implementation(int32 SpecificIndex)
 	// Strict Server Authority check
 	if (!HasAuthority()) return;
 
-	if (!AvailableArrowClasses.IsValidIndex(SpecificIndex)) return;
+	if (!AvailableArrows.IsValidIndex(SpecificIndex)) return;
 
 	// Dont do anything if we are already holding the same index
 	if (CurrentArrowIndex == SpecificIndex) return;

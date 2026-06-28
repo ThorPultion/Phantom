@@ -22,13 +22,28 @@ UAbilitySystemComponent* ACoreCharacterBase::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
-void ACoreCharacterBase::GiveStartingAbilities()
+void ACoreCharacterBase::GrantStartingAbilities()
 {
     UCoreAbilitySystemComponent* ASC = Cast<UCoreAbilitySystemComponent>(GetAbilitySystemComponent());
 
     if (!HasAuthority() || !ASC || !StartingAbilities) return;
 
 	ASC->GrantAbilitySetAsync(StartingAbilities);
+}
+
+void ACoreCharacterBase::GrantStartingEquipment()
+{
+	UCoreAbilitySystemComponent* ASC = Cast<UCoreAbilitySystemComponent>(GetAbilitySystemComponent());
+
+	if (!HasAuthority() || !ASC || !EquipmentComponent || EquipmentComponent->StartingEquipment.IsEmpty()) return;
+
+	for (UEquipmentDefinition* StartingItem : EquipmentComponent->StartingEquipment)
+	{
+		if (StartingItem)
+		{
+			EquipmentComponent->AddItemToLoadout(StartingItem);
+		}
+	}
 }
 
 // Called when the game starts or when spawned
@@ -46,7 +61,10 @@ void ACoreCharacterBase::PossessedBy(AController* NewController)
 	InitAbilitySystem();
 
 	// ASC is initiated, so give starting abilities
-	GiveStartingAbilities();
+	GrantStartingAbilities();
+
+	// Equipment grant abilities as well
+	GrantStartingEquipment();
 }
 
 // Called every frame

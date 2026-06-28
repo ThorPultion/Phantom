@@ -135,6 +135,7 @@ void UGA_ChargedProjectile::OnMontageEventReceived_Implementation(FGameplayEvent
 
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = Avatar;
+	SpawnParams.Instigator = AvatarPawn;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	GetWorld()->SpawnActor<AActor>(ProjectileToSpawn, SpawnLocation, SpawnRotation, SpawnParams);

@@ -59,6 +59,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Equipment")
 	AEquipmentBase* GetCurrentItem() const { return CurrentItem; }
 
+	/** Default loadout of equipment */
+	UPROPERTY(EditDefaultsOnly, Category = "Equipment")
+	TArray<TObjectPtr<UEquipmentDefinition>> StartingEquipment;
+
 protected:
 	// The physically spawned weapon actor
 	// Replicating weapon swap to local player for first person visual matching
@@ -77,10 +81,6 @@ protected:
 	UPROPERTY(Replicated)
 	TArray<TObjectPtr<UEquipmentDefinition>> Loadout;
 
-	/** Default loadout of equipment */
-	UPROPERTY(EditDefaultsOnly, Category = "Equipment")
-	TArray<TObjectPtr<UEquipmentDefinition>> DefaultLoadout;
-
 	// Which slot in the Loadout array is currently spawned in the players hands?
 	UPROPERTY(ReplicatedUsing = OnRep_CurrentSlotIndex)
 	int32 CurrentSlotIndex = -1;
@@ -97,9 +97,5 @@ protected:
 
 	// Helper function to find the owners ASC
 	UCoreAbilitySystemComponent* GetOwnerASC() const;
-
-protected:
-	// Called when the game starts
-	virtual void BeginPlay() override;
 		
 };

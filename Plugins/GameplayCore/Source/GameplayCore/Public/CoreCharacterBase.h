@@ -53,7 +53,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UEquipmentComponent> EquipmentComponent;
 
-	virtual void GiveStartingAbilities();
+	virtual void GrantStartingAbilities();
+
+	virtual void GrantStartingEquipment();
 
 	// Called by child classes once their ASC is valid
 	virtual void InitAbilitySystem();

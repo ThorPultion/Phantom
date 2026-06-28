@@ -46,5 +46,5 @@ void AArrowProjectile::OnProjectileHit(UPrimitiveComponent* HitComponent, AActor
 	}
 
 	// Extend the lifespan on hit so the arrow stays in the wall/guard for a minute before despawning
-	SetLifeSpan(60.0f);
+	SetLifeSpan(ArrowLifeSpanAfterCollision);
 }
