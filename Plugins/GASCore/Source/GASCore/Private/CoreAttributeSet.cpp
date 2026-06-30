@@ -15,6 +15,7 @@ UCoreAttributeSet::UCoreAttributeSet()
 	InitMaxHealth(100.f);
 	InitEnergy(100.f);
 	InitMaxEnergy(100.f);
+	InitMovementSpeed(600.f);
 }
 
 void UCoreAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -25,6 +26,7 @@ void UCoreAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, MaxHealth, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, Energy, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, MaxEnergy, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, MovementSpeed, COND_None, REPNOTIFY_Always);
 }
 
 void UCoreAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
@@ -39,6 +41,10 @@ void UCoreAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, 
 	else if (Attribute == GetEnergyAttribute())
 	{
 		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxEnergy());
+	}
+	else if (Attribute == GetMovementSpeedAttribute())
+	{
+		NewValue = FMath::Max<float>(NewValue, 0.0f);
 	}
 }
 
@@ -60,7 +66,7 @@ void UCoreAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 
 			// Create the Payload
 			FGameplayEventData Payload;
-			Payload.EventTag = GASCoreTags::Event_State_Death;
+			Payload.EventTag = GASCoreTags::Event_Death;
 			Payload.Instigator = Data.EffectSpec.GetEffectContext().GetOriginalInstigator();
 			Payload.Target = GetOwningActor();
 
@@ -101,4 +107,9 @@ void UCoreAttributeSet::OnRep_Energy(const FGameplayAttributeData& OldEnergy)
 void UCoreAttributeSet::OnRep_MaxEnergy(const FGameplayAttributeData& OldMaxEnergy)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UCoreAttributeSet, MaxEnergy, OldMaxEnergy);
+}
+
+void UCoreAttributeSet::OnRep_MovementSpeed(const FGameplayAttributeData& OldMovementSpeed)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UCoreAttributeSet, MovementSpeed, OldMovementSpeed);
 }

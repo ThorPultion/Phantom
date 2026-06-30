@@ -6,6 +6,8 @@
 #include "CoreAbilitySet.h"
 #include "CoreAbilitySystemComponent.h"
 #include "EquipmentComponent.h"
+#include "CoreAttributeSet.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 ACoreCharacterBase::ACoreCharacterBase()
@@ -83,6 +85,24 @@ void ACoreCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 void ACoreCharacterBase::InitAbilitySystem()
 {
-	// Default empty implementation
+	// This Super should be called AFTER initializing ASC!
+	if (AbilitySystemComponent && AttributeSet)
+	{
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+			AttributeSet->GetMovementSpeedAttribute()).Remove(MovementSpeedChangedDelegateHandle);
+
+		// Start listening for movement speed changes
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+			AttributeSet->GetMovementSpeedAttribute()).AddUObject(this, &ACoreCharacterBase::OnMovementSpeedChanged);
+	}
+}
+
+void ACoreCharacterBase::OnMovementSpeedChanged(const FOnAttributeChangeData& Data)
+{
+	// Apply the new GAS value directly to the engine's movement component
+	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+	{
+		MoveComp->MaxWalkSpeed = Data.NewValue;
+	}
 }
 

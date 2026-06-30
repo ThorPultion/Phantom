@@ -116,39 +116,36 @@ void ACoreProjectile::OnProjectileHit(UPrimitiveComponent* HitComponent, AActor*
 	if (!TargetASC || !FiringPawn) return;
 
 	IAbilitySystemInterface* FiringInterface = Cast<IAbilitySystemInterface>(FiringPawn);
-
 	if (!FiringInterface) return;
 
 	UAbilitySystemComponent* SourceASC = FiringInterface->GetAbilitySystemComponent();
-	if (SourceASC)
+	if (!SourceASC) return;
+
+
+	FGameplayEffectContextHandle EffectContext = SourceASC->MakeEffectContext();
+	EffectContext.AddHitResult(Hit);
+	EffectContext.AddInstigator(FiringPawn, this);
+
+	if (ProjectileData->ImpactDamageEffect && ProjectileData)
 	{
-		// 3. Create an Effect Context (packs details like hit location, instigator, etc.)
-		FGameplayEffectContextHandle EffectContext = SourceASC->MakeEffectContext();
-		EffectContext.AddHitResult(Hit);
-		EffectContext.AddInstigator(FiringPawn, this);
-
-		// 4. Create and apply the Gameplay Effect Spec
-		if (ImpactDamageEffect)
+		FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(ProjectileData->ImpactDamageEffect, 1.0f, EffectContext);
+		if (SpecHandle.IsValid())
 		{
-			FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(ImpactDamageEffect, 1.0f, EffectContext);
-			if (SpecHandle.IsValid())
+			for (auto& DamageConfig : ProjectileData->DamageConfig)
 			{
-				SpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(TEXT("Data.Damage.DoT.Fire")), -25.0f);
-
-				SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
+				SpecHandle.Data->SetSetByCallerMagnitude(DamageConfig.Key, DamageConfig.Value);
 			}
+			SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data, TargetASC);
 		}
+	}
 
-		// 5. Trigger the Burst Gameplay Cue explicitly (for the impact explosion/sparks)
-		if (ImpactGameplayCue.IsValid())
-		{
-			FGameplayCueParameters CueParams;
-			CueParams.EffectContext = EffectContext;
-			CueParams.Location = Hit.ImpactPoint;
-			CueParams.Normal = Hit.ImpactNormal;
+	if (ProjectileData->ImpactGameplayCue.IsValid())
+	{
+		FGameplayCueParameters CueParams;
+		CueParams.EffectContext = EffectContext;
+		CueParams.Location = Hit.ImpactPoint;
+		CueParams.Normal = Hit.ImpactNormal;
 
-			// This executes a Burst Cue on all clients natively and efficiently
-			TargetASC->ExecuteGameplayCue(ImpactGameplayCue, CueParams);
-		}
+		TargetASC->ExecuteGameplayCue(ProjectileData->ImpactGameplayCue, CueParams);
 	}
 }

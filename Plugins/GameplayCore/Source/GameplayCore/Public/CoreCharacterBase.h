@@ -13,6 +13,7 @@ class UCoreAbilitySet;
 struct FStreamableHandle;
 class UEquipmentComponent;
 class USkeletalMeshComponent;
+struct FOnAttributeChangeData;
 
 UCLASS(Abstract)
 class GAMEPLAYCORE_API ACoreCharacterBase : public ACharacter, public IAbilitySystemInterface
@@ -63,4 +64,9 @@ protected:
 	virtual void BeginPlay() override;
 
 	virtual void PossessedBy(AController* NewController) override;
+
+	// Callback function for when movement speed attribute changes
+	virtual void OnMovementSpeedChanged(const FOnAttributeChangeData& Data);
+
+	FDelegateHandle MovementSpeedChangedDelegateHandle;
 };
