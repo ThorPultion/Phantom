@@ -84,6 +84,9 @@ void ACorePlayerCharacter::InitAbilitySystem()
 			AbilitySystemComponent->InitAbilityActorInfo(PS, this);
 		}
 	}
+
+	// Calling base class function AFTER initializing, ASC needs to be set up in child classes such as this one FIRST!
+	Super::InitAbilitySystem();
 }
 
 void ACorePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

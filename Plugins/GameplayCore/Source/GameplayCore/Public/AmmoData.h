@@ -4,10 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "GameplayTagContainer.h"
 #include "AmmoData.generated.h"
 
 class ACoreProjectile;
 class UNiagaraSystem;
+class UGameplayEffect;
 
 /**
  * 
@@ -27,4 +29,15 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Object")
 	TObjectPtr<UNiagaraSystem> AmmoParticleSystem;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	TMap<FGameplayTag, float> DamageConfig;
+
+	// The Effect to apply on impact
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	TSubclassOf<UGameplayEffect> ImpactDamageEffect;
+
+	// The Cue to trigger for impact visuals/audio
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	FGameplayTag ImpactGameplayCue;
 };

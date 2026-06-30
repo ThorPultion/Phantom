@@ -49,6 +49,11 @@ public:
 	FGameplayAttributeData MaxEnergy;
 	ATTRIBUTE_ACCESSORS(UCoreAttributeSet, MaxEnergy)
 
+	// -- Movement --
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Movement", ReplicatedUsing = OnRep_MovementSpeed)
+	FGameplayAttributeData MovementSpeed;
+	ATTRIBUTE_ACCESSORS(UCoreAttributeSet, MovementSpeed)
+
 protected:
 	UFUNCTION()
 	virtual void OnRep_Health(const FGameplayAttributeData& OldHealth);
@@ -61,4 +66,7 @@ protected:
 
 	UFUNCTION()
 	virtual void OnRep_MaxEnergy(const FGameplayAttributeData& OldMaxEnergy);
+
+	UFUNCTION()
+	virtual void OnRep_MovementSpeed(const FGameplayAttributeData& OldMovementSpeed);
 };

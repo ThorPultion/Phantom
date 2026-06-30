@@ -55,14 +55,6 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Projectile")
 	void OnImpact(const FHitResult& Hit);
 
-	/** The Gameplay Effect applied to the target on hit */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
-	TSubclassOf<UGameplayEffect> ImpactDamageEffect;
-
-	/** The Gameplay Cue tag to trigger sounds and particles on impact */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
-	FGameplayTag ImpactGameplayCue;
-
 	/** Projectiles defining particle effect */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
 	TObjectPtr<UNiagaraComponent> ParticleSystem;
