@@ -52,39 +52,75 @@ void UCoreAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 {
 	Super::PostGameplayEffectExecute(Data);
 
-	// Ensure the final value stays clamped after the Gameplay Effect applies
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
 		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
 
-		// If health hits 0 and we arent already dead
+		// Gameplay events for ability triggering
 		if (GetHealth() <= 0.0f)
 		{
-			// Get the Hit Result that caused the lethal damage
-			FGameplayEffectContextHandle Context = Data.EffectSpec.GetContext();
-			const FHitResult* HitResult = Context.GetHitResult();
-
-			// Create the Payload
-			FGameplayEventData Payload;
-			Payload.EventTag = GASCoreTags::Event_Death;
-			Payload.Instigator = Data.EffectSpec.GetEffectContext().GetOriginalInstigator();
-			Payload.Target = GetOwningActor();
-
-			// If we have a hit result, pass it along so the death ability knows where the hit came from
-			if (HitResult)
-			{
-				Payload.ContextHandle = Context;
-				Payload.TargetData = UAbilitySystemBlueprintLibrary::AbilityTargetDataFromHitResult(*HitResult);
-			}
-
-			// Send the Event to the ASC
-			GetOwningAbilitySystemComponent()->HandleGameplayEvent(Payload.EventTag, &Payload);
+			HandleDeath(Data);
+		}
+		else
+		{
+			TryTriggerKnockback(Data);
 		}
 	}
 	else if (Data.EvaluatedData.Attribute == GetEnergyAttribute())
 	{
 		SetEnergy(FMath::Clamp(GetEnergy(), 0.f, GetMaxEnergy()));
 	}
+}
+
+void UCoreAttributeSet::HandleDeath(const FGameplayEffectModCallbackData& Data)
+{
+	float ImpactForce = 0.f;
+
+	// Check if the killing blow was also a knockback effect
+	const FGameplayTagContainer& AssetTags = Data.EffectSpec.Def->GetAssetTags();
+	if (AssetTags.HasTagExact(GASCoreTags::Effect_Knockback))
+	{
+		// Extract the force specifically for the death payload
+		ImpactForce = Data.EffectSpec.GetSetByCallerMagnitude(GASCoreTags::Data_Magnitude_Force, false, 0.f);
+	}
+
+	// Send gameplay event to trigger death ability
+	FGameplayEventData Payload = CreateEventPayload(Data, ImpactForce);
+	Payload.EventTag = GASCoreTags::Event_Death;
+	GetOwningAbilitySystemComponent()->HandleGameplayEvent(Payload.EventTag, &Payload);
+}
+
+void UCoreAttributeSet::TryTriggerKnockback(const FGameplayEffectModCallbackData& Data)
+{
+	// Check if the GE is supposed to knock back
+	const FGameplayTagContainer& AssetTags = Data.EffectSpec.Def->GetAssetTags();
+	if (AssetTags.HasTagExact(GASCoreTags::Effect_Knockback))
+	{
+		float ImpactForce = Data.EffectSpec.GetSetByCallerMagnitude(GASCoreTags::Data_Magnitude_Force, false, 0.f);
+		if (ImpactForce > 0.f)
+		{
+			// Send gameplay event to trigger knockback ability
+			FGameplayEventData Payload = CreateEventPayload(Data, ImpactForce);
+			Payload.EventTag = GASCoreTags::Event_Movement_Knockback;
+			GetOwningAbilitySystemComponent()->HandleGameplayEvent(Payload.EventTag, &Payload);
+		}
+	}
+}
+
+FGameplayEventData UCoreAttributeSet::CreateEventPayload(const FGameplayEffectModCallbackData& Data, float EventMagnitude)
+{
+	FGameplayEventData Payload;
+	Payload.Instigator = Data.EffectSpec.GetEffectContext().GetOriginalInstigator();
+	Payload.Target = GetOwningActor();
+	Payload.EventMagnitude = EventMagnitude;
+
+	if (const FHitResult* HitResult = Data.EffectSpec.GetContext().GetHitResult())
+	{
+		Payload.ContextHandle = Data.EffectSpec.GetContext();
+		Payload.TargetData = UAbilitySystemBlueprintLibrary::AbilityTargetDataFromHitResult(*HitResult);
+	}
+
+	return Payload;
 }
 
 // --- RepNotifies ---

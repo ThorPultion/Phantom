@@ -10,6 +10,7 @@
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
 #include "GameplayEffect.h"
+#include "GASCoreTags.h"
 
 ACoreProjectile::ACoreProjectile()
 {
@@ -134,7 +135,9 @@ void ACoreProjectile::OnProjectileHit(UPrimitiveComponent* HitComponent, AActor*
 			for (auto& DamageConfig : ProjectileData->DamageConfig)
 			{
 				SpecHandle.Data->SetSetByCallerMagnitude(DamageConfig.Key, DamageConfig.Value);
+
 			}
+
 			SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data, TargetASC);
 		}
 	}

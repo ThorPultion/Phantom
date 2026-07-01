@@ -55,6 +55,13 @@ public:
 	ATTRIBUTE_ACCESSORS(UCoreAttributeSet, MovementSpeed)
 
 protected:
+	// Action helpers (Side Effects from damage)
+	void HandleDeath(const FGameplayEffectModCallbackData& Data);
+	void TryTriggerKnockback(const FGameplayEffectModCallbackData& Data);
+
+	// Payload generator
+	FGameplayEventData CreateEventPayload(const FGameplayEffectModCallbackData& Data, float EventMagnitude = 0.f);
+
 	UFUNCTION()
 	virtual void OnRep_Health(const FGameplayAttributeData& OldHealth);
 
