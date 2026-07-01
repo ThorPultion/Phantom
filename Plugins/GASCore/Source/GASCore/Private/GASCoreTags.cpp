@@ -4,6 +4,7 @@ namespace GASCoreTags
 {
 	// --- Events ---
 	UE_DEFINE_GAMEPLAY_TAG(Event_Death, "Event.Death");
+	UE_DEFINE_GAMEPLAY_TAG(Event_Movement_Knockback, "Event.Movement.Knockback");
 
 	// --- Movement States ---
 	UE_DEFINE_GAMEPLAY_TAG(State_Movement_Crouched, "State.Movement.Crouched");
@@ -16,4 +17,10 @@ namespace GASCoreTags
 
 	// --- States ---
 	UE_DEFINE_GAMEPLAY_TAG(State_Dead, "State.Dead");
+
+	// --- Data ---
+	UE_DEFINE_GAMEPLAY_TAG(Data_Magnitude_Force, "Data.Magnitude.Force");
+
+	// --- Effects ---
+	UE_DEFINE_GAMEPLAY_TAG(Effect_Knockback, "Effect.Knockback");
 }

@@ -6,6 +6,7 @@ namespace GASCoreTags
 {
 	// --- Events ---
 	GASCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Death);
+	GASCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Movement_Knockback);
 
 	// --- Movement States ---
 	GASCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Movement_Crouched);
@@ -18,4 +19,10 @@ namespace GASCoreTags
 	
 	// --- States ---
 	GASCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Dead);
+
+	// --- Data ---
+	GASCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Magnitude_Force);
+
+	// --- Effects ---
+	GASCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Knockback);
 }
