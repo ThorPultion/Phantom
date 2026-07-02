@@ -15,6 +15,7 @@ class GAMEPLAYCORE_API UGA_Jump : public UCoreGameplayAbility
 	GENERATED_BODY()
 
 protected:
+
 	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		const FGameplayAbilityActorInfo* ActorInfo,
 		const FGameplayTagContainer* SourceTags = nullptr,

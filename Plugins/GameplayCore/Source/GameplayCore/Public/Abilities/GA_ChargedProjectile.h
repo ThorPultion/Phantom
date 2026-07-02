@@ -20,6 +20,7 @@ public:
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
 protected:
+
 	// The implementation for when AnimNotify triggers
 	virtual void OnMontageEventReceived_Implementation(FGameplayEventData Payload) override;
 

@@ -23,4 +23,8 @@ namespace GASCoreTags
 
 	// --- Effects ---
 	UE_DEFINE_GAMEPLAY_TAG(Effect_Knockback, "Effect.Knockback");
+
+	// --- GameplayCues ---
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Death_Ragdoll, "GameplayCue.Death.Ragdoll");
+	
 }
