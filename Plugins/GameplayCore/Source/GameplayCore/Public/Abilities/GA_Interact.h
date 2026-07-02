@@ -15,6 +15,7 @@ class GAMEPLAYCORE_API UGA_Interact : public UCoreGameplayAbility
 	GENERATED_BODY()
 
 protected:
+
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		const FGameplayAbilityActorInfo* ActorInfo,
 		const FGameplayAbilityActivationInfo ActivationInfo,

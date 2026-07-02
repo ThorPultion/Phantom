@@ -19,9 +19,6 @@ AEquipmentBow::AEquipmentBow()
 	FirstPersonLoadedArrowMesh->SetupAttachment(FirstPersonMesh);
 	ThirdPersonLoadedArrowMesh->SetupAttachment(ThirdPersonMesh);
 
-	FirstPersonLoadedArrowMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	ThirdPersonLoadedArrowMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
 	FirstPersonLoadedArrowMesh->SetOnlyOwnerSee(true);
 	FirstPersonLoadedArrowMesh->SetCastShadow(false);
 	ThirdPersonLoadedArrowMesh->SetOwnerNoSee(true);

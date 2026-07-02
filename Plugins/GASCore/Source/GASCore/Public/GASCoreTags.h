@@ -25,4 +25,7 @@ namespace GASCoreTags
 
 	// --- Effects ---
 	GASCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Knockback);
+
+	// --- GameplayCues ---
+	GASCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Death_Ragdoll);
 }
