@@ -14,6 +14,7 @@ struct FStreamableHandle;
 class UEquipmentComponent;
 class USkeletalMeshComponent;
 struct FOnAttributeChangeData;
+struct FGameplayTag;
 
 UCLASS(Abstract)
 class GAMEPLAYCORE_API ACoreCharacterBase : public ACharacter, public IAbilitySystemInterface
@@ -69,4 +70,11 @@ protected:
 	virtual void OnMovementSpeedChanged(const FOnAttributeChangeData& Data);
 
 	FDelegateHandle MovementSpeedChangedDelegateHandle;
+
+	UPROPERTY(BlueprintReadOnly, Category = "State")
+	bool bIsAiming;
+
+	FDelegateHandle AimingTagDelegateHandle;
+
+	void OnAimingTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
 };

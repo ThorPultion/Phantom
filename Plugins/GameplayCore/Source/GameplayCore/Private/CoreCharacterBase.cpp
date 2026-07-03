@@ -8,6 +8,7 @@
 #include "EquipmentComponent.h"
 #include "CoreAttributeSet.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GASCoreTags.h"
 
 // Sets default values
 ACoreCharacterBase::ACoreCharacterBase()
@@ -91,9 +92,18 @@ void ACoreCharacterBase::InitAbilitySystem()
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 			AttributeSet->GetMovementSpeedAttribute()).Remove(MovementSpeedChangedDelegateHandle);
 
-		// Start listening for movement speed changes
-		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+		// Start listening for movement speed changes and store handle for cleanup
+		MovementSpeedChangedDelegateHandle = AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 			AttributeSet->GetMovementSpeedAttribute()).AddUObject(this, &ACoreCharacterBase::OnMovementSpeedChanged);
+
+		AbilitySystemComponent->RegisterGameplayTagEvent(
+			GASCoreTags::State_Weapon_Priming,
+			EGameplayTagEventType::NewOrRemoved).Remove(AimingTagDelegateHandle);
+
+		// Start listening for aiming GE and store handle for cleanup
+		AimingTagDelegateHandle = AbilitySystemComponent->RegisterGameplayTagEvent(
+			GASCoreTags::State_Weapon_Priming,
+			EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ACoreCharacterBase::OnAimingTagChanged);
 	}
 }
 
@@ -104,5 +114,11 @@ void ACoreCharacterBase::OnMovementSpeedChanged(const FOnAttributeChangeData& Da
 	{
 		MoveComp->MaxWalkSpeed = Data.NewValue;
 	}
+}
+
+void ACoreCharacterBase::OnAimingTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
+{
+	// If the count is > 0, the GE is active.
+	bIsAiming = (NewCount > 0);
 }
 

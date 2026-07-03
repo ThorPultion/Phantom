@@ -7,25 +7,26 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GASCoreTags.h"
+#include "CoreCharacterBase.h"
 
 bool UGC_DeathRagdoll::OnExecute_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const
 {
-
 	ACharacter* AvatarCharacter = Cast<ACharacter>(MyTarget);
 	if (!AvatarCharacter)
 	{
 		return false;
 	}
 
+	if (UCharacterMovementComponent* MoveComp = AvatarCharacter->GetCharacterMovement())
+	{
+		MoveComp->SetMovementMode(MOVE_None);
+		AvatarCharacter->SetReplicateMovement(false);
+	}
+
 	// Disable capsule collision and movement component
 	if (UCapsuleComponent* Capsule = AvatarCharacter->GetCapsuleComponent())
 	{
 		Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
-	if (UCharacterMovementComponent* MoveComp = AvatarCharacter->GetCharacterMovement())
-	{
-		MoveComp->DisableMovement();
-		MoveComp->StopMovementImmediately();
 	}
 
 	USkeletalMeshComponent* Mesh = AvatarCharacter->GetMesh();
@@ -34,10 +35,15 @@ bool UGC_DeathRagdoll::OnExecute_Implementation(AActor* MyTarget, const FGamepla
 		return false;
 	}
 
-	// Enabling ragdoll
-	Mesh->SetAllBodiesSimulatePhysics(true);
 	Mesh->SetSimulatePhysics(true);
-	Mesh->WakeAllRigidBodies();
+	Mesh->SetOwnerNoSee(false);
+	if (ACoreCharacterBase* BaseCharacter = Cast<ACoreCharacterBase>(AvatarCharacter))
+	{
+		if (USkeletalMeshComponent* FPMesh = BaseCharacter->GetFirstPersonMesh())
+		{
+			FPMesh->SetVisibility(false);
+		}
+	}
 
 	// Apply the force thats been passed here through payload
 	if (Parameters.RawMagnitude > 0.f)
@@ -73,7 +79,7 @@ bool UGC_DeathRagdoll::OnExecute_Implementation(AActor* MyTarget, const FGamepla
 		}
 
 		// Adding upwards bias for a little lift
-		ImpulseDirection.Z = FMath::Max(ImpulseDirection.Z, 0.15f);
+		ImpulseDirection.Z = FMath::Max(ImpulseDirection.Z, 0.25f);
 		ImpulseDirection.Normalize();
 
 		FVector FinalImpulse = ImpulseDirection * Parameters.RawMagnitude;

@@ -19,6 +19,7 @@ namespace GASCoreTags
 	
 	// --- States ---
 	GASCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Dead);
+	GASCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Weapon_Priming);
 
 	// --- Data ---
 	GASCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Magnitude_Force);
