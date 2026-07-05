@@ -15,29 +15,22 @@ void UGA_Death::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const F
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-	// Standard GAS safety check
-	if (!HasAuthorityOrPredictionKey(ActorInfo, &ActivationInfo))
+	if (HasAuthority(&ActivationInfo))
 	{
-		return;
+		FGameplayCueParameters CueParams;
+		if (TriggerEventData)
+		{
+			CueParams.RawMagnitude = TriggerEventData->EventMagnitude;
+			CueParams.EffectContext = TriggerEventData->ContextHandle;
+
+			CueParams.Instigator = TriggerEventData->ContextHandle.GetInstigator();
+			CueParams.EffectCauser = TriggerEventData->ContextHandle.GetEffectCauser();
+		}
+
+		// Ragdolling the character with a Cue so its properly replicated
+		ActorInfo->AbilitySystemComponent->ExecuteGameplayCue(GASCoreTags::GameplayCue_Death_Ragdoll, CueParams);
 	}
 
-	FGameplayCueParameters CueParams;
-	if (TriggerEventData)
-	{
-		CueParams.RawMagnitude = TriggerEventData->EventMagnitude;
-		CueParams.EffectContext = TriggerEventData->ContextHandle;
-
-		CueParams.Instigator = TriggerEventData->ContextHandle.GetInstigator();
-		CueParams.EffectCauser = TriggerEventData->ContextHandle.GetEffectCauser();
-	}
-
-	// Fire the Cue to all clients
-	ActorInfo->AbilitySystemComponent->ExecuteGameplayCue(GASCoreTags::GameplayCue_Death_Ragdoll, CueParams);
-
-	// 3. Do not end the ability, so the character retains the "State.Dead" tag
-
-	// --- 4. DO NOT END THE ABILITY ---
-	// Notice there is no EndAbility() call down here. 
-	// We leave the ability permanently active so the Character retains the "State.Dead" tag 
-	// until they are respawned or destroyed.
+	// WE ARE NOT CALLING ENDABILITY! The Character retains the "State.Dead" tag 
+	// until respawned or destroyed.
 }

@@ -19,4 +19,11 @@ protected:
 	// This is the function that runs on every client when the cue is triggered
 	virtual bool OnExecute_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const override;
 
+	/** Multiplier required to impulses that use mass */
+	UPROPERTY(EditDefaultsOnly, Category = "Impulse")
+	float ImpulseMultiplier = 100.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Impulse")
+	float ImpulseLiftModifier = 0.25f;
+
 };
