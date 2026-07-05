@@ -27,10 +27,6 @@ protected:
 	UFUNCTION()
 	void OnInputReleased(float TimeHeld);
 
-	/** Montage for charging the projectile */
-	UPROPERTY(EditDefaultsOnly, Category = "Animation")
-	UAnimMontage* ChargeMontage;
-
 	/** Montage for when input is released after MinChargeTime amount of time */
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")
 	UAnimMontage* ReleaseMontage;
