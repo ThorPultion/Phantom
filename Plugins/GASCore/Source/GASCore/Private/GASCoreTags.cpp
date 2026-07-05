@@ -21,6 +21,8 @@ namespace GASCoreTags
 
 	// --- Data ---
 	UE_DEFINE_GAMEPLAY_TAG(Data_Magnitude_Force, "Data.Magnitude.Force");
+	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_MaxHealth, "Data.Attribute.MaxHealth");
+	UE_DEFINE_GAMEPLAY_TAG(Data_Attribute_MaxEnergy, "Data.Attribute.MaxEnergy");
 
 	// --- Effects ---
 	UE_DEFINE_GAMEPLAY_TAG(Effect_Knockback, "Effect.Knockback");

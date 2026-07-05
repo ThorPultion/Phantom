@@ -26,4 +26,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Impulse")
 	float ImpulseLiftModifier = 0.25f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
+	FCollisionProfileName RagdollProfile = FCollisionProfileName(TEXT("Ragdoll"));;
+
 };

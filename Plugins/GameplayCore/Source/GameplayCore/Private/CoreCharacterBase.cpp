@@ -3,12 +3,12 @@
 
 #include "CoreCharacterBase.h"
 #include "AbilitySystemComponent.h"
-#include "CoreAbilitySet.h"
 #include "CoreAbilitySystemComponent.h"
 #include "EquipmentComponent.h"
 #include "CoreAttributeSet.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GASCoreTags.h"
+#include "GASInitData.h"
 
 // Sets default values
 ACoreCharacterBase::ACoreCharacterBase()
@@ -29,9 +29,29 @@ void ACoreCharacterBase::GrantStartingAbilities()
 {
     UCoreAbilitySystemComponent* ASC = Cast<UCoreAbilitySystemComponent>(GetAbilitySystemComponent());
 
-    if (!HasAuthority() || !ASC || !StartingAbilities) return;
+    if (!HasAuthority() || !ASC || !GASInitData->StartingAbilities) return;
 
-	ASC->GrantAbilitySetAsync(StartingAbilities);
+	ASC->GrantAbilitySetAsync(GASInitData->StartingAbilities);
+}
+
+void ACoreCharacterBase::SetupAttributes()
+{
+	if (!HasAuthority() || !AbilitySystemComponent || !GASInitData->InitializationEffect) return;
+
+	// Initializing attributes
+	FGameplayEffectContextHandle ContextHandle = AbilitySystemComponent->MakeEffectContext();
+	ContextHandle.AddInstigator(this, this);
+
+	FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(GASInitData->InitializationEffect, 1.f, ContextHandle);
+
+	if (SpecHandle.IsValid())
+	{
+		// Pulling stats from data asset
+		SpecHandle.Data.Get()->SetSetByCallerMagnitude(GASCoreTags::Data_Attribute_MaxHealth, GASInitData->MaxHealth);
+		SpecHandle.Data.Get()->SetSetByCallerMagnitude(GASCoreTags::Data_Attribute_MaxEnergy, GASInitData->MaxEnergy);
+
+		AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+	}
 }
 
 void ACoreCharacterBase::GrantStartingEquipment()
@@ -65,6 +85,8 @@ void ACoreCharacterBase::PossessedBy(AController* NewController)
 
 	// ASC is initiated, so give starting abilities
 	GrantStartingAbilities();
+
+	SetupAttributes();
 
 	// Equipment grant abilities as well
 	GrantStartingEquipment();

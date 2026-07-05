@@ -23,6 +23,8 @@ namespace GASCoreTags
 
 	// --- Data ---
 	GASCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Magnitude_Force);
+	GASCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_MaxHealth);
+	GASCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Attribute_MaxEnergy);
 
 	// --- Effects ---
 	GASCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Knockback);

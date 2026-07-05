@@ -36,6 +36,7 @@ bool UGC_DeathRagdoll::OnExecute_Implementation(AActor* MyTarget, const FGamepla
 	}
 
 	// Ragdolling the character
+	Mesh->SetCollisionProfileName(RagdollProfile.Name);
 	Mesh->SetSimulatePhysics(true);
 	Mesh->SetOwnerNoSee(false);
 	if (ACoreCharacterBase* BaseCharacter = Cast<ACoreCharacterBase>(AvatarCharacter))
