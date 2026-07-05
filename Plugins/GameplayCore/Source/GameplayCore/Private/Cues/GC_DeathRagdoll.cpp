@@ -17,13 +17,13 @@ bool UGC_DeathRagdoll::OnExecute_Implementation(AActor* MyTarget, const FGamepla
 		return false;
 	}
 
+	// Groundwork for ragdolling character
 	if (UCharacterMovementComponent* MoveComp = AvatarCharacter->GetCharacterMovement())
 	{
 		MoveComp->SetMovementMode(MOVE_None);
 		AvatarCharacter->SetReplicateMovement(false);
 	}
 
-	// Disable capsule collision and movement component
 	if (UCapsuleComponent* Capsule = AvatarCharacter->GetCapsuleComponent())
 	{
 		Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -35,6 +35,7 @@ bool UGC_DeathRagdoll::OnExecute_Implementation(AActor* MyTarget, const FGamepla
 		return false;
 	}
 
+	// Ragdolling the character
 	Mesh->SetSimulatePhysics(true);
 	Mesh->SetOwnerNoSee(false);
 	if (ACoreCharacterBase* BaseCharacter = Cast<ACoreCharacterBase>(AvatarCharacter))
@@ -55,7 +56,7 @@ bool UGC_DeathRagdoll::OnExecute_Implementation(AActor* MyTarget, const FGamepla
 		// Taking hit result from payload
 		if (const FHitResult* HitResult = Parameters.EffectContext.GetHitResult())
 		{
-			// Get the exact bone that was hit (e.g., "head", "upperarm_l")
+			// Getting hit bone to apply impulse to
 			if (HitResult->BoneName != NAME_None)
 			{
 				HitBoneName = HitResult->BoneName;
@@ -63,7 +64,7 @@ bool UGC_DeathRagdoll::OnExecute_Implementation(AActor* MyTarget, const FGamepla
 
 			ImpactLocation = HitResult->ImpactPoint;
 
-			// Calculate direction based on the line trace/projectile path
+			// Calculate direction based on line trace/projectile path
 			ImpulseDirection = (HitResult->TraceEnd - HitResult->TraceStart).GetSafeNormal();
 
 			// If trace data wasnt provided (e.g., AoE overlaps), fallback to impact normal
@@ -72,20 +73,21 @@ bool UGC_DeathRagdoll::OnExecute_Implementation(AActor* MyTarget, const FGamepla
 				ImpulseDirection = -HitResult->ImpactNormal;
 			}
 		}
-		// If no hit data exists
+		// If no hit data exists just calculate direction from instigator
 		else if (const AActor* Instigator = Parameters.Instigator.Get())
 		{
 			ImpulseDirection = (AvatarCharacter->GetActorLocation() - Instigator->GetActorLocation()).GetSafeNormal();
 		}
 
-		// Adding upwards bias for a little lift
-		ImpulseDirection.Z = FMath::Max(ImpulseDirection.Z, 0.25f);
+		// Adding upwards bias for lift
+		ImpulseDirection.Z = FMath::Max(ImpulseDirection.Z, ImpulseLiftModifier);
 		ImpulseDirection.Normalize();
 
-		FVector FinalImpulse = ImpulseDirection * Parameters.RawMagnitude;
+		// Physics impulse takes into account mass, so we need to multiply magnitude
+		FVector FinalImpulse = ImpulseDirection * (Parameters.RawMagnitude * ImpulseMultiplier);
 
-		// Use AddImpulseAtLocation to apply the force exactly where the bullet/weapon struck, 
-		// creating accurate rotational torque on the ragdoll.
+		// Use AddImpulseAtLocation to apply the force exactly where we were struck,
+		// which should cause accurate rotational torque on the ragdoll.
 		Mesh->AddImpulseAtLocation(FinalImpulse, ImpactLocation, HitBoneName);
 	}
 
