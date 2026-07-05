@@ -9,7 +9,7 @@
 
 class UAbilitySystemComponent;
 class UCoreAttributeSet;
-class UCoreAbilitySet;
+class UGASInitData;
 struct FStreamableHandle;
 class UEquipmentComponent;
 class USkeletalMeshComponent;
@@ -49,13 +49,15 @@ protected:
 	TObjectPtr<UCoreAttributeSet> AttributeSet;
 
 	UPROPERTY(EditAnywhere, Category = "GAS")
-	TObjectPtr<UCoreAbilitySet> StartingAbilities;
+	TObjectPtr<UGASInitData> GASInitData;
 
 	/** Manages equipment */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UEquipmentComponent> EquipmentComponent;
 
 	virtual void GrantStartingAbilities();
+
+	virtual void SetupAttributes();
 
 	virtual void GrantStartingEquipment();
 
