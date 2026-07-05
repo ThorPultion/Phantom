@@ -21,8 +21,6 @@ void UGA_ChargedProjectile::ActivateAbility(const FGameplayAbilitySpecHandle Han
 		return;
 	}
 
-	PlayAbilityMontage(ChargeMontage);
-
 	// Applying "Drawing" GE.
 	FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(ChargingEffectClass, 1.0f);
 
