@@ -29,14 +29,14 @@ void ACoreCharacterBase::GrantStartingAbilities()
 {
     UCoreAbilitySystemComponent* ASC = Cast<UCoreAbilitySystemComponent>(GetAbilitySystemComponent());
 
-    if (!HasAuthority() || !ASC || !GASInitData->StartingAbilities) return;
+    if (!HasAuthority() || !ASC || !GASInitData || !GASInitData->StartingAbilities) return;
 
 	ASC->GrantAbilitySetAsync(GASInitData->StartingAbilities);
 }
 
 void ACoreCharacterBase::SetupAttributes()
 {
-	if (!HasAuthority() || !AbilitySystemComponent || !GASInitData->InitializationEffect) return;
+	if (!HasAuthority() || !AbilitySystemComponent || !GASInitData || !GASInitData->InitializationEffect) return;
 
 	// Initializing attributes
 	FGameplayEffectContextHandle ContextHandle = AbilitySystemComponent->MakeEffectContext();
@@ -51,6 +51,24 @@ void ACoreCharacterBase::SetupAttributes()
 		SpecHandle.Data.Get()->SetSetByCallerMagnitude(GASCoreTags::Data_Attribute_MaxEnergy, GASInitData->MaxEnergy);
 
 		AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+	}
+}
+
+void ACoreCharacterBase::GrantPassiveEffects()
+{
+	if (!HasAuthority() || !AbilitySystemComponent || !GASInitData || GASInitData->PassiveEffects.IsEmpty()) return;
+
+	FGameplayEffectContextHandle ContextHandle = AbilitySystemComponent->MakeEffectContext();
+	ContextHandle.AddInstigator(this, this);
+
+	// Applying passive effects and tags
+	for (TSubclassOf<UGameplayEffect> EffectClass : GASInitData->PassiveEffects)
+	{
+		if (EffectClass)
+		{
+			UGameplayEffect* BaseEffect = EffectClass->GetDefaultObject<UGameplayEffect>();
+			AbilitySystemComponent->ApplyGameplayEffectToSelf(BaseEffect, 1.f, ContextHandle);
+		}
 	}
 }
 
@@ -87,6 +105,8 @@ void ACoreCharacterBase::PossessedBy(AController* NewController)
 	GrantStartingAbilities();
 
 	SetupAttributes();
+
+	GrantPassiveEffects();
 
 	// Equipment grant abilities as well
 	GrantStartingEquipment();
