@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "GameplayTagContainer.h"
 #include "GASInitData.generated.h"
 
 class UCoreAbilitySet;
@@ -32,4 +33,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
 	float MaxEnergy = 100.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
+	TArray<TSubclassOf<UGameplayEffect>> PassiveEffects;
 };

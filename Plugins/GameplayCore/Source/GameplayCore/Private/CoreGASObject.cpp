@@ -50,21 +50,37 @@ void ACoreGASObject::PostInitializeComponents()
 			CoreASC->GrantAbilitySetAsync(GASInitData->StartingAbilities);
 		}
 
-		// Initializing attributes
-		if (GASInitData->InitializationEffect)
+		if (GASInitData)
 		{
-			FGameplayEffectContextHandle ContextHandle = AbilitySystemComponent->MakeEffectContext();
+			// Initializing attributes
+			if (GASInitData->InitializationEffect)
+			{
+				FGameplayEffectContextHandle ContextHandle = CoreASC->MakeEffectContext();
+				ContextHandle.AddInstigator(this, this);
+
+				FGameplayEffectSpecHandle SpecHandle = CoreASC->MakeOutgoingSpec(GASInitData->InitializationEffect, 1.f, ContextHandle);
+
+				if (SpecHandle.IsValid())
+				{
+					// Pulling stats from data asset
+					SpecHandle.Data.Get()->SetSetByCallerMagnitude(GASCoreTags::Data_Attribute_MaxHealth, GASInitData->MaxHealth);
+					SpecHandle.Data.Get()->SetSetByCallerMagnitude(GASCoreTags::Data_Attribute_MaxEnergy, GASInitData->MaxEnergy);
+
+					CoreASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+				}
+			}
+
+			FGameplayEffectContextHandle ContextHandle = CoreASC->MakeEffectContext();
 			ContextHandle.AddInstigator(this, this);
 
-			FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(GASInitData->InitializationEffect, 1.f, ContextHandle);
-
-			if (SpecHandle.IsValid())
+			// Applying passive effects and tags
+			for (TSubclassOf<UGameplayEffect> EffectClass : GASInitData->PassiveEffects)
 			{
-				// Pulling stats from data asset
-				SpecHandle.Data.Get()->SetSetByCallerMagnitude(GASCoreTags::Data_Attribute_MaxHealth, GASInitData->MaxHealth);
-				SpecHandle.Data.Get()->SetSetByCallerMagnitude(GASCoreTags::Data_Attribute_MaxEnergy, GASInitData->MaxEnergy);
-
-				AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+				if (EffectClass)
+				{
+					UGameplayEffect* BaseEffect = EffectClass->GetDefaultObject<UGameplayEffect>();
+					CoreASC->ApplyGameplayEffectToSelf(BaseEffect, 1.f, ContextHandle);
+				}
 			}
 		}
 	}

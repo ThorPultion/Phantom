@@ -59,6 +59,8 @@ protected:
 
 	virtual void SetupAttributes();
 
+	virtual void GrantPassiveEffects();
+
 	virtual void GrantStartingEquipment();
 
 	// Called by child classes once their ASC is valid
