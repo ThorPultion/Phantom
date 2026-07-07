@@ -30,7 +30,10 @@ public class AICore : ModuleRules
 				"GASCore",
 				"GameplayCore",
                 "StateTreeModule",          // The core StateTree engine
-				"GameplayStateTreeModule"   // Required for Gameplay-specific Tasks/Evaluators
+				"GameplayStateTreeModule",   // Required for Gameplay-specific Tasks/Evaluators
+				"GameplayAbilities", // <--- Add these three for GAS
+				"GameplayTags",      // <---
+				"GameplayTasks"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);

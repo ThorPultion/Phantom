@@ -8,6 +8,7 @@
 
 class UStateTreeAIComponent;
 class UCoreAIPerceptionComponent;
+struct FAIStimulus;
 
 /**
  * 
@@ -21,6 +22,9 @@ public:
 
 	ACoreAIController();
 
+	// This AIs attitude towards other
+	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
+
 protected:
 
 	virtual void BeginPlay() override;
@@ -30,4 +34,7 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Perception")
 	TObjectPtr<UCoreAIPerceptionComponent> CorePerceptionComponent;
+
+	UFUNCTION()
+	virtual void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
 };

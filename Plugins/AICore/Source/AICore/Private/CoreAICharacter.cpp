@@ -15,6 +15,7 @@ ACoreAICharacter::ACoreAICharacter()
 
 	AbilitySystemComponent = CreateDefaultSubobject<UCoreAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
 
 	AttributeSet = CreateDefaultSubobject<UCoreAttributeSet>(TEXT("AttributeSet"));
 
@@ -45,5 +46,7 @@ void ACoreAICharacter::Tick(float DeltaTime)
 void ACoreAICharacter::InitAbilitySystem()
 {
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
+
+	Super::InitAbilitySystem();
 }
 

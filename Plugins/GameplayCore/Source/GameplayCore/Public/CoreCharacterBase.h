@@ -5,6 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
+#include "Perceivable.h"
+#include "GenericTeamAgentInterface.h"
+#include "AIReactionData.h"
 #include "CoreCharacterBase.generated.h"
 
 class UAbilitySystemComponent;
@@ -17,7 +20,7 @@ struct FOnAttributeChangeData;
 struct FGameplayTag;
 
 UCLASS(Abstract)
-class GAMEPLAYCORE_API ACoreCharacterBase : public ACharacter, public IAbilitySystemInterface
+class GAMEPLAYCORE_API ACoreCharacterBase : public ACharacter, public IAbilitySystemInterface, public IGenericTeamAgentInterface, public IPerceivable
 {
 	GENERATED_BODY()
 
@@ -81,4 +84,20 @@ protected:
 	FDelegateHandle AimingTagDelegateHandle;
 
 	void OnAimingTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
+
+public:
+	/** What team this character is on */
+	virtual FGenericTeamId GetGenericTeamId() const override;
+
+protected:
+	/** Assign team in blueprints, 0 = Players, 1 = Guards, 2 = Monsters */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	FGenericTeamId TeamID;
+
+	/** Giving AI reaction GEs for when this character is perceived */
+	virtual TSubclassOf<UGameplayEffect> GetPerceptionReactionEffect_Implementation(const FAIStimulus& Stimulus) override;
+
+	/** What reaction data this character gives to AI */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Perception")
+	TObjectPtr<UAIReactionData> ReactionData;
 };
