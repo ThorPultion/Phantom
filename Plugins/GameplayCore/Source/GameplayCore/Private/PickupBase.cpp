@@ -46,19 +46,12 @@ void APickupBase::Interact_Implementation(AActor* Interactor)
 {
     if (Interactor && ItemData)
     {
-        // 1. Debug message to prove it works
-        FString Message = FString::Printf(TEXT("%s just interacted with %s!"), *Interactor->GetName(), *ItemData->ItemName.ToString());
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, Message);
-
-        // 2. TODO: Call the Interactor's Inventory/Equipment Component and pass 'ItemData' to it!
-
-        // 3. Vanish from the world
+        // If there is something we want to do on every pickup interact that would go here
     }
 }
 
 FText APickupBase::GetInteractText_Implementation()
 {
-    // If the designer remembered to slot in a Data Asset...
     if (ItemData)
     {
         FFormatNamedArguments Args;
@@ -69,6 +62,5 @@ FText APickupBase::GetInteractText_Implementation()
         return FText::Format(FText::FromString("{Verb} {Item}"), Args);
     }
 
-    // Loud fallback warning if they forgot the Data Asset
     return FText::FromString("ERROR: MISSING ITEM DATA");
 }
