@@ -8,10 +8,12 @@
 
 ALightObject::ALightObject()
 {
+	PrimaryActorTick.bCanEverTick = false;
+
 	PointLightComponent = CreateDefaultSubobject<UPointLightComponent>(TEXT("PointLight"));
 	PointLightComponent->SetupAttachment(RootComponent);
 
-	ParticleComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("FireParticles"));
+	ParticleComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("ParticleSystem"));
 	ParticleComponent->SetupAttachment(RootComponent);
 }
 
