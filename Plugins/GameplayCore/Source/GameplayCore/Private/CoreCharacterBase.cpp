@@ -9,6 +9,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GASCoreTags.h"
 #include "GASInitData.h"
+#include "Perception/AIPerceptionTypes.h"
 
 // Sets default values
 ACoreCharacterBase::ACoreCharacterBase()
@@ -164,3 +165,27 @@ void ACoreCharacterBase::OnAimingTagChanged(const FGameplayTag CallbackTag, int3
 	bIsAiming = (NewCount > 0);
 }
 
+FGenericTeamId ACoreCharacterBase::GetGenericTeamId() const
+{
+	return TeamID;
+}
+
+TSubclassOf<UGameplayEffect> ACoreCharacterBase::GetPerceptionReactionEffect_Implementation(const FAIStimulus& Stimulus)
+{
+	if (!ReactionData) return nullptr;
+
+	// If dead
+	if (AbilitySystemComponent && AbilitySystemComponent->HasMatchingGameplayTag(GASCoreTags::State_Dead))
+	{
+		return Stimulus.WasSuccessfullySensed() ? ReactionData->SensedDeadEffect : nullptr;
+	}
+
+	if (Stimulus.WasSuccessfullySensed())
+	{
+		return ReactionData->SensedAliveEffect;
+	}
+	else
+	{
+		return ReactionData->LostSightEffect;
+	}
+}

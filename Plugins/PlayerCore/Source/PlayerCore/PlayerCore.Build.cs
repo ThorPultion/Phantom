@@ -31,7 +31,8 @@ public class PlayerCore : ModuleRules
 				"GameplayCore",
 				"GameplayAbilities",
                 "GameplayTags",
-                "UMG"
+                "UMG",
+                "AIModule"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);

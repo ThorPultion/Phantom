@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "CoreCharacterBase.h"
+#include "Perceivable.h"
 #include "CoreAICharacter.generated.h"
 
 UCLASS()
