@@ -34,10 +34,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Light")
 	TSubclassOf<UGameplayEffect> LitGameplayEffect;
 
-	// The tag granted by the GE that we want to listen for
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Light")
-	FGameplayTag LitStateTag;
-
 protected:
 	virtual void BeginPlay() override;
 	virtual void PostInitializeComponents() override;

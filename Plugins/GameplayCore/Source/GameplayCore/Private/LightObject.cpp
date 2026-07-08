@@ -5,6 +5,7 @@
 #include "AbilitySystemComponent.h"
 #include "Components/PointLightComponent.h"
 #include "NiagaraComponent.h"
+#include "GASCoreTags.h"
 
 ALightObject::ALightObject()
 {
@@ -23,9 +24,9 @@ void ALightObject::PostInitializeComponents()
 
 	// Bind to the ASC tag event. EGameplayTagEventType::NewOrRemoved ensures 
 	// this only fires when the tag goes from 0->1 or 1->0, saving performance.
-	if (AbilitySystemComponent && LitStateTag.IsValid())
+	if (AbilitySystemComponent)
 	{
-		AbilitySystemComponent->RegisterGameplayTagEvent(LitStateTag, EGameplayTagEventType::NewOrRemoved)
+		AbilitySystemComponent->RegisterGameplayTagEvent(GASCoreTags::State_LightSource_Lit, EGameplayTagEventType::NewOrRemoved)
 			.AddUObject(this, &ALightObject::OnLitTagChanged);
 	}
 }
@@ -38,7 +39,7 @@ void ALightObject::BeginPlay()
 	PointLightComponent->SetVisibility(false);
 	ParticleComponent->Deactivate();
 
-	if (HasAuthority() && bStartsLit && LitGameplayEffect)
+	if (HasAuthority() && bStartsLit && LitGameplayEffect && AbilitySystemComponent)
 	{
 		// Applying this GE grants the LitStateTag, which instantly triggers OnLitTagChanged
 		FGameplayEffectContextHandle ContextHandle = AbilitySystemComponent->MakeEffectContext();
