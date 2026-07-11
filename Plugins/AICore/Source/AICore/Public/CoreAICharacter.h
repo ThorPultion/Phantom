@@ -8,6 +8,7 @@
 
 class UAIStatePriorityData;
 class UAIAttributeSet;
+class UWidgetComponent;
 
 UCLASS()
 class AICORE_API ACoreAICharacter : public ACoreCharacterBase
@@ -35,6 +36,9 @@ protected:
 	TObjectPtr<UAIAttributeSet> AIAttributeSet;
 
 	virtual void SetupAttributes() override;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+	TObjectPtr<UWidgetComponent> DetectionWidgetComponent;
 
 public:	
 	// Called every frame

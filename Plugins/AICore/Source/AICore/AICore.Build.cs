@@ -33,7 +33,8 @@ public class AICore : ModuleRules
 				"GameplayStateTreeModule",   // Required for Gameplay-specific Tasks/Evaluators
 				"GameplayAbilities", // <--- Add these three for GAS
 				"GameplayTags",      // <---
-				"GameplayTasks"
+				"GameplayTasks",
+				"UMG"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);

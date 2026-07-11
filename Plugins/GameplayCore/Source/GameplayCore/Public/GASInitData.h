@@ -24,7 +24,7 @@ public:
 	UCoreAbilitySet* StartingAbilities;
 
 	// GE used to apply stats
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Initialization")
 	TSubclassOf<UGameplayEffect> InitializationEffect;
 
 	// The raw stats for SetByCaller magnitudes

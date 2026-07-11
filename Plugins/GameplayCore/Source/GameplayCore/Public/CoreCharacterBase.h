@@ -19,6 +19,7 @@ class USkeletalMeshComponent;
 struct FOnAttributeChangeData;
 struct FGameplayTag;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAbilitySystemInitialized, UAbilitySystemComponent*, ASC);
 UCLASS(Abstract)
 class GAMEPLAYCORE_API ACoreCharacterBase : public ACharacter, public IAbilitySystemInterface, public IGenericTeamAgentInterface, public IPerceivable
 {
@@ -51,8 +52,13 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "GAS")
 	TObjectPtr<UCoreAttributeSet> AttributeSet;
 
+	/** Data used to initialize attributes, abilities and effects */
 	UPROPERTY(EditAnywhere, Category = "GAS")
 	TObjectPtr<UGASInitData> GASInitData;
+
+	/** Delegate for external systems to bind to that need GAS info at startup. Fetch ASC, if ASC invalid, bind to this!*/
+	UPROPERTY(BlueprintAssignable, Category = "GAS")
+	FOnAbilitySystemInitialized OnAbilitySystemInitialized;
 
 	/** Manages equipment */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")

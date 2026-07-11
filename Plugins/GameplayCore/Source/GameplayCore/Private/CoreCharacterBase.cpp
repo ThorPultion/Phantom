@@ -28,10 +28,12 @@ UAbilitySystemComponent* ACoreCharacterBase::GetAbilitySystemComponent() const
 
 void ACoreCharacterBase::GrantStartingAbilities()
 {
+	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Magenta, "Grant attempt");
     UCoreAbilitySystemComponent* ASC = Cast<UCoreAbilitySystemComponent>(GetAbilitySystemComponent());
 
     if (!HasAuthority() || !ASC || !GASInitData || !GASInitData->StartingAbilities) return;
 
+	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Magenta, "Grant success");
 	ASC->GrantAbilitySetAsync(GASInitData->StartingAbilities);
 }
 
@@ -102,6 +104,8 @@ void ACoreCharacterBase::PossessedBy(AController* NewController)
 	// Running on the Server when the controller takes possession
 	InitAbilitySystem();
 
+	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Magenta, "PossessedBy");
+
 	// ASC is initiated, so give starting abilities
 	GrantStartingAbilities();
 
@@ -134,6 +138,12 @@ void ACoreCharacterBase::InitAbilitySystem()
 	if (AbilitySystemComponent && AttributeSet)
 	{
 		BindAbilitySystemDelegates();
+
+		// IMPORTANT: For external systems that want to know things about ASC on BeginPlay, Construct or such.
+		// Fetch ASC, if ASC is valid, AbilitySystemInit ran first, no need to do anything.
+		// If fetched ASC is not valid, bind to listen to this delegate.
+		// The full process above will negate the race condition.
+		OnAbilitySystemInitialized.Broadcast(AbilitySystemComponent);
 	}
 }
 
@@ -162,7 +172,7 @@ void ACoreCharacterBase::BindAbilitySystemDelegates()
 
 void ACoreCharacterBase::OnMovementSpeedChanged(const FOnAttributeChangeData& Data)
 {
-	// Apply the new GAS value directly to the engine's movement component
+	// Apply the new GAS value directly to the engines movement component
 	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
 	{
 		MoveComp->MaxWalkSpeed = Data.NewValue;
@@ -171,7 +181,7 @@ void ACoreCharacterBase::OnMovementSpeedChanged(const FOnAttributeChangeData& Da
 
 void ACoreCharacterBase::OnAimingTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
 {
-	// If the count is > 0, the GE is active.
+	// If the count is > 0, the GE is active
 	bIsAiming = (NewCount > 0);
 }
 
@@ -192,20 +202,17 @@ FGameplayTag ACoreCharacterBase::GetPerceptionTag_Implementation(ETeamAttitude::
 	{
 		if (Stimulus.WasSuccessfullySensed())
 		{
-			// Player says: "I am an enemy in your vision."
-			// Do NOT return State.Combat here. Return something like State.Suspicious.
 			return ReactionData->SensedAliveTag;
 		}
 		else
 		{
-			// Player says: "I was an enemy, but I just broke line of sight."
-			return ReactionData->LostSightTag; // e.g., State.Investigate
+			return ReactionData->LostSightTag;
 		}
 	}
 
 	if (ObserverAttitude == ETeamAttitude::Friendly)
 	{
-		// Add something here if making friendly AI
+		// Add something for friendly sightings (AI seeing other AI in a fight, AI joins fight)
 	}
 
 	return FGameplayTag::EmptyTag;
