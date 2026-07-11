@@ -3,10 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
 #include "CoreCharacterBase.h"
-#include "Perceivable.h"
 #include "CoreAICharacter.generated.h"
+
+class UAIStatePriorityData;
+class UAIAttributeSet;
 
 UCLASS()
 class AICORE_API ACoreAICharacter : public ACoreCharacterBase
@@ -20,11 +21,20 @@ public:
 	// Server side possession initialization for AI
 	virtual void PossessedBy(AController* NewController) override;
 
+	/** Defines which states take priority */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Targeting")
+	TObjectPtr<UAIStatePriorityData> PriorityData;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	void InitAbilitySystem();
+
+	UPROPERTY(BlueprintReadOnly, Category = "GAS")
+	TObjectPtr<UAIAttributeSet> AIAttributeSet;
+
+	virtual void SetupAttributes() override;
 
 public:	
 	// Called every frame

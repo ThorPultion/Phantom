@@ -85,6 +85,7 @@ void ACorePlayerCharacter::InitAbilitySystem()
 		}
 	}
 
+	// IMPORTANT:
 	// Calling base class function AFTER initializing, ASC needs to be set up in child classes such as this one FIRST!
 	Super::InitAbilitySystem();
 }
