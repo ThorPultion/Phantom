@@ -7,6 +7,9 @@
 #include "CoreAICharacter.h"
 #include "AbilitySystemComponent.h"
 #include "Perceivable.h"
+#include "AIAttributeSet.h"
+#include "AIStatePriorityData.h"
+#include "GASCoreTags.h"
 
 ACoreAIController::ACoreAIController()
 {
@@ -31,31 +34,161 @@ void ACoreAIController::BeginPlay()
 	}
 }
 
+void ACoreAIController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	ControlledCharacter = Cast<ACoreAICharacter>(InPawn);
+
+	if (ControlledCharacter)
+	{
+		AbilitySystemComponent = ControlledCharacter->GetAbilitySystemComponent();
+	}
+
+	DetectionDelegateHandle = AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+		UAIAttributeSet::GetDetectionLevelAttribute()).AddUObject(this, &ACoreAIController::OnDetectionLevelChanged);
+}
+
+void ACoreAIController::OnUnPossess()
+{
+	Super::OnUnPossess();
+
+	// Clean up when the AI dies or changes bodies
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+			UAIAttributeSet::GetDetectionLevelAttribute()).Remove(DetectionDelegateHandle);
+	}
+
+	ControlledCharacter = nullptr;
+	AbilitySystemComponent = nullptr;
+}
+
 void ACoreAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
 	if (!IsValid(Actor)) return;
 
-	// Get AIs own ASC
-	ACoreAICharacter* ControlledAI = Cast<ACoreAICharacter>(GetPawn());
-	if (!ControlledAI) return;
-
-	UAbilitySystemComponent* AI_ASC = ControlledAI->GetAbilitySystemComponent();
-	if (!AI_ASC) return;
-
-	// Does perceived actor implement Perceivable?
 	if (Actor->Implements<UPerceivable>())
 	{
-		// The sensed object will decide what Gameplay Effect to apply
-		TSubclassOf<UGameplayEffect> ReactionGE = IPerceivable::Execute_GetPerceptionReactionEffect(Actor, Stimulus);
+		// The sensed object will decide what state tag to apply
+		FGameplayTag ReactionTag = IPerceivable::Execute_GetPerceptionTag(Actor, GetTeamAttitudeTowards(*Actor), Stimulus);
 
-		if (ReactionGE)
+		if (!ReactionTag.IsValid()) return;
+
+		// Check if they are already in the array
+		FPerceivedData* ExistingData = KnownTargets.FindByKey(Actor);
+
+		// Apply Escalation / De-escalation Rules
+		if (Stimulus.WasSuccessfullySensed())
 		{
-			FGameplayEffectContextHandle Context = AI_ASC->MakeEffectContext();
-			Context.AddInstigator(ControlledAI, ControlledAI);
+			if (ExistingData)
+			{
+				// ESCALATION: Only update if the new tag is a higher priority.
+				// (Prevents a perception pulse from overwriting Combat with Suspicious)
+				int32 CurrentScore = ControlledCharacter->PriorityData->StatePriorities.FindRef(ExistingData->DesiredStateTag);
+				int32 ProposedScore = ControlledCharacter->PriorityData->StatePriorities.FindRef(ReactionTag);
 
-			AI_ASC->ApplyGameplayEffectToSelf(ReactionGE->GetDefaultObject<UGameplayEffect>(), 1.0f, Context);
+				if (ProposedScore > CurrentScore)
+				{
+					ExistingData->DesiredStateTag = ReactionTag;
+				}
+			}
+			else
+			{
+				// Brand new target, add them to memory
+				FPerceivedData NewData;
+				NewData.TargetActor = Actor;
+				NewData.DesiredStateTag = ReactionTag;
+				KnownTargets.Add(NewData);
+			}
+		}
+		else
+		{
+			if (ExistingData)
+			{
+				// DE-ESCALATION: Sight lost! Force the downgrade (Combat -> Investigate)
+				ExistingData->DesiredStateTag = ReactionTag;
+
+				// Note: If you have a Max Age set in your AI Perception config, this stimulus 
+				// will fire again with WasSuccessfullySensed() = false when they expire completely.
+				// You could add logic here to remove them from KnownTargets entirely if needed.
+			}
 		}
 	}
+
+	EvaluateBestTarget();
+}
+
+void ACoreAIController::EvaluateBestTarget()
+{
+	// Check cached pointers
+	if (!IsValid(ControlledCharacter) || !ControlledCharacter->PriorityData)
+	{
+		CurrentTargetActor = nullptr;
+		CurrentTargetTag = FGameplayTag::EmptyTag;
+		return;
+	}
+
+	FGameplayTag BestTag = FGameplayTag::EmptyTag;
+	AActor* BestActor = nullptr;
+	int32 HighestScore = -1;
+	float ClosestDistanceSq = MAX_flt; // Track distance for tie-breakers
+
+	// Loop through targets too find highest scored tag
+	for (const FPerceivedData& TargetData : KnownTargets)
+	{
+		if (!IsValid(TargetData.TargetActor)) continue;
+
+		int32 Score = 0;
+
+		if (const int32* FoundPriority = ControlledCharacter->PriorityData->StatePriorities.Find(TargetData.DesiredStateTag))
+		{
+			Score = *FoundPriority;
+		}
+
+		// Calculate squared distance (cheaper than actual distance because it avoids square roots)
+		float DistanceSq = FVector::DistSquared(TargetData.TargetActor->GetActorLocation(), ControlledCharacter->GetActorLocation());
+
+		if (Score > HighestScore)
+		{
+			HighestScore = Score;
+			BestActor = TargetData.TargetActor;
+			BestTag = TargetData.DesiredStateTag;
+			ClosestDistanceSq = DistanceSq;
+		}
+		// TIE BREAKER: Are the priorities exactly the same?
+		else if (Score == HighestScore)
+		{
+			// Pick the one that is physically closer
+			if (DistanceSq < ClosestDistanceSq)
+			{
+				BestActor = TargetData.TargetActor;
+				BestTag = TargetData.DesiredStateTag;
+				ClosestDistanceSq = DistanceSq;
+			}
+		}
+	}
+
+	// Update ASC loose tags using the cached ASC
+	if (CurrentTargetTag != BestTag)
+	{
+		if (AbilitySystemComponent)
+		{
+			if (CurrentTargetTag.IsValid())
+			{
+				AbilitySystemComponent->RemoveLooseGameplayTag(CurrentTargetTag);
+			}
+
+			if (BestTag.IsValid())
+			{
+				AbilitySystemComponent->AddLooseGameplayTag(BestTag);
+			}
+		}
+
+		CurrentTargetTag = BestTag;
+	}
+
+	CurrentTargetActor = BestActor;
 }
 
 ETeamAttitude::Type ACoreAIController::GetTeamAttitudeTowards(const AActor& Other) const
@@ -80,4 +213,43 @@ ETeamAttitude::Type ACoreAIController::GetTeamAttitudeTowards(const AActor& Othe
 
 	// Default to hostile for anyone not on our team
 	return ETeamAttitude::Hostile;
+}
+
+void ACoreAIController::OnDetectionLevelChanged(const FOnAttributeChangeData& Data)
+{
+	if (!AbilitySystemComponent) return;
+
+	// If the meter is full
+	if (Data.NewValue >= AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetMaxDetectionAttribute()))
+	{
+		// Escalating our currently focused target to a combat threat
+		if (CurrentTargetActor)
+		{
+			UpdateTargetState(CurrentTargetActor, GASCoreTags::State_AI_Combat);
+		}
+	}
+}
+
+void ACoreAIController::UpdateTargetState(AActor* Target, FGameplayTag NewStateTag)
+{
+	if (!Target) return;
+
+	bool bFound = false;
+
+	// Find the target in memory and update its tag
+	for (FPerceivedData& TargetData : KnownTargets)
+	{
+		if (TargetData.TargetActor == Target)
+		{
+			TargetData.DesiredStateTag = NewStateTag;
+			bFound = true;
+			break;
+		}
+	}
+
+	// Re evaluate targets based on the new information
+	if (bFound)
+	{
+		EvaluateBestTarget();
+	}
 }

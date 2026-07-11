@@ -41,7 +41,7 @@ void ACoreCharacterBase::SetupAttributes()
 
 	// Initializing attributes
 	FGameplayEffectContextHandle ContextHandle = AbilitySystemComponent->MakeEffectContext();
-	ContextHandle.AddInstigator(this, this);
+	ContextHandle.AddSourceObject(GASInitData);
 
 	FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(GASInitData->InitializationEffect, 1.f, ContextHandle);
 
@@ -129,6 +129,16 @@ void ACoreCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 void ACoreCharacterBase::InitAbilitySystem()
 {
+	// IMPORTANT:
+	// This Super should be called AFTER initializing ASC in inheriting classes!
+	if (AbilitySystemComponent && AttributeSet)
+	{
+		BindAbilitySystemDelegates();
+	}
+}
+
+void ACoreCharacterBase::BindAbilitySystemDelegates()
+{
 	// This Super should be called AFTER initializing ASC!
 	if (AbilitySystemComponent && AttributeSet)
 	{
@@ -170,22 +180,33 @@ FGenericTeamId ACoreCharacterBase::GetGenericTeamId() const
 	return TeamID;
 }
 
-TSubclassOf<UGameplayEffect> ACoreCharacterBase::GetPerceptionReactionEffect_Implementation(const FAIStimulus& Stimulus)
+FGameplayTag ACoreCharacterBase::GetPerceptionTag_Implementation(ETeamAttitude::Type ObserverAttitude, const FAIStimulus& Stimulus)
 {
-	if (!ReactionData) return nullptr;
-
-	// If dead
+	// If we are dead
 	if (AbilitySystemComponent && AbilitySystemComponent->HasMatchingGameplayTag(GASCoreTags::State_Dead))
 	{
-		return Stimulus.WasSuccessfullySensed() ? ReactionData->SensedDeadEffect : nullptr;
+		return Stimulus.WasSuccessfullySensed() ? ReactionData->SensedDeadTag : FGameplayTag::EmptyTag;
 	}
 
-	if (Stimulus.WasSuccessfullySensed())
+	if (ObserverAttitude == ETeamAttitude::Hostile)
 	{
-		return ReactionData->SensedAliveEffect;
+		if (Stimulus.WasSuccessfullySensed())
+		{
+			// Player says: "I am an enemy in your vision."
+			// Do NOT return State.Combat here. Return something like State.Suspicious.
+			return ReactionData->SensedAliveTag;
+		}
+		else
+		{
+			// Player says: "I was an enemy, but I just broke line of sight."
+			return ReactionData->LostSightTag; // e.g., State.Investigate
+		}
 	}
-	else
+
+	if (ObserverAttitude == ETeamAttitude::Friendly)
 	{
-		return ReactionData->LostSightEffect;
+		// Add something here if making friendly AI
 	}
+
+	return FGameplayTag::EmptyTag;
 }

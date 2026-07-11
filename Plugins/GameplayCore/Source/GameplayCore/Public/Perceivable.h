@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+#include "GameplayTagContainer.h"
+#include "GenericTeamAgentInterface.h"
 #include "Perceivable.generated.h"
 
 struct FAIStimulus;
@@ -26,5 +28,5 @@ class GAMEPLAYCORE_API IPerceivable
 public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Perception")
-	TSubclassOf<class UGameplayEffect> GetPerceptionReactionEffect(const FAIStimulus& Stimulus);
+	FGameplayTag GetPerceptionTag(ETeamAttitude::Type ObserverAttitude, const FAIStimulus& Stimulus);
 };

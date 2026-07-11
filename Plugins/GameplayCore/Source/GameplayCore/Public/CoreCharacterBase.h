@@ -69,6 +69,8 @@ protected:
 	// Called by child classes once their ASC is valid
 	virtual void InitAbilitySystem();
 
+	void BindAbilitySystemDelegates();
+
 	virtual void BeginPlay() override;
 
 	virtual void PossessedBy(AController* NewController) override;
@@ -94,8 +96,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	FGenericTeamId TeamID;
 
-	/** Giving AI reaction GEs for when this character is perceived */
-	virtual TSubclassOf<UGameplayEffect> GetPerceptionReactionEffect_Implementation(const FAIStimulus& Stimulus) override;
+	/** Giving AI reaction tags for when this character is perceived */
+	virtual FGameplayTag GetPerceptionTag_Implementation(ETeamAttitude::Type ObserverAttitude, const FAIStimulus& Stimulus) override;
 
 	/** What reaction data this character gives to AI */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Perception")

@@ -6,6 +6,9 @@
 #include "AbilitySystemComponent.h"
 #include "CoreAttributeSet.h"
 #include "CoreAbilitySystemComponent.h"
+#include "AIAttributeSet.h"
+#include "AIGASInitData.h"
+#include "GASCoreTags.h"
 
 // Sets default values
 ACoreAICharacter::ACoreAICharacter()
@@ -18,6 +21,7 @@ ACoreAICharacter::ACoreAICharacter()
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
 
 	AttributeSet = CreateDefaultSubobject<UCoreAttributeSet>(TEXT("AttributeSet"));
+	AIAttributeSet = CreateDefaultSubobject<UAIAttributeSet>(TEXT("AIAttributeSet"));
 
 	AIControllerClass = ACoreAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
@@ -47,6 +51,33 @@ void ACoreAICharacter::InitAbilitySystem()
 {
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 
+	// IMPORTANT:
+	// Calling base class function AFTER initializing, ASC needs to be set up in child classes such as this one FIRST!
 	Super::InitAbilitySystem();
 }
 
+void ACoreAICharacter::SetupAttributes()
+{
+	// Base class initializes basic attributes
+	Super::SetupAttributes();
+
+	if (!HasAuthority() || !AbilitySystemComponent) return;
+
+	// Initializing AI specific stats
+	if (UAIGASInitData* AIData = Cast<UAIGASInitData>(GASInitData))
+	{
+		if (AIData->AIInitializationEffect)
+		{
+			FGameplayEffectContextHandle ContextHandle = AbilitySystemComponent->MakeEffectContext();
+			ContextHandle.AddSourceObject(GASInitData);
+
+			FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(AIData->AIInitializationEffect, 1.0f, ContextHandle);
+
+			if (SpecHandle.IsValid())
+			{
+				SpecHandle.Data.Get()->SetSetByCallerMagnitude(GASCoreTags::Data_Attribute_MaxDetection, AIData->MaxDetection);
+				AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+			}
+		}
+	}
+}
