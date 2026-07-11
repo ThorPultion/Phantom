@@ -9,6 +9,7 @@
 #include "AIAttributeSet.h"
 #include "AIGASInitData.h"
 #include "GASCoreTags.h"
+#include "Components/WidgetComponent.h"
 
 // Sets default values
 ACoreAICharacter::ACoreAICharacter()
@@ -25,6 +26,12 @@ ACoreAICharacter::ACoreAICharacter()
 
 	AIControllerClass = ACoreAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+
+	DetectionWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("DetectionWidget"));
+	DetectionWidgetComponent->SetupAttachment(RootComponent);
+	DetectionWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen); // Screen space makes it always face the player
+	DetectionWidgetComponent->SetDrawSize(FVector2D(50.f, 150.f));
+	DetectionWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 100.f));
 }
 
 void ACoreAICharacter::PossessedBy(AController* NewController)
