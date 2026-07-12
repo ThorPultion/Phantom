@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GASInitData.h"
+#include "Data/GASInitData.h"
 #include "AIGASInitData.generated.h"
 
 /**

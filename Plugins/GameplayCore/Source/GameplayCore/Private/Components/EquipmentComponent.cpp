@@ -1,16 +1,16 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "EquipmentComponent.h"
-#include "EquipmentDefinition.h"
+#include "Components/EquipmentComponent.h"
+#include "Data/EquipmentDefinition.h"
 #include "CoreAbilitySystemComponent.h"
-#include "EquipmentBase.h"
+#include "Actors/EquipmentBase.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
 #include "Net/UnrealNetwork.h"
 #include "CoreCharacterBase.h"
-#include "ProjectileProvider.h"
-#include "AmmoCycler.h"
+#include "Interfaces/ProjectileProvider.h"
+#include "Interfaces/AmmoCycler.h"
 
 // Sets default values for this component's properties
 UEquipmentComponent::UEquipmentComponent()

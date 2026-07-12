@@ -10,7 +10,7 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GASCoreTags.h"
-#include "Interactable.h"
+#include "Interfaces/Interactable.h"
 #include "CoreHUD.h"
 
 // Sets default values

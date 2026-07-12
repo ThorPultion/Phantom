@@ -8,7 +8,7 @@
 
 class UAIStatePriorityData;
 class UAIAttributeSet;
-class UWidgetComponent;
+class UCoreWidgetComponent;
 
 UCLASS()
 class AICORE_API ACoreAICharacter : public ACoreCharacterBase
@@ -38,7 +38,12 @@ protected:
 	virtual void SetupAttributes() override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
-	TObjectPtr<UWidgetComponent> DetectionWidgetComponent;
+	TObjectPtr<UCoreWidgetComponent> DetectionWidgetComponent;
+
+protected:
+	FDelegateHandle CombatTagDelegateHandle;
+
+	void OnCombatTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
 
 public:	
 	// Called every frame

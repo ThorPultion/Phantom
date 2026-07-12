@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "EquipmentBase.h"
-#include "ProjectileProvider.h"
-#include "AmmoCycler.h"
+#include "Interfaces/ProjectileProvider.h"
+#include "Interfaces/AmmoCycler.h"
 #include "EquipmentBow.generated.h"
 
 class UStaticMeshComponent;

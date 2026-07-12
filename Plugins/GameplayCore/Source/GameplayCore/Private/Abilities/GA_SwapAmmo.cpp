@@ -2,7 +2,7 @@
 
 
 #include "Abilities/GA_SwapAmmo.h"
-#include "EquipmentComponent.h"
+#include "Components/EquipmentComponent.h"
 #include "AbilitySystemComponent.h"
 #include "GASCoreTags.h"
 

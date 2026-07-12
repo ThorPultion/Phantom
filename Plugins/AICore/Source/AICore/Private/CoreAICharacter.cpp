@@ -9,7 +9,7 @@
 #include "AIAttributeSet.h"
 #include "AIGASInitData.h"
 #include "GASCoreTags.h"
-#include "Components/WidgetComponent.h"
+#include "Components/CoreWidgetComponent.h"
 
 // Sets default values
 ACoreAICharacter::ACoreAICharacter()
@@ -27,10 +27,10 @@ ACoreAICharacter::ACoreAICharacter()
 	AIControllerClass = ACoreAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
-	DetectionWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("DetectionWidget"));
+	DetectionWidgetComponent = CreateDefaultSubobject<UCoreWidgetComponent>(TEXT("DetectionWidget"));
 	DetectionWidgetComponent->SetupAttachment(RootComponent);
 	DetectionWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen); // Screen space makes it always face the player
-	DetectionWidgetComponent->SetDrawSize(FVector2D(50.f, 150.f));
+	DetectionWidgetComponent->SetDrawAtDesiredSize(true);
 	DetectionWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 100.f));
 }
 
@@ -61,6 +61,25 @@ void ACoreAICharacter::InitAbilitySystem()
 	// IMPORTANT:
 	// Calling base class function AFTER initializing, ASC needs to be set up in child classes such as this one FIRST!
 	Super::InitAbilitySystem();
+
+	CombatTagDelegateHandle = AbilitySystemComponent->RegisterGameplayTagEvent(
+		GASCoreTags::State_AI_Combat,
+		EGameplayTagEventType::AnyCountChange).AddUObject(this, &ACoreAICharacter::OnCombatTagChanged);
+}
+
+void ACoreAICharacter::OnCombatTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
+{
+	FString DebugMsg = FString::Printf(TEXT("Combat Tag Count is now: %d"), NewCount);
+	FColor MsgColor = (NewCount > 1) ? FColor::Red : FColor::Yellow;
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, MsgColor, DebugMsg);
+
+	// ONLY dump the stack trace when the tag illegally stacks!
+	if (NewCount > 1)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("=== ILLEGAL COMBAT TAG STACK DETECTED! COUNT: %d ==="), NewCount);
+		FDebug::DumpStackTraceToLog(ELogVerbosity::Warning);
+		UE_LOG(LogTemp, Warning, TEXT("================================================="));
+	}
 }
 
 void ACoreAICharacter::SetupAttributes()

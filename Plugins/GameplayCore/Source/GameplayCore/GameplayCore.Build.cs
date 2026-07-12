@@ -43,7 +43,8 @@ public class GameplayCore : ModuleRules
                 "GameplayTags",
                 "GameplayTasks",
                 "Niagara",
-                "AIModule"
+                "AIModule",
+                "UMG"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

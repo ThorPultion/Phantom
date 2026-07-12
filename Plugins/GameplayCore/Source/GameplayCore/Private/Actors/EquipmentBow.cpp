@@ -1,12 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "EquipmentBow.h"
+#include "Actors/EquipmentBow.h"
 #include "Net/UnrealNetwork.h"
 #include "Components/StaticMeshComponent.h"
 #include "NiagaraComponent.h"
-#include "AmmoData.h"
-#include "CoreProjectile.h"
+#include "Data/AmmoData.h"
+#include "Actors/CoreProjectile.h"
 
 AEquipmentBow::AEquipmentBow()
 {

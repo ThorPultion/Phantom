@@ -31,6 +31,9 @@ public:
 	// Intercepts attribute changes before they are applied (good for clamping)
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 
+	// Handles logic immediately after a Gameplay Effect modifies an attribute
+	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
+
 	/** How aware the AI is of a target (0 = Oblivious, 100 = Full Combat) */
 	UPROPERTY(BlueprintReadOnly, Category = "Perception", ReplicatedUsing = OnRep_DetectionLevel)
 	FGameplayAttributeData DetectionLevel;

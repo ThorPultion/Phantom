@@ -4,10 +4,10 @@
 #include "Abilities/Tasks/AbilityTask_WaitInputRelease.h"
 #include "AbilitySystemComponent.h"
 #include "GameFramework/Actor.h"
-#include "EquipmentComponent.h"
+#include "Components/EquipmentComponent.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "EquipmentBase.h"
-#include "ProjectileProvider.h"
+#include "Actors/EquipmentBase.h"
+#include "Interfaces/ProjectileProvider.h"
 
 
 void UGA_ChargedProjectile::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)

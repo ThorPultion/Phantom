@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "CoreGASObject.h"
+#include "Actors/CoreGASObject.h"
 #include "AbilitySystemComponent.h"
 #include "CoreAttributeSet.h"
 #include "CoreAbilitySystemComponent.h"
-#include "GASInitData.h"
+#include "Data/GASInitData.h"
 #include "GASCoreTags.h"
 
 ACoreGASObject::ACoreGASObject()
