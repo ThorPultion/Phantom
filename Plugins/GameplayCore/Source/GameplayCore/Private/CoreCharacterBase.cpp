@@ -4,11 +4,11 @@
 #include "CoreCharacterBase.h"
 #include "AbilitySystemComponent.h"
 #include "CoreAbilitySystemComponent.h"
-#include "EquipmentComponent.h"
+#include "Components/EquipmentComponent.h"
 #include "CoreAttributeSet.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GASCoreTags.h"
-#include "GASInitData.h"
+#include "Data/GASInitData.h"
 #include "Perception/AIPerceptionTypes.h"
 
 // Sets default values
@@ -28,12 +28,10 @@ UAbilitySystemComponent* ACoreCharacterBase::GetAbilitySystemComponent() const
 
 void ACoreCharacterBase::GrantStartingAbilities()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Magenta, "Grant attempt");
     UCoreAbilitySystemComponent* ASC = Cast<UCoreAbilitySystemComponent>(GetAbilitySystemComponent());
 
     if (!HasAuthority() || !ASC || !GASInitData || !GASInitData->StartingAbilities) return;
 
-	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Magenta, "Grant success");
 	ASC->GrantAbilitySetAsync(GASInitData->StartingAbilities);
 }
 
@@ -103,8 +101,6 @@ void ACoreCharacterBase::PossessedBy(AController* NewController)
 
 	// Running on the Server when the controller takes possession
 	InitAbilitySystem();
-
-	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Magenta, "PossessedBy");
 
 	// ASC is initiated, so give starting abilities
 	GrantStartingAbilities();

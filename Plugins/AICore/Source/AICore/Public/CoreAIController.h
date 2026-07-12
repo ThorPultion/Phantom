@@ -96,4 +96,6 @@ public:
 	/** The state the current target is proposing that the AI should be in */
 	UPROPERTY(BlueprintReadOnly, Category = "Memory")
 	FGameplayTag CurrentTargetTag;
+
+	virtual FGenericTeamId GetGenericTeamId() const override;
 };

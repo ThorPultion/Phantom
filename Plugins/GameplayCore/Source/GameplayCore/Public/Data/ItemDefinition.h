@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
-#include "Interactable.h"
+#include "Interfaces/Interactable.h"
 #include "ItemDefinition.generated.h"
 
 /**

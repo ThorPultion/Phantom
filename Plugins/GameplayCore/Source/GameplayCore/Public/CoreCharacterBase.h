@@ -5,9 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
-#include "Perceivable.h"
+#include "Interfaces/Perceivable.h"
 #include "GenericTeamAgentInterface.h"
-#include "AIReactionData.h"
+#include "Data/AIReactionData.h"
 #include "CoreCharacterBase.generated.h"
 
 class UAbilitySystemComponent;

@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "PickupBase.h"
+#include "Actors/PickupBase.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
-#include "ItemDefinition.h"
+#include "Data/ItemDefinition.h"
 
 APickupBase::APickupBase()
 {

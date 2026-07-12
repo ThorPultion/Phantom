@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Interactable.h"
+#include "Interfaces/Interactable.h"
 #include "PickupBase.generated.h"
 
 class UItemDefinition;

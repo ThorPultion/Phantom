@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "PickupEquipment.h"
-#include "EquipmentComponent.h"
-#include "EquipmentDefinition.h" // Assuming this is where your definition lives
+#include "Actors/PickupEquipment.h"
+#include "Components/EquipmentComponent.h"
+#include "Data/EquipmentDefinition.h"
 
 APickupEquipment::APickupEquipment()
 {

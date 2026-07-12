@@ -6,10 +6,11 @@
 #include "CoreAIPerceptionComponent.h"
 #include "CoreAICharacter.h"
 #include "AbilitySystemComponent.h"
-#include "Perceivable.h"
+#include "Interfaces/Perceivable.h"
 #include "AIAttributeSet.h"
 #include "AIStatePriorityData.h"
 #include "GASCoreTags.h"
+#include "Perception/AISense_Sight.h"
 
 ACoreAIController::ACoreAIController()
 {
@@ -107,11 +108,16 @@ void ACoreAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Sti
 			if (ExistingData)
 			{
 				// DE-ESCALATION: Sight lost! Force the downgrade (Combat -> Investigate)
-				ExistingData->DesiredStateTag = ReactionTag;
 
 				// Note: If you have a Max Age set in your AI Perception config, this stimulus 
 				// will fire again with WasSuccessfullySensed() = false when they expire completely.
 				// You could add logic here to remove them from KnownTargets entirely if needed.
+
+				if (!CorePerceptionComponent->HasActiveStimulus(*Actor, UAISense::GetSenseID<UAISense_Sight>()))
+				{
+					// We have legitimately lost sight. Now we can downgrade to Search.
+					ExistingData->DesiredStateTag = ReactionTag;
+				}
 			}
 		}
 	}
@@ -172,11 +178,19 @@ void ACoreAIController::EvaluateBestTarget()
 	// Update ASC loose tags using the cached ASC
 	if (CurrentTargetTag != BestTag)
 	{
+		// 1. Cache the old tag
+		FGameplayTag OldTag = CurrentTargetTag;
+
+		// 2. UPDATE THE LOCK FIRST to prevent re-entrancy loops!
+		CurrentTargetTag = BestTag;
+
 		if (AbilitySystemComponent)
 		{
-			if (CurrentTargetTag.IsValid())
+			if (OldTag.IsValid())
 			{
-				AbilitySystemComponent->RemoveLooseGameplayTag(CurrentTargetTag);
+				// 3. This might trigger callbacks that fire EvaluateBestTarget again.
+				// Because we already updated CurrentTargetTag, the inner loop will safely ignore it.
+				AbilitySystemComponent->RemoveLooseGameplayTag(OldTag);
 			}
 
 			if (BestTag.IsValid())
@@ -184,8 +198,6 @@ void ACoreAIController::EvaluateBestTarget()
 				AbilitySystemComponent->AddLooseGameplayTag(BestTag);
 			}
 		}
-
-		CurrentTargetTag = BestTag;
 	}
 
 	CurrentTargetActor = BestActor;
@@ -209,6 +221,7 @@ ETeamAttitude::Type ACoreAIController::GetTeamAttitudeTowards(const AActor& Othe
 	{
 		return ETeamAttitude::Neutral;
 	}
+
 	if (OurTeam == TheirTeam) return ETeamAttitude::Friendly;
 
 	// Default to hostile for anyone not on our team
@@ -225,7 +238,12 @@ void ACoreAIController::OnDetectionLevelChanged(const FOnAttributeChangeData& Da
 		// Escalating our currently focused target to a combat threat
 		if (CurrentTargetActor)
 		{
-			UpdateTargetState(CurrentTargetActor, GASCoreTags::State_AI_Combat);
+			// SAFETY CHECK: Only force the Combat tag if our eyeballs are actually on the target!
+			// If we are circling and drop sight, this prevents the Attribute from fighting Perception.
+			if (CorePerceptionComponent->HasActiveStimulus(*CurrentTargetActor, UAISense::GetSenseID<UAISense_Sight>()))
+			{
+				UpdateTargetState(CurrentTargetActor, GASCoreTags::State_AI_Combat);
+			}
 		}
 	}
 }
@@ -252,4 +270,15 @@ void ACoreAIController::UpdateTargetState(AActor* Target, FGameplayTag NewStateT
 	{
 		EvaluateBestTarget();
 	}
+}
+
+FGenericTeamId ACoreAIController::GetGenericTeamId() const
+{
+	// Ask the pawn we are currently possessing what team it is on
+	if (IGenericTeamAgentInterface* PawnTeamAgent = Cast<IGenericTeamAgentInterface>(GetPawn()))
+	{
+		return PawnTeamAgent->GetGenericTeamId();
+	}
+
+	return FGenericTeamId::NoTeam;
 }

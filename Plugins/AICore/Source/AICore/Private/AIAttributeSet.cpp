@@ -32,6 +32,16 @@ void UAIAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, fl
 	}
 }
 
+void UAIAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
+{
+	Super::PostGameplayEffectExecute(Data);
+
+	if (Data.EvaluatedData.Attribute == GetDetectionLevelAttribute())
+	{
+		SetDetectionLevel(FMath::Clamp(GetDetectionLevel(), 0.f, GetMaxDetection()));
+	}
+}
+
 void UAIAttributeSet::OnRep_DetectionLevel(const FGameplayAttributeData& OldDetectionLevel)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UAIAttributeSet, DetectionLevel, OldDetectionLevel);

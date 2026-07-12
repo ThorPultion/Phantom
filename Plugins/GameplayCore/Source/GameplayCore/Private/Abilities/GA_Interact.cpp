@@ -2,7 +2,7 @@
 
 
 #include "Abilities/GA_Interact.h"
-#include "Interactable.h"
+#include "Interfaces/Interactable.h"
 
 
 void UGA_Interact::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
