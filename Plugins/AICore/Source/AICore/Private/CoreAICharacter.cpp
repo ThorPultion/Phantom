@@ -44,7 +44,13 @@ void ACoreAICharacter::PossessedBy(AController* NewController)
 void ACoreAICharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	// THIS IS SUSPECT. CURRENTLY USED TO REPLICATE ABP AIM ANIMATION DUE TO GETTING AIMING TAG FROM GE
+	// MIGHT CAUSE ISSUES? RACE CONDITIONS?
+	if (GetLocalRole() == ROLE_SimulatedProxy)
+	{
+		InitAbilitySystem();
+	}
 }
 
 // Called every frame
