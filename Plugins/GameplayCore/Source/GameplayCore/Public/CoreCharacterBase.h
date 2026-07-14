@@ -77,10 +77,6 @@ protected:
 
 	void BindAbilitySystemDelegates();
 
-	virtual void BeginPlay() override;
-
-	virtual void PossessedBy(AController* NewController) override;
-
 	// Callback function for when movement speed attribute changes
 	virtual void OnMovementSpeedChanged(const FOnAttributeChangeData& Data);
 
@@ -96,14 +92,18 @@ protected:
 public:
 	/** What team this character is on */
 	virtual FGenericTeamId GetGenericTeamId() const override;
+	
+	virtual void BeginPlay() override;
+
+	virtual void PossessedBy(AController* NewController) override;
+	
+	/** Giving AI reaction tags for when this character is perceived */
+	virtual FGameplayTag GetPerceptionTag_Implementation(ETeamAttitude::Type ObserverAttitude, const FAIStimulus& Stimulus) override;
 
 protected:
 	/** Assign team in blueprints, 0 = Players, 1 = Guards, 2 = Monsters */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	FGenericTeamId TeamID;
-
-	/** Giving AI reaction tags for when this character is perceived */
-	virtual FGameplayTag GetPerceptionTag_Implementation(ETeamAttitude::Type ObserverAttitude, const FAIStimulus& Stimulus) override;
 
 	/** What reaction data this character gives to AI */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Perception")

@@ -42,9 +42,10 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FOnInteractionFocusChanged OnInteractionFocusChanged;
 
-protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	
+protected:
 
 	/** Initiate Gameplay Ability System */
 	virtual void InitAbilitySystem() override;

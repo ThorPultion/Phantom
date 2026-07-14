@@ -43,7 +43,8 @@ void ACoreCharacterBase::SetupAttributes()
 	FGameplayEffectContextHandle ContextHandle = AbilitySystemComponent->MakeEffectContext();
 	ContextHandle.AddSourceObject(GASInitData);
 
-	FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(GASInitData->InitializationEffect, 1.f, ContextHandle);
+	const FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(
+		GASInitData->InitializationEffect, 1.f, ContextHandle);
 
 	if (SpecHandle.IsValid())
 	{
@@ -67,7 +68,7 @@ void ACoreCharacterBase::GrantPassiveEffects()
 	{
 		if (EffectClass)
 		{
-			UGameplayEffect* BaseEffect = EffectClass->GetDefaultObject<UGameplayEffect>();
+			const UGameplayEffect* BaseEffect = EffectClass->GetDefaultObject<UGameplayEffect>();
 			AbilitySystemComponent->ApplyGameplayEffectToSelf(BaseEffect, 1.f, ContextHandle);
 		}
 	}
@@ -75,7 +76,7 @@ void ACoreCharacterBase::GrantPassiveEffects()
 
 void ACoreCharacterBase::GrantStartingEquipment()
 {
-	UCoreAbilitySystemComponent* ASC = Cast<UCoreAbilitySystemComponent>(GetAbilitySystemComponent());
+	const UCoreAbilitySystemComponent* ASC = Cast<UCoreAbilitySystemComponent>(GetAbilitySystemComponent());
 
 	if (!HasAuthority() || !ASC || !EquipmentComponent || EquipmentComponent->StartingEquipment.IsEmpty()) return;
 
