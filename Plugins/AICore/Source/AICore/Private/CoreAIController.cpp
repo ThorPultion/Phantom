@@ -153,7 +153,7 @@ void ACoreAIController::EvaluateBestTarget()
 		}
 
 		// Calculate squared distance (cheaper than actual distance because it avoids square roots)
-		float DistanceSq = FVector::DistSquared(TargetData.TargetActor->GetActorLocation(), ControlledCharacter->GetActorLocation());
+		const float DistanceSq = FVector::DistSquared(TargetData.TargetActor->GetActorLocation(), ControlledCharacter->GetActorLocation());
 
 		if (Score > HighestScore)
 		{
@@ -179,7 +179,7 @@ void ACoreAIController::EvaluateBestTarget()
 	if (CurrentTargetTag != BestTag)
 	{
 		// 1. Cache the old tag
-		FGameplayTag OldTag = CurrentTargetTag;
+		const FGameplayTag OldTag = CurrentTargetTag;
 
 		// 2. UPDATE THE LOCK FIRST to prevent re-entrancy loops!
 		CurrentTargetTag = BestTag;
@@ -200,7 +200,7 @@ void ACoreAIController::EvaluateBestTarget()
 		}
 	}
 
-	CurrentTargetActor = BestActor;
+	SetTarget(BestActor);
 }
 
 ETeamAttitude::Type ACoreAIController::GetTeamAttitudeTowards(const AActor& Other) const
@@ -272,10 +272,22 @@ void ACoreAIController::UpdateTargetState(AActor* Target, FGameplayTag NewStateT
 	}
 }
 
+void ACoreAIController::SetTarget(AActor* NewTarget)
+{
+	// Controllers local reference (needed for OnDetectionLevelChanged)
+	CurrentTargetActor = NewTarget;
+
+	// Pushing the target down to the Character for ABP replication purposes
+	if (IsValid(ControlledCharacter))
+	{
+		ControlledCharacter->CurrentTargetActor = NewTarget;
+	}
+}
+
 FGenericTeamId ACoreAIController::GetGenericTeamId() const
 {
 	// Ask the pawn we are currently possessing what team it is on
-	if (IGenericTeamAgentInterface* PawnTeamAgent = Cast<IGenericTeamAgentInterface>(GetPawn()))
+	if (const IGenericTeamAgentInterface* PawnTeamAgent = Cast<IGenericTeamAgentInterface>(GetPawn()))
 	{
 		return PawnTeamAgent->GetGenericTeamId();
 	}

@@ -10,6 +10,7 @@
 #include "AIGASInitData.h"
 #include "GASCoreTags.h"
 #include "Components/CoreWidgetComponent.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 ACoreAICharacter::ACoreAICharacter()
@@ -60,6 +61,13 @@ void ACoreAICharacter::Tick(float DeltaTime)
 
 }
 
+void ACoreAICharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME(ACoreAICharacter, CurrentTargetActor);
+}
+
 void ACoreAICharacter::InitAbilitySystem()
 {
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
@@ -69,22 +77,15 @@ void ACoreAICharacter::InitAbilitySystem()
 	Super::InitAbilitySystem();
 
 	CombatTagDelegateHandle = AbilitySystemComponent->RegisterGameplayTagEvent(
-		GASCoreTags::State_AI_Combat,
-		EGameplayTagEventType::AnyCountChange).AddUObject(this, &ACoreAICharacter::OnCombatTagChanged);
+		GASCoreTags::State_Dead,
+		EGameplayTagEventType::AnyCountChange).AddUObject(this, &ACoreAICharacter::OnDeadTagChanged);
 }
 
-void ACoreAICharacter::OnCombatTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
+void ACoreAICharacter::OnDeadTagChanged(const FGameplayTag CallbackTag, const int32 NewCount) const
 {
-	FString DebugMsg = FString::Printf(TEXT("Combat Tag Count is now: %d"), NewCount);
-	FColor MsgColor = (NewCount > 1) ? FColor::Red : FColor::Yellow;
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, MsgColor, DebugMsg);
-
-	// ONLY dump the stack trace when the tag illegally stacks!
-	if (NewCount > 1)
+	if (NewCount > 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("=== ILLEGAL COMBAT TAG STACK DETECTED! COUNT: %d ==="), NewCount);
-		FDebug::DumpStackTraceToLog(ELogVerbosity::Warning);
-		UE_LOG(LogTemp, Warning, TEXT("================================================="));
+		DetectionWidgetComponent->DestroyComponent();
 	}
 }
 

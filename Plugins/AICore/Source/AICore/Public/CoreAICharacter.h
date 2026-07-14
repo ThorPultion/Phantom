@@ -18,19 +18,29 @@ class AICORE_API ACoreAICharacter : public ACoreCharacterBase
 public:
 	// Sets default values for this character's properties
 	ACoreAICharacter();
-
+	
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+	
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
+	
 	// Server side possession initialization for AI
 	virtual void PossessedBy(AController* NewController) override;
 
 	/** Defines which states take priority */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Targeting")
 	TObjectPtr<UAIStatePriorityData> PriorityData;
+	
+	/** AIControllers current target actor, used for ABP replication */
+	UPROPERTY(Replicated, Transient, BlueprintReadOnly, Category = "Targeting")
+	TObjectPtr<AActor> CurrentTargetActor;
+	
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
 
-	void InitAbilitySystem();
+	virtual void InitAbilitySystem() override;
 
 	UPROPERTY(BlueprintReadOnly, Category = "GAS")
 	TObjectPtr<UAIAttributeSet> AIAttributeSet;
@@ -43,10 +53,6 @@ protected:
 protected:
 	FDelegateHandle CombatTagDelegateHandle;
 
-	void OnCombatTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
+	void OnDeadTagChanged(const FGameplayTag CallbackTag, const int32 NewCount) const;
+	
 };
