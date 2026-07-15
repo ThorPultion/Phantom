@@ -90,11 +90,11 @@ protected:
 public:
 
 	/** The AIs current target (Looking, chasing, investigating, etc) */
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Memory")
+	UPROPERTY(VisibleAnywhere, Transient, BlueprintReadOnly, Category = "Memory")
 	TObjectPtr<AActor> CurrentTargetActor;
 
 	/** The state the current target is proposing that the AI should be in */
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "Memory")
+	UPROPERTY(VisibleAnywhere, Transient, BlueprintReadOnly, Category = "Memory")
 	FGameplayTag CurrentTargetTag;
 	
 	void SetTarget(AActor* NewTarget);
