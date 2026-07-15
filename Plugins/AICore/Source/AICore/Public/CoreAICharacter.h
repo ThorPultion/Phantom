@@ -33,7 +33,7 @@ public:
 	TObjectPtr<UAIStatePriorityData> PriorityData;
 	
 	/** AIControllers current target actor, used for ABP replication */
-	UPROPERTY(Replicated, Transient, BlueprintReadOnly, Category = "Targeting")
+	UPROPERTY(VisibleAnywhere, Replicated, Transient, BlueprintReadOnly, Category = "Targeting")
 	TObjectPtr<AActor> CurrentTargetActor;
 	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

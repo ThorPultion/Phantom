@@ -178,18 +178,16 @@ void ACoreAIController::EvaluateBestTarget()
 	// Update ASC loose tags using the cached ASC
 	if (CurrentTargetTag != BestTag)
 	{
-		// 1. Cache the old tag
+		// Cache the old tag
 		const FGameplayTag OldTag = CurrentTargetTag;
 
-		// 2. UPDATE THE LOCK FIRST to prevent re-entrancy loops!
+		// UPDATE THE LOCK FIRST to prevent re entrancy loops
 		CurrentTargetTag = BestTag;
 
 		if (AbilitySystemComponent)
 		{
 			if (OldTag.IsValid())
 			{
-				// 3. This might trigger callbacks that fire EvaluateBestTarget again.
-				// Because we already updated CurrentTargetTag, the inner loop will safely ignore it.
 				AbilitySystemComponent->RemoveLooseGameplayTag(OldTag);
 			}
 
@@ -213,8 +211,8 @@ ETeamAttitude::Type ACoreAIController::GetTeamAttitudeTowards(const AActor& Othe
 	}
 
 	// This objects team and other objects team
-	FGenericTeamId OurTeam = GetGenericTeamId();
-	FGenericTeamId TheirTeam = OtherTeamAgent->GetGenericTeamId();
+	const FGenericTeamId OurTeam = GetGenericTeamId();
+	const FGenericTeamId TheirTeam = OtherTeamAgent->GetGenericTeamId();
 
 	// If no team, neutral
 	if (OurTeam == FGenericTeamId::NoTeam || TheirTeam == FGenericTeamId::NoTeam)
@@ -235,11 +233,9 @@ void ACoreAIController::OnDetectionLevelChanged(const FOnAttributeChangeData& Da
 	// If the meter is full
 	if (Data.NewValue >= AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetMaxDetectionAttribute()))
 	{
-		// Escalating our currently focused target to a combat threat
 		if (CurrentTargetActor)
 		{
-			// SAFETY CHECK: Only force the Combat tag if our eyeballs are actually on the target!
-			// If we are circling and drop sight, this prevents the Attribute from fighting Perception.
+			// Update to combat state if we see the target
 			if (CorePerceptionComponent->HasActiveStimulus(*CurrentTargetActor, UAISense::GetSenseID<UAISense_Sight>()))
 			{
 				UpdateTargetState(CurrentTargetActor, GASCoreTags::State_AI_Combat);
