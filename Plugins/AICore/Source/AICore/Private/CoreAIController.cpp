@@ -14,10 +14,10 @@
 
 ACoreAIController::ACoreAIController()
 {
-	CorePerceptionComponent = CreateDefaultSubobject<UCoreAIPerceptionComponent>(TEXT("CorePerceptionComponent"));
+	CorePerceptionComponent = CreateDefaultSubobject<UCoreAIPerceptionComponent>(TEXT("PerceptionComponent"));
 
 	SetPerceptionComponent(*CorePerceptionComponent);
-
+	
 	StateTreeAIComponent = CreateDefaultSubobject<UStateTreeAIComponent>(TEXT("StateTreeAIComponent"));
 }
 
@@ -85,7 +85,7 @@ void ACoreAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Sti
 			if (ExistingData)
 			{
 				// ESCALATION: Only update if the new tag is a higher priority.
-				// (Prevents a perception pulse from overwriting Combat with Suspicious)
+				// (For example, prevents a perception pulse from overwriting Combat with Suspicious)
 				int32 CurrentScore = ControlledCharacter->PriorityData->StatePriorities.FindRef(ExistingData->DesiredStateTag);
 				int32 ProposedScore = ControlledCharacter->PriorityData->StatePriorities.FindRef(ReactionTag);
 
@@ -93,6 +93,9 @@ void ACoreAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Sti
 				{
 					ExistingData->DesiredStateTag = ReactionTag;
 				}
+				
+				ExistingData->LastKnownLocation = Actor->GetActorLocation();
+				ExistingData->TimeLastSeen = GetWorld()->GetTimeSeconds();
 			}
 			else
 			{
@@ -100,6 +103,9 @@ void ACoreAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Sti
 				FPerceivedData NewData;
 				NewData.TargetActor = Actor;
 				NewData.DesiredStateTag = ReactionTag;
+				NewData.LastKnownLocation = Actor->GetActorLocation();
+				NewData.TimeLastSeen = GetWorld()->GetTimeSeconds();
+				
 				KnownTargets.Add(NewData);
 			}
 		}
@@ -115,6 +121,8 @@ void ACoreAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Sti
 
 				if (!CorePerceptionComponent->HasActiveStimulus(*Actor, UAISense::GetSenseID<UAISense_Sight>()))
 				{
+					ExistingData->LastKnownLocation = Actor->GetActorLocation();
+					
 					// We have legitimately lost sight. Now we can downgrade to Search.
 					ExistingData->DesiredStateTag = ReactionTag;
 				}
@@ -137,6 +145,7 @@ void ACoreAIController::EvaluateBestTarget()
 
 	FGameplayTag BestTag = FGameplayTag::EmptyTag;
 	AActor* BestActor = nullptr;
+	FVector BestLastKnownLocation = FVector::ZeroVector;
 	int32 HighestScore = -1;
 	float ClosestDistanceSq = MAX_flt; // Track distance for tie-breakers
 
@@ -158,8 +167,9 @@ void ACoreAIController::EvaluateBestTarget()
 		if (Score > HighestScore)
 		{
 			HighestScore = Score;
-			BestActor = TargetData.TargetActor;
 			BestTag = TargetData.DesiredStateTag;
+			BestActor = TargetData.TargetActor;
+			BestLastKnownLocation = TargetData.LastKnownLocation;
 			ClosestDistanceSq = DistanceSq;
 		}
 		// TIE BREAKER: Are the priorities exactly the same?
@@ -168,12 +178,15 @@ void ACoreAIController::EvaluateBestTarget()
 			// Pick the one that is physically closer
 			if (DistanceSq < ClosestDistanceSq)
 			{
-				BestActor = TargetData.TargetActor;
 				BestTag = TargetData.DesiredStateTag;
+				BestActor = TargetData.TargetActor;
+				BestLastKnownLocation = TargetData.LastKnownLocation;
 				ClosestDistanceSq = DistanceSq;
 			}
 		}
 	}
+	
+	TargetLastKnownLocation = BestLastKnownLocation;
 
 	// Update ASC loose tags using the cached ASC
 	if (CurrentTargetTag != BestTag)

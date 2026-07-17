@@ -35,13 +35,13 @@ void AArrowProjectile::OnProjectileHit(UPrimitiveComponent* HitComponent, AActor
 	}
 
 	// Sink the arrow slightly into the surface
-	FVector ForwardVector = GetActorForwardVector();
+	const FVector ForwardVector = GetActorForwardVector();
 	AddActorWorldOffset(ForwardVector * PenetrationDepth);
 
 	// Attach the arrow to the object it hit (Crucial for moving targets like guards)
 	if (OtherComp)
 	{
-		FAttachmentTransformRules AttachRules(EAttachmentRule::KeepWorld, true);
+		const FAttachmentTransformRules AttachRules(EAttachmentRule::KeepWorld, true);
 		AttachToComponent(OtherComp, AttachRules, Hit.BoneName);
 	}
 

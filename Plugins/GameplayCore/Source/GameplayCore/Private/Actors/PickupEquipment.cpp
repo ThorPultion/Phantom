@@ -7,7 +7,7 @@
 
 APickupEquipment::APickupEquipment()
 {
-    SetReplicates(true);
+    bReplicates = true;
 }
 
 void APickupEquipment::Interact_Implementation(AActor* Interactor)
