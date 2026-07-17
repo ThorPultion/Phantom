@@ -36,7 +36,7 @@ struct FStateTreeTask_SendGameplayEventInstanceData
 	FGameplayTag InProgressTag;
 };
 
-USTRUCT(meta = (DisplayName = "Send GAS Event", Category = "Core AI"))
+USTRUCT(meta = (DisplayName = "Send GAS Event", Category = "GAS"))
 struct FStateTreeTask_SendGameplayEvent : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()

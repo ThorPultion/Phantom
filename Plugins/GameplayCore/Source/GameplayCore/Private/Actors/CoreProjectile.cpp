@@ -15,10 +15,9 @@
 ACoreProjectile::ACoreProjectile()
 {
 	PrimaryActorTick.bCanEverTick = false;
-
-	// Projectiles must replicate in a multiplayer game
-	SetReplicates(true);
-	SetReplicateMovement(true);
+	
+	bReplicates = true;
+	SetReplicatingMovement(true);
 
 	// Setting up collider, collider is root
 	CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionComponent"));

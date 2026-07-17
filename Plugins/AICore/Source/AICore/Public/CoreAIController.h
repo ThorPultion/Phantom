@@ -24,6 +24,14 @@ struct FPerceivedData
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Perception")
 	FGameplayTag DesiredStateTag;
+	
+	/** Location the target was last seen */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Perception")
+	FVector LastKnownLocation = FVector::ZeroVector;
+
+	/** Used to check for staleness */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Perception")
+	float TimeLastSeen = 0.0f;
 
 	// This operator overload allows easy use of certain find functions by just passing in an AActor pointer
 	bool operator==(const AActor* OtherActor) const
@@ -46,6 +54,26 @@ public:
 
 	// This AIs attitude towards other
 	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
+	
+	/** The AIs current target (Looking, chasing, investigating, etc) */
+	UPROPERTY(VisibleAnywhere, Transient, BlueprintReadOnly, Category = "Memory")
+	TObjectPtr<AActor> CurrentTargetActor;
+
+	/** The state the current target is proposing that the AI should be in */
+	UPROPERTY(VisibleAnywhere, Transient, BlueprintReadOnly, Category = "Memory")
+	FGameplayTag CurrentTargetTag;
+	
+	/** The AIs current movement goal, usually based on TargetActor */
+	UPROPERTY(VisibleAnywhere, Transient, BlueprintReadWrite, Category = "Memory", meta = (AllowPrivateAccess = "true"))
+	FVector CurrentMovementGoal = FVector::ZeroVector;
+	
+	/** The location the AI is currently focusing on */
+	UPROPERTY(VisibleAnywhere, Transient, BlueprintReadOnly, Category = "Memory")
+	FVector TargetLastKnownLocation = FVector::ZeroVector;
+	
+	void SetTarget(AActor* NewTarget);
+
+	virtual FGenericTeamId GetGenericTeamId() const override;
 
 protected:
 
@@ -54,15 +82,11 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Logic")
 	TObjectPtr<UStateTreeAIComponent> StateTreeAIComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Perception")
+	UPROPERTY(BlueprintReadOnly, Category = "Perception")
 	TObjectPtr<UCoreAIPerceptionComponent> CorePerceptionComponent;
 
 	UFUNCTION()
 	virtual void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
-
-	/** The AIs current movement goal */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Memory", meta = (AllowPrivateAccess = "true"))
-	FVector CurrentTargetLocation = FVector::ZeroVector;
 
 	/** Known target actors and their supplied tags */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Memory", meta = (AllowPrivateAccess = "true"))
@@ -86,18 +110,4 @@ protected:
 	FDelegateHandle DetectionDelegateHandle;
 
 	void UpdateTargetState(AActor* Target, FGameplayTag NewStateTag);
-
-public:
-
-	/** The AIs current target (Looking, chasing, investigating, etc) */
-	UPROPERTY(VisibleAnywhere, Transient, BlueprintReadOnly, Category = "Memory")
-	TObjectPtr<AActor> CurrentTargetActor;
-
-	/** The state the current target is proposing that the AI should be in */
-	UPROPERTY(VisibleAnywhere, Transient, BlueprintReadOnly, Category = "Memory")
-	FGameplayTag CurrentTargetTag;
-	
-	void SetTarget(AActor* NewTarget);
-
-	virtual FGenericTeamId GetGenericTeamId() const override;
 };
