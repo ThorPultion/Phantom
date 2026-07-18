@@ -68,6 +68,10 @@ public:
 	void SetTarget(AActor* NewTarget) const;
 
 	virtual FGenericTeamId GetGenericTeamId() const override;
+	
+	// Overriding the default SetFocus focal point to use our overriden target location.
+	// The target defines its own focal point which SetFocus then stares at.
+	virtual FVector GetFocalPointOnActor(const AActor* Actor) const override;
 
 protected:
 

@@ -214,3 +214,15 @@ FGameplayTag ACoreCharacterBase::GetPerceptionTag_Implementation(ETeamAttitude::
 
 	return FGameplayTag::EmptyTag;
 }
+
+FVector ACoreCharacterBase::GetTargetLocation(AActor* RequestedBy) const
+{
+	if (GetMesh())
+	{
+		// AI SetFocus will now aim at the designated socket
+		return GetMesh()->GetSocketLocation(SetFocusTargetSocket);
+	}
+    
+	// Fallback
+	return Super::GetTargetLocation(RequestedBy);
+}
