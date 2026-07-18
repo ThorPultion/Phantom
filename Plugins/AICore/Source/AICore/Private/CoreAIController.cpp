@@ -138,14 +138,11 @@ void ACoreAIController::EvaluateBestTarget()
 	// Check cached pointers
 	if (!IsValid(ControlledCharacter) || !ControlledCharacter->PriorityData)
 	{
-		CurrentTargetActor = nullptr;
-		CurrentTargetTag = FGameplayTag::EmptyTag;
+		CurrentTargetData = FPerceivedData(); 
 		return;
 	}
 
-	FGameplayTag BestTag = FGameplayTag::EmptyTag;
-	AActor* BestActor = nullptr;
-	FVector BestLastKnownLocation = FVector::ZeroVector;
+	FPerceivedData BestTargetData;
 	int32 HighestScore = -1;
 	float ClosestDistanceSq = MAX_flt; // Track distance for tie-breakers
 
@@ -155,7 +152,6 @@ void ACoreAIController::EvaluateBestTarget()
 		if (!IsValid(TargetData.TargetActor)) continue;
 
 		int32 Score = 0;
-
 		if (const int32* FoundPriority = ControlledCharacter->PriorityData->StatePriorities.Find(TargetData.DesiredStateTag))
 		{
 			Score = *FoundPriority;
@@ -167,9 +163,7 @@ void ACoreAIController::EvaluateBestTarget()
 		if (Score > HighestScore)
 		{
 			HighestScore = Score;
-			BestTag = TargetData.DesiredStateTag;
-			BestActor = TargetData.TargetActor;
-			BestLastKnownLocation = TargetData.LastKnownLocation;
+			BestTargetData = TargetData;
 			ClosestDistanceSq = DistanceSq;
 		}
 		// TIE BREAKER: Are the priorities exactly the same?
@@ -178,24 +172,20 @@ void ACoreAIController::EvaluateBestTarget()
 			// Pick the one that is physically closer
 			if (DistanceSq < ClosestDistanceSq)
 			{
-				BestTag = TargetData.DesiredStateTag;
-				BestActor = TargetData.TargetActor;
-				BestLastKnownLocation = TargetData.LastKnownLocation;
+				BestTargetData = TargetData;
 				ClosestDistanceSq = DistanceSq;
 			}
 		}
 	}
-	
-	TargetLastKnownLocation = BestLastKnownLocation;
 
 	// Update ASC loose tags using the cached ASC
-	if (CurrentTargetTag != BestTag)
+	if (CurrentTargetData.DesiredStateTag != BestTargetData.DesiredStateTag)
 	{
 		// Cache the old tag
-		const FGameplayTag OldTag = CurrentTargetTag;
+		const FGameplayTag OldTag = CurrentTargetData.DesiredStateTag;
 
 		// UPDATE THE LOCK FIRST to prevent re entrancy loops
-		CurrentTargetTag = BestTag;
+		CurrentTargetData.DesiredStateTag = BestTargetData.DesiredStateTag;
 
 		if (AbilitySystemComponent)
 		{
@@ -204,14 +194,15 @@ void ACoreAIController::EvaluateBestTarget()
 				AbilitySystemComponent->RemoveLooseGameplayTag(OldTag);
 			}
 
-			if (BestTag.IsValid())
+			if (BestTargetData.DesiredStateTag.IsValid())
 			{
-				AbilitySystemComponent->AddLooseGameplayTag(BestTag);
+				AbilitySystemComponent->AddLooseGameplayTag(BestTargetData.DesiredStateTag);
 			}
 		}
 	}
 
-	SetTarget(BestActor);
+	CurrentTargetData = BestTargetData;
+	SetTarget(CurrentTargetData.TargetActor);
 }
 
 ETeamAttitude::Type ACoreAIController::GetTeamAttitudeTowards(const AActor& Other) const
@@ -246,12 +237,12 @@ void ACoreAIController::OnDetectionLevelChanged(const FOnAttributeChangeData& Da
 	// If the meter is full
 	if (Data.NewValue >= AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetMaxDetectionAttribute()))
 	{
-		if (CurrentTargetActor)
+		if (CurrentTargetData.TargetActor)
 		{
 			// Update to combat state if we see the target
-			if (CorePerceptionComponent->HasActiveStimulus(*CurrentTargetActor, UAISense::GetSenseID<UAISense_Sight>()))
+			if (CorePerceptionComponent->HasActiveStimulus(*CurrentTargetData.TargetActor, UAISense::GetSenseID<UAISense_Sight>()))
 			{
-				UpdateTargetState(CurrentTargetActor, GASCoreTags::State_AI_Combat);
+				UpdateTargetState(CurrentTargetData.TargetActor, GASCoreTags::State_AI_Combat);
 			}
 		}
 	}
@@ -281,11 +272,8 @@ void ACoreAIController::UpdateTargetState(AActor* Target, FGameplayTag NewStateT
 	}
 }
 
-void ACoreAIController::SetTarget(AActor* NewTarget)
+void ACoreAIController::SetTarget(AActor* NewTarget) const
 {
-	// Controllers local reference (needed for OnDetectionLevelChanged)
-	CurrentTargetActor = NewTarget;
-
 	// Pushing the target down to the Character for ABP replication purposes
 	if (IsValid(ControlledCharacter))
 	{

@@ -3,12 +3,27 @@
 #include "Abilities/GA_ChargedProjectile.h"
 #include "Abilities/Tasks/AbilityTask_WaitInputRelease.h"
 #include "AbilitySystemComponent.h"
+#include "GASCoreTags.h"
+#include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "GameFramework/Actor.h"
 #include "Components/EquipmentComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Actors/EquipmentBase.h"
 #include "Interfaces/ProjectileProvider.h"
 
+UGA_ChargedProjectile::UGA_ChargedProjectile()
+{
+	FAbilityTriggerData TriggerData;
+    
+	// The tag to trigger this ability
+	TriggerData.TriggerTag = GASCoreTags::Event_AI_Primary;
+    
+	// Source (matches "On Gameplay Event" in the BP dropdown)
+	TriggerData.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
+    
+	// Adding it to the standard GAS triggers array
+	AbilityTriggers.Add(TriggerData);
+}
 
 void UGA_ChargedProjectile::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
@@ -29,16 +44,27 @@ void UGA_ChargedProjectile::ActivateAbility(const FGameplayAbilitySpecHandle Han
 		ActiveEffectHandle = ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, SpecHandle);
 	}
 
-	// Waiting for input to release to fire bow
+	// --- PLAYER LOGIC ---
+	// Waiting for physical input to release to fire projectile
 	UAbilityTask_WaitInputRelease* InputReleaseTask = UAbilityTask_WaitInputRelease::WaitInputRelease(this, false);
 	if (InputReleaseTask)
 	{
 		InputReleaseTask->OnRelease.AddDynamic(this, &UGA_ChargedProjectile::OnInputReleased);
 		InputReleaseTask->ReadyForActivation();
 	}
+	
+	// --- AI LOGIC ---
+	// Waiting for Gameplay Event with AIs "release input" tag
+	UAbilityTask_WaitGameplayEvent* AIInputReleaseEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
+		this, GASCoreTags::Event_AI_ReleasePrimary);
+	if (AIInputReleaseEventTask)
+	{
+		AIInputReleaseEventTask->EventReceived.AddDynamic(this, &UGA_ChargedProjectile::OnAIReleaseEventReceived);
+		AIInputReleaseEventTask->ReadyForActivation();
+	}
 }
 
-void UGA_ChargedProjectile::OnInputReleased(float TimeHeld)
+void UGA_ChargedProjectile::OnInputReleased(const float TimeHeld)
 {
 	// Minimal draw time
 	if (TimeHeld >= MinChargeTime && ReleaseMontage)
@@ -126,7 +152,7 @@ void UGA_ChargedProjectile::OnMontageEventReceived_Implementation(FGameplayEvent
 			// If trace hit nothing, aim at the end of the trace
 			FVector TargetLocation = bHit ? HitResult.ImpactPoint : TraceEnd;
 
-			// Angle the arrow from the bow socket to the target
+			// Angling the projectile from the socket to the target
 			SpawnRotation = UKismetMathLibrary::FindLookAtRotation(SpawnLocation, TargetLocation);
 		}
 	}
@@ -139,7 +165,16 @@ void UGA_ChargedProjectile::OnMontageEventReceived_Implementation(FGameplayEvent
 	GetWorld()->SpawnActor<AActor>(ProjectileToSpawn, SpawnLocation, SpawnRotation, SpawnParams);
 
 	// We dont call EndAbility here because the wrapper handles it via 
-	// the Montage Completed delegate, but we could in order to stop it early
+	// the Montage Completed delegate, but we could in order to stop it early.
+}
+
+void UGA_ChargedProjectile::OnAIReleaseEventReceived(FGameplayEventData Payload)
+{
+	// Calculate how long the AI held the charge
+	const float TimeHeld = GetWorld()->GetTimeSeconds() - AIChargeStartTime;
+    
+	// Calling same logic as player
+	OnInputReleased(TimeHeld);
 }
 
 
