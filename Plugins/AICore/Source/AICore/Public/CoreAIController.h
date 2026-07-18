@@ -19,9 +19,11 @@ struct FPerceivedData
 {
 	GENERATED_BODY()
 
+	/** The AIs current target */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Perception")
 	TObjectPtr<AActor> TargetActor;
 
+	/** The state the current target is proposing that the AI should be in */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Perception")
 	FGameplayTag DesiredStateTag;
 	
@@ -55,23 +57,15 @@ public:
 	// This AIs attitude towards other
 	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
 	
-	/** The AIs current target (Looking, chasing, investigating, etc) */
+	/** The full data struct of our currently active target */
 	UPROPERTY(VisibleAnywhere, Transient, BlueprintReadOnly, Category = "Memory")
-	TObjectPtr<AActor> CurrentTargetActor;
-
-	/** The state the current target is proposing that the AI should be in */
-	UPROPERTY(VisibleAnywhere, Transient, BlueprintReadOnly, Category = "Memory")
-	FGameplayTag CurrentTargetTag;
+	FPerceivedData CurrentTargetData;
 	
 	/** The AIs current movement goal, usually based on TargetActor */
 	UPROPERTY(VisibleAnywhere, Transient, BlueprintReadWrite, Category = "Memory", meta = (AllowPrivateAccess = "true"))
 	FVector CurrentMovementGoal = FVector::ZeroVector;
 	
-	/** The location the AI is currently focusing on */
-	UPROPERTY(VisibleAnywhere, Transient, BlueprintReadOnly, Category = "Memory")
-	FVector TargetLastKnownLocation = FVector::ZeroVector;
-	
-	void SetTarget(AActor* NewTarget);
+	void SetTarget(AActor* NewTarget) const;
 
 	virtual FGenericTeamId GetGenericTeamId() const override;
 

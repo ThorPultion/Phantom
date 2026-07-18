@@ -14,5 +14,5 @@ void UEnvQueryContext_FocalPoint::ProvideContext(FEnvQueryInstance& QueryInstanc
 	if (!AIController) return;
 
 	// Pulling last known location to use for focal point and handing it to EQS
-	UEnvQueryItemType_Point::SetContextHelper(ContextData, AIController->TargetLastKnownLocation);
+	UEnvQueryItemType_Point::SetContextHelper(ContextData, AIController->CurrentTargetData.LastKnownLocation);
 }

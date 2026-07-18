@@ -15,17 +15,35 @@ class GAMEPLAYCORE_API UGA_ChargedProjectile : public UCoreGameplayAbility
 	GENERATED_BODY()
 	
 public:
+	UGA_ChargedProjectile();
 
-	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
-	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
-
-protected:
-
+	virtual void ActivateAbility(
+		const FGameplayAbilitySpecHandle Handle,
+		const FGameplayAbilityActorInfo* ActorInfo,
+		const FGameplayAbilityActivationInfo ActivationInfo,
+		const FGameplayEventData* TriggerEventData) override;
+	
+	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle,
+		const FGameplayAbilityActorInfo* ActorInfo,
+		const FGameplayAbilityActivationInfo ActivationInfo,
+		bool bReplicateEndAbility, bool bWasCancelled) override;
+	
 	// The implementation for when AnimNotify triggers
 	virtual void OnMontageEventReceived_Implementation(FGameplayEventData Payload) override;
+protected:
+	
 
+	// Waits for players input release event
 	UFUNCTION()
-	void OnInputReleased(float TimeHeld);
+	void OnInputReleased(const float TimeHeld);
+	
+	// Waits for AIs "input release" GAS event
+	UFUNCTION()
+	void OnAIReleaseEventReceived(FGameplayEventData Payload);
+	
+	/** AIs "input release" event tag */
+	UPROPERTY(EditDefaultsOnly, Category = "AI")
+	FGameplayTag AIReleaseEventTag;
 
 	/** Montage for when input is released after MinChargeTime amount of time */
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")
@@ -46,4 +64,7 @@ protected:
 private:
 	// The handle to the specific instance of the effect applied
 	FActiveGameplayEffectHandle ActiveEffectHandle;
+	
+	// Tracks AIs charge time
+	float AIChargeStartTime = 0.0f;
 };

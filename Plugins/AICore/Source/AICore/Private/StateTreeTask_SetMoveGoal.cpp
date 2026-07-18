@@ -22,7 +22,7 @@ EStateTreeRunStatus FStateTreeTask_SetMoveGoal::EnterState(FStateTreeExecutionCo
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 	ACoreAIController* AIController = Context.GetExternalDataPtr(AIControllerHandle);
 
-	if (IsValid(AIController))
+	if (!IsValid(AIController))
 	{
 		return EStateTreeRunStatus::Failed;
 	}

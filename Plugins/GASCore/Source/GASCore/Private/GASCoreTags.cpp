@@ -14,6 +14,10 @@ namespace GASCoreTags
 	UE_DEFINE_GAMEPLAY_TAG(Input_Interact, "Input.Interact");
 	UE_DEFINE_GAMEPLAY_TAG(Input_SwapAmmo_SetIndex, "Input.SwapAmmo.SetIndex");
 	UE_DEFINE_GAMEPLAY_TAG(Input_SwapAmmo_Cycle, "Input.SwapAmmo.Cycle");
+	
+	// --- AI "Inputs" ---
+	UE_DEFINE_GAMEPLAY_TAG(Event_AI_Primary, "Event.AI.Primary");
+	UE_DEFINE_GAMEPLAY_TAG(Event_AI_ReleasePrimary, "Event.AI.ReleasePrimary");
 
 	// --- States ---
 	UE_DEFINE_GAMEPLAY_TAG(State_Dead, "State.Dead");
