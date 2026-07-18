@@ -291,3 +291,14 @@ FGenericTeamId ACoreAIController::GetGenericTeamId() const
 
 	return FGenericTeamId::NoTeam;
 }
+
+FVector ACoreAIController::GetFocalPointOnActor(const AActor* Actor) const
+{
+	if (Actor != nullptr)
+	{
+		// We force SetFocus to look at the exact socket thats defined on the targets end
+		return Actor->GetTargetLocation(GetPawn());
+	}
+
+	return FAISystem::InvalidLocation;
+}

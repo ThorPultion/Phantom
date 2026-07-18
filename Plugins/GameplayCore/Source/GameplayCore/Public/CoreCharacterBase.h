@@ -99,8 +99,15 @@ public:
 	
 	/** Giving AI reaction tags for when this character is perceived */
 	virtual FGameplayTag GetPerceptionTag_Implementation(ETeamAttitude::Type ObserverAttitude, const FAIStimulus& Stimulus) override;
+	
+	/** Overriding default target location for AI SetFocus */
+	virtual FVector GetTargetLocation(AActor* RequestedBy = nullptr) const override;
 
 protected:
+	/** The point at which SetFocus will look at */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI")
+	FName SetFocusTargetSocket = "set_focus_socket";
+	
 	/** Assign team in blueprints, 0 = Players, 1 = Guards, 2 = Monsters */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	FGenericTeamId TeamID;
