@@ -76,6 +76,23 @@ void UCoreAbilitySystemComponent::OnAbilitySetAsyncLoadComplete(UCoreAbilitySet*
 			GrantAbilityWithInput(LoadedAbilityClass, BindInfo.InputTag);
 		}
 	}
+	
+	
+	// ----------------- HACKY FIX ALERT! -----------------
+	// We are reapplying every tag the character has after Async ability granting is complete.
+	// This is because AIs GA_BuildSuspicion uses When Tag Is Present for activation.
+	// Due to abilities being Asynchronously granted, the GA is not granted when the AI immediately gains the tag at startup!
+	// This could be reworked to a delegate here that we then use in different systems to prevent this race condition.
+	// I would only do the delegate rework if this same problem occurs within other systems as i dont believe this fix is problematic as is.
+	FGameplayTagContainer AvatarTags;
+	GetOwnedGameplayTags(AvatarTags);
+	
+	for (const FGameplayTag& Tag : AvatarTags)
+	{
+		RemoveLooseGameplayTag(Tag);
+		AddLooseGameplayTag(Tag);
+	}
+	// ----------------- HACKY FIX ALERT ENDS! -----------------
 }
 
 void UCoreAbilitySystemComponent::GrantAbilityWithInput(TSubclassOf<UCoreGameplayAbility> AbilityClass, FGameplayTag InputTag)

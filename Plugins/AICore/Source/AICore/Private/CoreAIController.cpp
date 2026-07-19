@@ -24,15 +24,7 @@ ACoreAIController::ACoreAIController()
 void ACoreAIController::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// The StateTreeComponent usually starts itself if configured to do so in the Editor,
-	// but you can also manually initialize and start it here if needed.
-
-	// Binding the perception delegate
-	if (CorePerceptionComponent)
-	{
-		CorePerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ACoreAIController::OnTargetPerceptionUpdated);
-	}
+	
 }
 
 void ACoreAIController::OnPossess(APawn* InPawn)
@@ -48,6 +40,11 @@ void ACoreAIController::OnPossess(APawn* InPawn)
 
 	DetectionDelegateHandle = AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 		UAIAttributeSet::GetDetectionLevelAttribute()).AddUObject(this, &ACoreAIController::OnDetectionLevelChanged);
+	
+	if (CorePerceptionComponent)
+	{
+		CorePerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ACoreAIController::OnTargetPerceptionUpdated);
+	}
 }
 
 void ACoreAIController::OnUnPossess()
@@ -144,9 +141,9 @@ void ACoreAIController::EvaluateBestTarget()
 
 	FPerceivedData BestTargetData;
 	int32 HighestScore = -1;
-	float ClosestDistanceSq = MAX_flt; // Track distance for tie-breakers
+	float ClosestDistanceSq = MAX_flt; // Tracking distance for tie breakers
 
-	// Loop through targets too find highest scored tag
+	// Loop through targets to find highest scored tag
 	for (const FPerceivedData& TargetData : KnownTargets)
 	{
 		if (!IsValid(TargetData.TargetActor)) continue;
