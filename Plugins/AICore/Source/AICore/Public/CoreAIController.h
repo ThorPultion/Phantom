@@ -31,10 +31,6 @@ struct FPerceivedData
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Perception")
 	FVector LastKnownLocation = FVector::ZeroVector;
 
-	/** Used to check for staleness */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Perception")
-	float TimeLastSeen = 0.0f;
-
 	// This operator overload allows easy use of certain find functions by just passing in an AActor pointer
 	bool operator==(const AActor* OtherActor) const
 	{
@@ -64,7 +60,7 @@ public:
 	/** The AIs current movement goal, usually based on TargetActor */
 	UPROPERTY(VisibleAnywhere, Transient, BlueprintReadWrite, Category = "Memory", meta = (AllowPrivateAccess = "true"))
 	FVector CurrentMovementGoal = FVector::ZeroVector;
-	
+
 	void SetTarget(AActor* NewTarget) const;
 
 	virtual FGenericTeamId GetGenericTeamId() const override;
@@ -107,5 +103,14 @@ protected:
 	void OnDetectionLevelChanged(const FOnAttributeChangeData& Data);
 	FDelegateHandle DetectionDelegateHandle;
 
+	/** Update targets current state tag to input param tag */
 	void UpdateTargetState(AActor* Target, FGameplayTag NewStateTag);
+	
+	void ProcessTargetSensed(AActor* TargetActor, FPerceivedData* ExistingData, const FGameplayTag ReactionTag);
+	
+	void ProcessTargetLost(AActor* TargetActor, FPerceivedData* ExistingData, FGameplayTag ReactionTag, const FAIStimulus&);
+	
+private:
+	bool bIsEvaluatingTargets = false;
+	bool bEvaluationPending = false;
 };

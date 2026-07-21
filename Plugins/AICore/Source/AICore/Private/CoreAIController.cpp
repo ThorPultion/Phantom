@@ -79,63 +79,99 @@ void ACoreAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Sti
 		// Apply Escalation / De-escalation Rules
 		if (Stimulus.WasSuccessfullySensed())
 		{
-			if (ExistingData)
-			{
-				// ESCALATION: Only update if the new tag is a higher priority.
-				// (For example, prevents a perception pulse from overwriting Combat with Suspicious)
-				int32 CurrentScore = ControlledCharacter->PriorityData->StatePriorities.FindRef(ExistingData->DesiredStateTag);
-				int32 ProposedScore = ControlledCharacter->PriorityData->StatePriorities.FindRef(ReactionTag);
-
-				if (ProposedScore > CurrentScore)
-				{
-					ExistingData->DesiredStateTag = ReactionTag;
-				}
-				
-				ExistingData->LastKnownLocation = Actor->GetActorLocation();
-				ExistingData->TimeLastSeen = GetWorld()->GetTimeSeconds();
-			}
-			else
-			{
-				// Brand new target, add them to memory
-				FPerceivedData NewData;
-				NewData.TargetActor = Actor;
-				NewData.DesiredStateTag = ReactionTag;
-				NewData.LastKnownLocation = Actor->GetActorLocation();
-				NewData.TimeLastSeen = GetWorld()->GetTimeSeconds();
-				
-				KnownTargets.Add(NewData);
-			}
+			ProcessTargetSensed(Actor, ExistingData, ReactionTag);
 		}
 		else
 		{
-			if (ExistingData)
-			{
-				// DE-ESCALATION: Sight lost! Force the downgrade (Combat -> Investigate)
-
-				// Note: If you have a Max Age set in your AI Perception config, this stimulus 
-				// will fire again with WasSuccessfullySensed() = false when they expire completely.
-				// You could add logic here to remove them from KnownTargets entirely if needed.
-
-				if (!CorePerceptionComponent->HasActiveStimulus(*Actor, UAISense::GetSenseID<UAISense_Sight>()))
-				{
-					ExistingData->LastKnownLocation = Actor->GetActorLocation();
-					
-					// We have legitimately lost sight. Now we can downgrade to Search.
-					ExistingData->DesiredStateTag = ReactionTag;
-				}
-			}
+			ProcessTargetLost(Actor, ExistingData, ReactionTag, Stimulus);
 		}
 	}
 
 	EvaluateBestTarget();
 }
 
+void ACoreAIController::ProcessTargetSensed(AActor* TargetActor, FPerceivedData* ExistingData, const FGameplayTag ReactionTag)
+{
+	if (ExistingData)
+	{
+		// ESCALATION: Only update if the new tag is a higher priority.
+		// (For example, prevents a perception pulse from overwriting Combat with Suspicious)
+		int32 CurrentScore = ControlledCharacter->PriorityData->StatePriorities.FindRef(ExistingData->DesiredStateTag);
+		int32 ProposedScore = ControlledCharacter->PriorityData->StatePriorities.FindRef(ReactionTag);
+
+		if (ProposedScore > CurrentScore)
+		{
+			ExistingData->DesiredStateTag = ReactionTag;
+		}
+				
+		ExistingData->LastKnownLocation = TargetActor->GetActorLocation();
+	}
+	else
+	{
+		// Entirely new target, add them to memory
+		FPerceivedData NewData;
+		NewData.TargetActor = TargetActor;
+		NewData.DesiredStateTag = ReactionTag;
+		NewData.LastKnownLocation = TargetActor->GetActorLocation();
+				
+		KnownTargets.Add(NewData);
+	}
+}
+
+void ACoreAIController::ProcessTargetLost(AActor* TargetActor, FPerceivedData* ExistingData, FGameplayTag ReactionTag,
+	const FAIStimulus& Stimulus)
+{
+	if (ExistingData)
+	{
+		// If MaxAge on a sense expired
+		if (Stimulus.IsExpired())
+		{
+			// The AI has forgotten this actor so we wipe all our info on the actor
+			KnownTargets.RemoveAll([TargetActor](const FPerceivedData& Data) {
+				return Data.TargetActor == TargetActor;
+			});
+					
+			// We dont want to run anything else
+			return;
+		}
+				
+		// DE-ESCALATION: Sight lost! Force the downgrade (Combat -> Investigate)
+
+		// Note: If you have a Max Age set in your AI Perception config, this stimulus 
+		// will fire again with WasSuccessfullySensed() = false when they expire completely.
+		// You could add logic here to remove them from KnownTargets entirely if needed.
+
+		if (!CorePerceptionComponent->HasActiveStimulus(*TargetActor, UAISense::GetSenseID<UAISense_Sight>()))
+		{
+			ExistingData->LastKnownLocation = TargetActor->GetActorLocation();
+					
+			// We have actually lost sight so downgrading state tag
+			ExistingData->DesiredStateTag = ReactionTag;
+		}
+	}
+}
+
 void ACoreAIController::EvaluateBestTarget()
 {
-	// Check cached pointers
+	// LOCK: If we are already evaluating, flag that we need to evaluate again and return early.
+	// This avoids shenanigans with tag removal and addition due to nested execution (re-entrancy),
+	// AKA, when tag changes, this function is called again before finishing its first execution
+	// which causes the rest of the code to fail
+	if (bIsEvaluatingTargets)
+	{
+		bEvaluationPending = true;
+		return;
+	}
+
+	// Locking the function
+	bIsEvaluatingTargets = true;
+	bEvaluationPending = false;
+	
+	// Checking cached pointers
 	if (!IsValid(ControlledCharacter) || !ControlledCharacter->PriorityData)
 	{
 		CurrentTargetData = FPerceivedData(); 
+		bIsEvaluatingTargets = false;
 		return;
 	}
 
@@ -175,14 +211,16 @@ void ACoreAIController::EvaluateBestTarget()
 		}
 	}
 
+	const FGameplayTag NewTag = BestTargetData.DesiredStateTag;
+	
 	// Update ASC loose tags using the cached ASC
-	if (CurrentTargetData.DesiredStateTag != BestTargetData.DesiredStateTag)
+	if (CurrentTargetData.DesiredStateTag != NewTag)
 	{
 		// Cache the old tag
 		const FGameplayTag OldTag = CurrentTargetData.DesiredStateTag;
-
-		// UPDATE THE LOCK FIRST to prevent re entrancy loops
-		CurrentTargetData.DesiredStateTag = BestTargetData.DesiredStateTag;
+		
+		// Update data
+		CurrentTargetData = BestTargetData;
 
 		if (AbilitySystemComponent)
 		{
@@ -190,16 +228,31 @@ void ACoreAIController::EvaluateBestTarget()
 			{
 				AbilitySystemComponent->RemoveLooseGameplayTag(OldTag);
 			}
-
+			
 			if (BestTargetData.DesiredStateTag.IsValid())
 			{
+				// If this triggers a GAS cascade that calls EvaluateBestTarget() again,
+				// the nested call will hit the lock, set bEvaluationPending = true, and harmlessly return.
 				AbilitySystemComponent->AddLooseGameplayTag(BestTargetData.DesiredStateTag);
 			}
 		}
 	}
+	else
+	{
+		// We still update data even if tag didnt change
+		CurrentTargetData = BestTargetData;
+	}
 
-	CurrentTargetData = BestTargetData;
 	SetTarget(CurrentTargetData.TargetActor);
+	
+	// Unlocking the function
+	bIsEvaluatingTargets = false;
+	
+	// If an evaluation is pending due to an evaluation attempt occurring while the block was running, we run it again
+	if (bEvaluationPending)
+	{
+		EvaluateBestTarget();
+	}
 }
 
 ETeamAttitude::Type ACoreAIController::GetTeamAttitudeTowards(const AActor& Other) const
@@ -247,24 +300,13 @@ void ACoreAIController::OnDetectionLevelChanged(const FOnAttributeChangeData& Da
 
 void ACoreAIController::UpdateTargetState(AActor* Target, FGameplayTag NewStateTag)
 {
-	if (!Target) return;
+	if (!IsValid(Target)) return;
 
-	bool bFound = false;
-
-	// Find the target in memory and update its tag
-	for (FPerceivedData& TargetData : KnownTargets)
+	
+	if (FPerceivedData* ExistingData = KnownTargets.FindByKey(Target))
 	{
-		if (TargetData.TargetActor == Target)
-		{
-			TargetData.DesiredStateTag = NewStateTag;
-			bFound = true;
-			break;
-		}
-	}
-
-	// Re evaluate targets based on the new information
-	if (bFound)
-	{
+		ExistingData->DesiredStateTag = NewStateTag;
+		// Re-evaluate best target
 		EvaluateBestTarget();
 	}
 }
