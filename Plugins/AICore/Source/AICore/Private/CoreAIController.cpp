@@ -296,15 +296,26 @@ void ACoreAIController::OnDetectionLevelChanged(const FOnAttributeChangeData& Da
 			}
 		}
 	}
+	else if (Data.OldValue > 0.f && Data.NewValue <= 0.f)
+	{
+		if (!CorePerceptionComponent->HasActiveStimulus(*CurrentTargetData.TargetActor, UAISense::GetSenseID<UAISense_Sight>()))
+		{
+			UpdateTargetState(CurrentTargetData.TargetActor, FGameplayTag::EmptyTag);
+		}
+	}
 }
 
 void ACoreAIController::UpdateTargetState(AActor* Target, FGameplayTag NewStateTag)
 {
-	if (!IsValid(Target)) return;
-
+	if (!IsValid(Target)) return;	
 	
 	if (FPerceivedData* ExistingData = KnownTargets.FindByKey(Target))
 	{
+		if (ExistingData->DesiredStateTag == NewStateTag)
+		{
+			return;
+		}
+		
 		ExistingData->DesiredStateTag = NewStateTag;
 		// Re-evaluate best target
 		EvaluateBestTarget();

@@ -9,7 +9,7 @@
 UEnvQueryGenerator_PatrolPoints::UEnvQueryGenerator_PatrolPoints(const FObjectInitializer& ObjectInitializer) 
 	: Super(ObjectInitializer)
 {
-	// Tell EQS this generator outputs Actors, not just raw FVectors (Locations)
+	// Telling EQS this generator outputs Actors, not just raw FVectors (Locations)
 	ItemType = UEnvQueryItemType_Actor::StaticClass();
 }
 
