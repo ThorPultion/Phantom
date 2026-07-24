@@ -37,7 +37,7 @@ struct FStateTreeTask_SendGameplayEventInstanceData
 };
 
 USTRUCT(meta = (DisplayName = "Send GAS Event", Category = "GAS"))
-struct FStateTreeTask_SendGameplayEvent : public FStateTreeTaskCommonBase
+struct AICORE_API FStateTreeTask_SendGameplayEvent : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()
 	using FInstanceDataType = FStateTreeTask_SendGameplayEventInstanceData;
