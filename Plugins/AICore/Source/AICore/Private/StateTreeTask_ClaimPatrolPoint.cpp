@@ -10,6 +10,16 @@
 EStateTreeRunStatus FStateTreeTask_ClaimPatrolPoint::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
     FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
+    
+    if (IsValid(InstanceData.ExistingPatrolPoint))
+    {
+        // Copy the existing point and its location directly to our outputs
+        InstanceData.OutPatrolPoint = InstanceData.ExistingPatrolPoint;
+        InstanceData.OutLocation = InstanceData.ExistingPatrolPoint->GetActorLocation();
+
+        // Return immediately and dont run the rest of the task
+        return EStateTreeRunStatus::Succeeded;
+    }
 
     if (!InstanceData.AIController || !InstanceData.FindPatrolPointQuery)
     {
@@ -99,8 +109,7 @@ void FStateTreeTask_ClaimPatrolPoint::ExitState(FStateTreeExecutionContext& Cont
 {
     FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 
-    // Cleanup: If this state aborted (e.g., AI heard a gunshot and transitioned to Combat BEFORE reaching the point),
-    // release the point so other guards can use it
+    // Cleanup: If this state aborted, release the point
     if (Transition.ChangeType != EStateTreeStateChangeType::Changed)
     {
         if (InstanceData.OutPatrolPoint && InstanceData.OutPatrolPoint->IsClaimed())

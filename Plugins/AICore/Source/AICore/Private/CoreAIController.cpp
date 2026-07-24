@@ -134,19 +134,36 @@ void ACoreAIController::ProcessTargetLost(AActor* TargetActor, FPerceivedData* E
 			// We dont want to run anything else
 			return;
 		}
-				
-		// DE-ESCALATION: Sight lost! Force the downgrade (Combat -> Investigate)
 
-		// Note: If you have a Max Age set in your AI Perception config, this stimulus 
-		// will fire again with WasSuccessfullySensed() = false when they expire completely.
-		// You could add logic here to remove them from KnownTargets entirely if needed.
-
-		if (!CorePerceptionComponent->HasActiveStimulus(*TargetActor, UAISense::GetSenseID<UAISense_Sight>()))
+		// MULTI-SENSE CHECK: Only evaluate a downgrade if we have completely lost ALL active senses on this target
+		if (!CorePerceptionComponent->HasAnyCurrentStimulus(*TargetActor))
 		{
 			ExistingData->LastKnownLocation = TargetActor->GetActorLocation();
-					
-			// We have actually lost sight so downgrading state tag
-			ExistingData->DesiredStateTag = ReactionTag;
+                
+			// Threshold check
+			if (AbilitySystemComponent)
+			{
+				const float CurrentDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetDetectionLevelAttribute());
+				const float MaxDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetMaxDetectionAttribute());
+              
+				const float InvestigationThreshold = MaxDetection * 0.3f;
+
+				// If detection level is higher than our designated threshold when losing sight,
+				// apply the searching tag
+				if (CurrentDetection >= InvestigationThreshold)
+				{
+					ExistingData->DesiredStateTag = ReactionTag;
+				}
+				else
+				{
+					// The AIs detection level is too low to apply searching tag
+					ExistingData->DesiredStateTag = GASCoreTags::State_AI_Routine;
+				}
+			}
+			else
+			{
+				ExistingData->DesiredStateTag = ReactionTag;
+			}
 		}
 	}
 }
@@ -300,7 +317,7 @@ void ACoreAIController::OnDetectionLevelChanged(const FOnAttributeChangeData& Da
 	{
 		if (!CorePerceptionComponent->HasActiveStimulus(*CurrentTargetData.TargetActor, UAISense::GetSenseID<UAISense_Sight>()))
 		{
-			UpdateTargetState(CurrentTargetData.TargetActor, FGameplayTag::EmptyTag);
+			UpdateTargetState(CurrentTargetData.TargetActor, GASCoreTags::State_AI_Routine);
 		}
 	}
 }

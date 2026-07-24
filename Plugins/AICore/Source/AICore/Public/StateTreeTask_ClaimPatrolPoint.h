@@ -25,8 +25,11 @@ USTRUCT()
 struct FStateTreeTask_ClaimPatrolPoint_InstanceData
 {
 	GENERATED_BODY()
+	
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<APatrolPoint> ExistingPatrolPoint = nullptr;
 
-	/** The EQS Query asset to run (e.g., EQS_FindPatrolPoint) */
+	/** The EQS Query asset to run, needs to find patrol points */
 	UPROPERTY(EditAnywhere, Category = "Parameter")
 	TObjectPtr<UEnvQuery> FindPatrolPointQuery = nullptr;
 
@@ -56,8 +59,7 @@ struct FStateTreeTask_ClaimPatrolPoint_InstanceData
 	TSharedPtr<FPatrolQueryBridge> QueryBridge = nullptr;
 };
 
-/** Executes an EQS query to find available patrol points, claims the highest scoring
- * unclaimed point, and outputs it */
+/** Executes an EQS query to find available patrol points, claims the highest scoring unclaimed point, and outputs it */
 USTRUCT(meta = (DisplayName = "Find And Claim Next Patrol Point", Category = "Patrol"))
 struct AICORE_API FStateTreeTask_ClaimPatrolPoint : public FStateTreeTaskCommonBase
 {

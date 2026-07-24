@@ -17,6 +17,10 @@ struct AICORE_API FStateTreeTask_ReleasePatrolPoint_InstanceData
 	/** Input: The patrol point actor to release */
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<APatrolPoint> PatrolPointToRelease = nullptr;
+	
+	/** Output: Used to overwrite the bound parameter back to null */
+	UPROPERTY(EditAnywhere, Category = "Output")
+	TObjectPtr<APatrolPoint> OutPatrolPoint = nullptr;
 };
 
 /** Releases a claimed patrol point so other AI can claim and use it. */
@@ -28,8 +32,6 @@ struct AICORE_API FStateTreeTask_ReleasePatrolPoint : public FStateTreeTaskCommo
 	using FInstanceDataType = FStateTreeTask_ReleasePatrolPoint_InstanceData;
 
 	virtual const UStruct* GetInstanceDataType() const override { return FInstanceDataType::StaticStruct(); }
-
-	//virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
 	
-	virtual void ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
+	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
 };
