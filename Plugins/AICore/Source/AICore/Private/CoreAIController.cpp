@@ -11,6 +11,10 @@
 #include "AIStatePriorityData.h"
 #include "GASCoreTags.h"
 #include "Perception/AISense_Sight.h"
+#include "Perception/AISense_Hearing.h"
+#include "Perception/AISense_Damage.h"
+#include "Perception/AISense_Team.h"
+#include "AIDetectionData.h"
 
 ACoreAIController::ACoreAIController()
 {
@@ -58,114 +62,199 @@ void ACoreAIController::OnUnPossess()
 			UAIAttributeSet::GetDetectionLevelAttribute()).Remove(DetectionDelegateHandle);
 	}
 
+	KnownTargets.Empty();
+	CurrentTargetData = FPerceivedData();
+	
 	ControlledCharacter = nullptr;
 	AbilitySystemComponent = nullptr;
 }
 
 void ACoreAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
-	if (!IsValid(Actor)) return;
+	if (!IsValid(Actor) || !Actor->Implements<UPerceivable>()) return;
+	
+	// The sensed object will decide what state tag to apply
+	const FGameplayTag ReactionTag = IPerceivable::Execute_GetPerceptionTag(Actor, GetTeamAttitudeTowards(*Actor), Stimulus);
+	if (!ReactionTag.IsValid()) return;
+	
+	const FAISenseID SenseID = Stimulus.Type;
 
-	if (Actor->Implements<UPerceivable>())
+	if (SenseID == UAISense::GetSenseID<UAISense_Sight>())
 	{
-		// The sensed object will decide what state tag to apply
-		FGameplayTag ReactionTag = IPerceivable::Execute_GetPerceptionTag(Actor, GetTeamAttitudeTowards(*Actor), Stimulus);
-
-		if (!ReactionTag.IsValid()) return;
-
-		// Check if they are already in the array
-		FPerceivedData* ExistingData = KnownTargets.FindByKey(Actor);
-
-		// Apply Escalation / De-escalation Rules
-		if (Stimulus.WasSuccessfullySensed())
-		{
-			ProcessTargetSensed(Actor, ExistingData, ReactionTag);
-		}
-		else
-		{
-			ProcessTargetLost(Actor, ExistingData, ReactionTag, Stimulus);
-		}
+		HandleSightSense(Actor, Stimulus);
+	}
+	else if (SenseID == UAISense::GetSenseID<UAISense_Hearing>())
+	{
+		HandleHearingSense(Actor, Stimulus);
+	}
+	else if (SenseID == UAISense::GetSenseID<UAISense_Damage>())
+	{
+		HandleDamageSense(Actor, Stimulus);
+	}
+	else if (SenseID == UAISense::GetSenseID<UAISense_Team>())
+	{
+		HandleTeamSense(Actor, Stimulus);
+	}
+	
+	// Apply Escalation / De-escalation Rules
+	if (Stimulus.WasSuccessfullySensed())
+	{
+		ProcessTargetSensed(Actor, ReactionTag, Stimulus.StimulusLocation);
+	}
+	else
+	{
+		ProcessTargetLost(Actor, ReactionTag, Stimulus);
 	}
 
 	EvaluateBestTarget();
 }
 
-void ACoreAIController::ProcessTargetSensed(AActor* TargetActor, FPerceivedData* ExistingData, const FGameplayTag ReactionTag)
+void ACoreAIController::HandleSightSense(AActor* Actor, const FAIStimulus& Stimulus) const
 {
-	if (ExistingData)
+	if (!Stimulus.WasSuccessfullySensed()) return;
+}
+
+void ACoreAIController::HandleHearingSense(AActor* Actor, const FAIStimulus& Stimulus) const
+{
+	if (!Stimulus.WasSuccessfullySensed()) return;
+
+	// Detection amount based on strength of sound stimulus
+	const float DetectionAmount = FMath::Clamp(Stimulus.Strength * DetectionData->MaxHearingDetection, 0, DetectionData->MaxHearingDetection);
+	ApplyDetectionImpulse(Actor, DetectionAmount);
+}
+
+void ACoreAIController::HandleDamageSense(AActor* Actor, const FAIStimulus& Stimulus) const
+{
+	if (!Stimulus.WasSuccessfullySensed() || !AbilitySystemComponent) return;
+	
+	const float MaxDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetMaxDetectionAttribute());
+	ApplyDetectionImpulse(Actor, MaxDetection);
+}
+
+void ACoreAIController::HandleTeamSense(AActor* Actor, const FAIStimulus& Stimulus) const
+{
+	if (!Stimulus.WasSuccessfullySensed()) return;
+}
+
+void ACoreAIController::ApplyDetectionImpulse(AActor* InstigatorActor, const float DetectionAmount) const
+{
+	if (!AbilitySystemComponent || !IsValid(InstigatorActor) || DetectionAmount <= 0.f || !DetectionData)
+	{
+		return;
+	}
+
+	if (!DetectionData->DetectionBuildGEClass)
+	{
+		return;
+	}
+
+	FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
+	Context.AddInstigator(InstigatorActor, InstigatorActor);
+	Context.AddSourceObject(this);
+
+	const FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(DetectionData->DetectionBuildGEClass, 1.0f, Context);
+	if (SpecHandle.IsValid())
+	{
+		SpecHandle.Data->SetSetByCallerMagnitude(GASCoreTags::Data_Magnitude_Detection, DetectionAmount);
+		AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+	}
+}
+
+void ACoreAIController::ProcessTargetSensed(AActor* TargetActor, const FGameplayTag ReactionTag, const FVector& StimulusLocation)
+{
+	if (!IsValid(TargetActor) || !ReactionTag.IsValid()) return;
+	
+	if (FPerceivedData* ExistingTargetData = KnownTargets.FindByKey(TargetActor))
 	{
 		// ESCALATION: Only update if the new tag is a higher priority.
 		// (For example, prevents a perception pulse from overwriting Combat with Suspicious)
-		int32 CurrentScore = ControlledCharacter->PriorityData->StatePriorities.FindRef(ExistingData->DesiredStateTag);
+		int32 CurrentScore = ControlledCharacter->PriorityData->StatePriorities.FindRef(ExistingTargetData->DesiredStateTag);
 		int32 ProposedScore = ControlledCharacter->PriorityData->StatePriorities.FindRef(ReactionTag);
 
 		if (ProposedScore > CurrentScore)
 		{
-			ExistingData->DesiredStateTag = ReactionTag;
+			ExistingTargetData->DesiredStateTag = ReactionTag;
 		}
 				
-		ExistingData->LastKnownLocation = TargetActor->GetActorLocation();
+		ExistingTargetData->LastKnownLocation = TargetActor->GetActorLocation();
 	}
 	else
 	{
 		// Entirely new target, add them to memory
-		FPerceivedData NewData;
-		NewData.TargetActor = TargetActor;
-		NewData.DesiredStateTag = ReactionTag;
-		NewData.LastKnownLocation = TargetActor->GetActorLocation();
+		FPerceivedData NewTargetData;
+		NewTargetData.TargetActor = TargetActor;
+		NewTargetData.DesiredStateTag = ReactionTag;
+		NewTargetData.LastKnownLocation = TargetActor->GetActorLocation();
 				
-		KnownTargets.Add(NewData);
+		KnownTargets.Add(NewTargetData);
 	}
 }
 
-void ACoreAIController::ProcessTargetLost(AActor* TargetActor, FPerceivedData* ExistingData, FGameplayTag ReactionTag,
-	const FAIStimulus& Stimulus)
+void ACoreAIController::ProcessTargetLost(AActor* TargetActor, const FGameplayTag ReactionTag, const FAIStimulus& Stimulus)
 {
-	if (ExistingData)
+	FPerceivedData* ExistingTargetData = KnownTargets.FindByKey(TargetActor);
+	if (!ExistingTargetData) return;
+
+	// MULTI-SENSE CHECK: Only evaluate a downgrade if we have completely lost ALL active senses on this target.
+	// IMPORTANT!:
+	// This essentially checks WasSuccessfullySensed() for each sense.
+	// Continuous senses such as Sight return false if player is not visible, even if MaxAge has not run out.
+	// Event based senses such as Hearing and Damage return true until MaxAge runs out.
+	if (!CorePerceptionComponent->HasAnyCurrentStimulus(*TargetActor))
 	{
-		// If MaxAge on a sense expired
-		if (Stimulus.IsExpired())
-		{
-			// The AI has forgotten this actor so we wipe all our info on the actor
-			KnownTargets.RemoveAll([TargetActor](const FPerceivedData& Data) {
-				return Data.TargetActor == TargetActor;
-			});
-					
-			// We dont want to run anything else
-			return;
-		}
-
-		// MULTI-SENSE CHECK: Only evaluate a downgrade if we have completely lost ALL active senses on this target
-		if (!CorePerceptionComponent->HasAnyCurrentStimulus(*TargetActor))
-		{
-			ExistingData->LastKnownLocation = TargetActor->GetActorLocation();
+		ExistingTargetData->LastKnownLocation = Stimulus.StimulusLocation;
                 
-			// Threshold check
-			if (AbilitySystemComponent)
-			{
-				const float CurrentDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetDetectionLevelAttribute());
-				const float MaxDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetMaxDetectionAttribute());
+		// Threshold check
+		if (AbilitySystemComponent)
+		{
+			const float CurrentDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetDetectionLevelAttribute());
+			const float MaxDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetMaxDetectionAttribute());
               
-				const float InvestigationThreshold = MaxDetection * 0.3f;
+			const float SearchThreshold = MaxDetection * DetectionData->SearchThresholdPercent;
 
-				// If detection level is higher than our designated threshold when losing sight,
-				// apply the searching tag
-				if (CurrentDetection >= InvestigationThreshold)
-				{
-					ExistingData->DesiredStateTag = ReactionTag;
-				}
-				else
-				{
-					// The AIs detection level is too low to apply searching tag
-					ExistingData->DesiredStateTag = GASCoreTags::State_AI_Routine;
-				}
+			// If detection level is higher than our designated threshold when losing sight,
+			// apply the searching tag
+			if (CurrentDetection >= SearchThreshold)
+			{
+				ExistingTargetData->DesiredStateTag = ReactionTag;
 			}
 			else
 			{
-				ExistingData->DesiredStateTag = ReactionTag;
+				// The AIs detection level is too low to apply searching tag
+				ExistingTargetData->DesiredStateTag = GASCoreTags::State_AI_Routine;
 			}
 		}
+		else
+		{
+			ExistingTargetData->DesiredStateTag = ReactionTag;
+		}
 	}
+	
+	PruneTargets();
+}
+
+void ACoreAIController::PruneTargets()
+{
+	KnownTargets.RemoveAll([this](const FPerceivedData& Data) {
+		if (!IsValid(Data.TargetActor)) return true;
+
+		// Checking if MaxAge has expired on all stimuli
+		const FActorPerceptionInfo* ActorInfo = CorePerceptionComponent->GetActorInfo(*Data.TargetActor);
+		const bool bHasActivePerception = ActorInfo && ActorInfo->HasAnyKnownStimulus();
+
+		// Checking if detection is 0 or active.
+		// We only check the detection when dealing with our currently focused target.
+		// We default to false for non-current targets
+		bool bHasActiveDetection = false;
+		if (AbilitySystemComponent && CurrentTargetData.TargetActor == Data.TargetActor)
+		{
+		   const float CurrentDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetDetectionLevelAttribute());
+		   bHasActiveDetection = (CurrentDetection > 0.f);
+		}
+
+		// If we have no perception AND no detection, delete target
+		return !bHasActivePerception && !bHasActiveDetection;
+	});
 }
 
 void ACoreAIController::EvaluateBestTarget()
@@ -226,6 +315,14 @@ void ACoreAIController::EvaluateBestTarget()
 				ClosestDistanceSq = DistanceSq;
 			}
 		}
+	}
+	
+	// If all valid targets have been removed due to MaxAge running out on all senses,
+	// clear target and go back to routine
+	if (!BestTargetData.DesiredStateTag.IsValid())
+	{
+		BestTargetData.DesiredStateTag = GASCoreTags::State_AI_Routine;
+		BestTargetData.TargetActor = nullptr;
 	}
 
 	const FGameplayTag NewTag = BestTargetData.DesiredStateTag;
@@ -306,19 +403,21 @@ void ACoreAIController::OnDetectionLevelChanged(const FOnAttributeChangeData& Da
 	{
 		if (CurrentTargetData.TargetActor)
 		{
-			// Update to combat state if we see the target
-			if (CorePerceptionComponent->HasActiveStimulus(*CurrentTargetData.TargetActor, UAISense::GetSenseID<UAISense_Sight>()))
-			{
-				UpdateTargetState(CurrentTargetData.TargetActor, GASCoreTags::State_AI_Combat);
-			}
+			UpdateTargetState(CurrentTargetData.TargetActor, GASCoreTags::State_AI_Combat);
 		}
 	}
 	else if (Data.OldValue > 0.f && Data.NewValue <= 0.f)
 	{
-		if (!CorePerceptionComponent->HasActiveStimulus(*CurrentTargetData.TargetActor, UAISense::GetSenseID<UAISense_Sight>()))
+		if (CurrentTargetData.TargetActor)
 		{
-			UpdateTargetState(CurrentTargetData.TargetActor, GASCoreTags::State_AI_Routine);
+			if (!CorePerceptionComponent->HasActiveStimulus(*CurrentTargetData.TargetActor, UAISense::GetSenseID<UAISense_Sight>()))
+			{
+				UpdateTargetState(CurrentTargetData.TargetActor, GASCoreTags::State_AI_Routine);
+			}
 		}
+		
+		PruneTargets();
+		EvaluateBestTarget();
 	}
 }
 
@@ -326,14 +425,14 @@ void ACoreAIController::UpdateTargetState(AActor* Target, FGameplayTag NewStateT
 {
 	if (!IsValid(Target)) return;	
 	
-	if (FPerceivedData* ExistingData = KnownTargets.FindByKey(Target))
+	if (FPerceivedData* ExistingTargetData = KnownTargets.FindByKey(Target))
 	{
-		if (ExistingData->DesiredStateTag == NewStateTag)
+		if (ExistingTargetData->DesiredStateTag == NewStateTag)
 		{
 			return;
 		}
 		
-		ExistingData->DesiredStateTag = NewStateTag;
+		ExistingTargetData->DesiredStateTag = NewStateTag;
 		// Re-evaluate best target
 		EvaluateBestTarget();
 	}

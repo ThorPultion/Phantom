@@ -19,7 +19,7 @@ void UGA_Knockback::ActivateAbility(const FGameplayAbilitySpecHandle Handle, con
 		return;
 	}
 
-	AActor* AvatarActor = ActorInfo->AvatarActor.Get();
+	const AActor* AvatarActor = ActorInfo->AvatarActor.Get();
 	if (!AvatarActor || !TriggerEventData)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
@@ -27,32 +27,40 @@ void UGA_Knockback::ActivateAbility(const FGameplayAbilitySpecHandle Handle, con
 	}
 
 	// Hit and magnitude data passed here through payload
-	float KnockbackMagnitude = TriggerEventData->EventMagnitude;
-	FVector ImpactNormal = FVector::ZeroVector;
+	const float KnockbackMagnitude = TriggerEventData->EventMagnitude;
 	FVector ImpactLocation = AvatarActor->GetActorLocation();
 	FVector PushDirection = FVector::ZeroVector;
 
 	// Using hit data for location and direction
 	if (const FHitResult* HitResult = TriggerEventData->ContextHandle.GetHitResult())
 	{
-		ImpactNormal = HitResult->ImpactNormal;
 		ImpactLocation = HitResult->ImpactPoint;
 		PushDirection = (HitResult->TraceEnd - HitResult->TraceStart).GetSafeNormal();
 	}
-	else if (const AActor* Instigator = TriggerEventData->Instigator.Get())
-	{
-		ImpactNormal = (AvatarActor->GetActorLocation() - Instigator->GetActorLocation()).GetSafeNormal();
-	}
-
+	
+	// Fallback 1, forward vector of arrow
 	if (PushDirection.IsNearlyZero())
 	{
-		PushDirection = -ImpactNormal;
+		if (const AActor* EffectCauser = TriggerEventData->ContextHandle.GetEffectCauser())
+		{
+			PushDirection = EffectCauser->GetActorForwardVector();
+		}
 	}
+	
+	// Fallback 2, direction from instigator to target
+	if (PushDirection.IsNearlyZero())
+	{
+		if (const AActor* Instigator = TriggerEventData->Instigator.Get())
+		{
+			PushDirection = (AvatarActor->GetActorLocation() - Instigator->GetActorLocation()).GetSafeNormal();
+		}
+	}
+	
 	PushDirection.Z = FMath::Max(PushDirection.Z, ImpulseLiftModifier);
 	PushDirection.Normalize();
 
 	// If character, do root motion task. If not, do impulse
-	if (UCharacterMovementComponent* CMC = AvatarActor->FindComponentByClass<UCharacterMovementComponent>())
+	if (AvatarActor->FindComponentByClass<UCharacterMovementComponent>())
 	{
 		UAbilityTask_ApplyRootMotionConstantForce* KnockbackTask = UAbilityTask_ApplyRootMotionConstantForce::ApplyRootMotionConstantForce(
 			this,

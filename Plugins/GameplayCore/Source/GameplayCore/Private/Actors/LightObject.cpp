@@ -64,6 +64,6 @@ void ALightObject::OnLitTagChanged(const FGameplayTag CallbackTag, int32 NewCoun
 	}
 	else
 	{
-		ParticleComponent->Deactivate();
+		ParticleComponent->DeactivateImmediate();
 	}
 }

@@ -10,7 +10,9 @@ class UEnvQuery;
 class APatrolPoint;
 class AAIController;
 
-/** Thread safe bridge to hold data between the background EQS thread and the StateTree Game Thread. */
+/** 
+ * Thread safe bridge to hold data between the background EQS thread and the StateTree Game Thread.
+ */
 struct FPatrolQueryBridge
 {
 	bool bIsFinished = false;
@@ -19,8 +21,10 @@ struct FPatrolQueryBridge
 	FVector PointLocation = FVector::ZeroVector;
 };
 
-/** Instance data for the Claim Patrol Point task.
-* Exposes parameters to the StateTree editor UI. */
+/** 
+ * Instance data for the Claim Patrol Point task.
+ * Exposes parameters to the StateTree editor UI.
+ */
 USTRUCT()
 struct FStateTreeTask_ClaimPatrolPoint_InstanceData
 {
@@ -59,7 +63,9 @@ struct FStateTreeTask_ClaimPatrolPoint_InstanceData
 	TSharedPtr<FPatrolQueryBridge> QueryBridge = nullptr;
 };
 
-/** Executes an EQS query to find available patrol points, claims the highest scoring unclaimed point, and outputs it */
+/** 
+ * Executes an EQS query to find available patrol points, claims the highest scoring unclaimed point, and outputs it
+ */
 USTRUCT(meta = (DisplayName = "Find And Claim Next Patrol Point", Category = "Patrol"))
 struct AICORE_API FStateTreeTask_ClaimPatrolPoint : public FStateTreeTaskCommonBase
 {

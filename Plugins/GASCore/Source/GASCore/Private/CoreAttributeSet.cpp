@@ -6,6 +6,7 @@
 #include "GameplayEffectExtension.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "GASCoreTags.h"
+#include "Perception/AISense_Damage.h"
 
 UCoreAttributeSet::UCoreAttributeSet()
 {
@@ -54,6 +55,8 @@ void UCoreAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
+		TryReportDamageSense(Data);
+		
 		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
 
 		// Gameplay events for ability triggering
@@ -72,7 +75,7 @@ void UCoreAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 	}
 }
 
-void UCoreAttributeSet::HandleDeath(const FGameplayEffectModCallbackData& Data)
+void UCoreAttributeSet::HandleDeath(const FGameplayEffectModCallbackData& Data) const
 {
 	float ImpactForce = 0.f;
 
@@ -90,7 +93,7 @@ void UCoreAttributeSet::HandleDeath(const FGameplayEffectModCallbackData& Data)
 	GetOwningAbilitySystemComponent()->HandleGameplayEvent(Payload.EventTag, &Payload);
 }
 
-void UCoreAttributeSet::TryTriggerKnockback(const FGameplayEffectModCallbackData& Data)
+void UCoreAttributeSet::TryTriggerKnockback(const FGameplayEffectModCallbackData& Data) const
 {
 	// Check if the GE is supposed to knock back
 	const FGameplayTagContainer& AssetTags = Data.EffectSpec.Def->GetAssetTags();
@@ -107,7 +110,39 @@ void UCoreAttributeSet::TryTriggerKnockback(const FGameplayEffectModCallbackData
 	}
 }
 
-FGameplayEventData UCoreAttributeSet::CreateEventPayload(const FGameplayEffectModCallbackData& Data, float EventMagnitude)
+void UCoreAttributeSet::TryReportDamageSense(const FGameplayEffectModCallbackData& Data) const
+{
+	// We only report if the change was negative (Damage, not Healing)
+	const float Magnitude = Data.EvaluatedData.Magnitude;
+	if (Magnitude >= 0.f) return;
+	
+	const float DamageTaken = FMath::Abs(Magnitude);
+	AActor* TargetActor = GetOwningActor();
+	AActor* InstigatorActor = Data.EffectSpec.GetEffectContext().GetInstigator();
+
+	// Ensure both actors exist and ensure this isnt a self damage event
+	if (IsValid(TargetActor) && IsValid(InstigatorActor) && TargetActor != InstigatorActor)
+	{
+		// Attempt to grab the exact hit location on the body
+		FVector HitLocation = TargetActor->GetActorLocation();
+		if (const FHitResult* HitResult = Data.EffectSpec.GetEffectContext().GetHitResult())
+		{
+			HitLocation = HitResult->ImpactPoint;
+		}
+
+		// Broadcasting to the AI Perception System
+		UAISense_Damage::ReportDamageEvent(
+		   TargetActor->GetWorld(),
+		   TargetActor,
+		   InstigatorActor,
+		   DamageTaken,
+		   InstigatorActor->GetActorLocation(),
+		   HitLocation
+		);
+	}
+}
+
+FGameplayEventData UCoreAttributeSet::CreateEventPayload(const FGameplayEffectModCallbackData& Data, const float EventMagnitude) const
 {
 	FGameplayEventData Payload;
 	Payload.Instigator = Data.EffectSpec.GetEffectContext().GetOriginalInstigator();
