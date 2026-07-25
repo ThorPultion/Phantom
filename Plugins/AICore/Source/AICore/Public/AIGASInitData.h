@@ -6,9 +6,8 @@
 #include "Data/GASInitData.h"
 #include "AIGASInitData.generated.h"
 
-/**
- * 
- */
+/** Data for AI specific GAS Initialization
+ * (regular GASInit runs on inherited base character, AIGASInit adds AI specific initialization) */
 UCLASS()
 class AICORE_API UAIGASInitData : public UGASInitData
 {
@@ -16,10 +15,11 @@ class AICORE_API UAIGASInitData : public UGASInitData
 
 public:
 
-	// The raw stat for SetByCaller magnitude for AI perception
+	/** Raw stat for SetByCaller magnitude for AIs attribute initialization */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
 	float MaxDetection = 100.f;
 
+	/** Initialization handling GE */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Initialization")
 	TSubclassOf<UGameplayEffect> AIInitializationEffect;
 };

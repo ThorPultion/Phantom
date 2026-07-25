@@ -56,11 +56,12 @@ public:
 
 protected:
 	// Action helpers (Side Effects from damage)
-	void HandleDeath(const FGameplayEffectModCallbackData& Data);
-	void TryTriggerKnockback(const FGameplayEffectModCallbackData& Data);
+	void HandleDeath(const FGameplayEffectModCallbackData& Data) const;
+	void TryTriggerKnockback(const FGameplayEffectModCallbackData& Data) const;
+	void TryReportDamageSense(const FGameplayEffectModCallbackData& Data) const;
 
 	// Payload generator
-	FGameplayEventData CreateEventPayload(const FGameplayEffectModCallbackData& Data, float EventMagnitude = 0.f);
+	FGameplayEventData CreateEventPayload(const FGameplayEffectModCallbackData& Data, const float EventMagnitude = 0.f) const;
 
 	UFUNCTION()
 	virtual void OnRep_Health(const FGameplayAttributeData& OldHealth);

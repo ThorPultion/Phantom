@@ -11,6 +11,7 @@ class UStateTreeAIComponent;
 class UCoreAIPerceptionComponent;
 class ACoreAICharacter;
 class UAbilitySystemComponent;
+class UAIDetectionData;
 struct FAIStimulus;
 struct FOnAttributeChangeData;
 
@@ -102,13 +103,28 @@ protected:
 
 	void OnDetectionLevelChanged(const FOnAttributeChangeData& Data);
 	FDelegateHandle DetectionDelegateHandle;
+	
+	void HandleSightSense(AActor* Actor, const FAIStimulus& Stimulus) const;
+	void HandleHearingSense(AActor* Actor, const FAIStimulus& Stimulus) const;
+	void HandleDamageSense(AActor* Actor, const FAIStimulus& Stimulus) const;
+	void HandleTeamSense(AActor* Actor, const FAIStimulus& Stimulus) const;
 
 	/** Update targets current state tag to input param tag */
 	void UpdateTargetState(AActor* Target, FGameplayTag NewStateTag);
 	
-	void ProcessTargetSensed(AActor* TargetActor, FPerceivedData* ExistingData, const FGameplayTag ReactionTag);
+	void ProcessTargetSensed(AActor* TargetActor, const FGameplayTag ReactionTag, const FVector& StimulusLocation);
 	
-	void ProcessTargetLost(AActor* TargetActor, FPerceivedData* ExistingData, FGameplayTag ReactionTag, const FAIStimulus&);
+	void ProcessTargetLost(AActor* TargetActor, const FGameplayTag ReactionTag, const FAIStimulus&);
+	
+	/** Applies an amount of detection level to the AI instantly */
+	void ApplyDetectionImpulse(AActor* InstigatorActor, const float DetectionAmount) const;
+	
+	/** Perception event handling data for the Detection attribute. Detection dictates AI state */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Detection")
+	TObjectPtr<UAIDetectionData> DetectionData;
+	
+	/** Removes targets from memory if they have no active perception AND no remaining detection level */
+	void PruneTargets();
 	
 private:
 	bool bIsEvaluatingTargets = false;

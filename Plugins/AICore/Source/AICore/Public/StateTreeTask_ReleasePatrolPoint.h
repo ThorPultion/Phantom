@@ -8,7 +8,9 @@
 
 class APatrolPoint;
 
-/** Instance data for releasing a patrol point. */
+/** 
+ * Instance data for releasing a patrol point.
+ */
 USTRUCT()
 struct AICORE_API FStateTreeTask_ReleasePatrolPoint_InstanceData
 {
@@ -23,7 +25,9 @@ struct AICORE_API FStateTreeTask_ReleasePatrolPoint_InstanceData
 	TObjectPtr<APatrolPoint> OutPatrolPoint = nullptr;
 };
 
-/** Releases a claimed patrol point so other AI can claim and use it. */
+/** 
+ * Releases a claimed patrol point so other AI can claim and use it.
+ */
 USTRUCT(meta = (DisplayName = "Release Patrol Point"), Category = "Patrol")
 struct AICORE_API FStateTreeTask_ReleasePatrolPoint : public FStateTreeTaskCommonBase
 {

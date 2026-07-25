@@ -17,9 +17,13 @@ class GAMEPLAYCORE_API UGA_Knockback : public UCoreGameplayAbility
 public:
 	UGA_Knockback();
 
-	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
-
 protected:
+	
+	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle,
+		const FGameplayAbilityActorInfo* ActorInfo,
+		const FGameplayAbilityActivationInfo ActivationInfo,
+		const FGameplayEventData* TriggerEventData) override;
+	
 	// The callback that fires when the root motion timer expires
 	UFUNCTION()
 	void OnKnockbackFinished();
