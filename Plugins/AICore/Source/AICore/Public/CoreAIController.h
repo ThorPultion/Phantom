@@ -126,6 +126,10 @@ protected:
 	/** Removes targets from memory if they have no active perception AND no remaining detection level */
 	void PruneTargets();
 	
+	void TryBroadcastAllyAlert() const;
+	
+	float GetSearchThreshold() const;
+	
 private:
 	bool bIsEvaluatingTargets = false;
 	bool bEvaluationPending = false;

@@ -16,15 +16,15 @@ class GAMEPLAYCORE_API UAIReactionData : public UPrimaryDataAsset
 	GENERATED_BODY()
 	
 public:
-	/** The effect to apply when the AI successfully spots this alive target */
+	/** The tag to apply when the AI successfully spots this alive target */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Reactions")
 	FGameplayTag SensedAliveTag;
 
-	/** The effect to apply when the AI loses sight of this target */
+	/** The tag to apply when the AI loses sight of this target */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Reactions")
 	FGameplayTag LostSightTag;
 
-	/** The effect to apply when the AI spots this target and it has the Dead tag */
+	/** The tag to apply when the AI spots this target and it has the Dead tag */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Reactions")
 	FGameplayTag SensedDeadTag;
 };

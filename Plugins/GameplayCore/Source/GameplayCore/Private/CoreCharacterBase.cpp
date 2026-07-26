@@ -206,12 +206,6 @@ FGameplayTag ACoreCharacterBase::GetPerceptionTag_Implementation(ETeamAttitude::
 			return ReactionData->LostSightTag;
 		}
 	}
-
-	if (ObserverAttitude == ETeamAttitude::Friendly)
-	{
-		// Add something for friendly sightings (AI seeing other AI in a fight, AI joins fight)
-	}
-
 	return FGameplayTag::EmptyTag;
 }
 
