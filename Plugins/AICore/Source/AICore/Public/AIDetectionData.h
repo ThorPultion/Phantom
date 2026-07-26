@@ -28,6 +28,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Modifier", meta = (ClampMin = "0.0", ClampMax = "100.0"))
 	float DetectionBuildRate = 5.f;
 	
+	/** How far do we want to broadcast AIs Team events */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Team", meta = (ClampMin = "0.0", ClampMax = "10000.0"))
+	float TeamBroadcastRange = 1500.f;
+	
 	/** For AI perception events that should build detection level */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
 	TSubclassOf<UGameplayEffect> DetectionBuildGEClass;

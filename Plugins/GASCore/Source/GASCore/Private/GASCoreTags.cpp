@@ -26,6 +26,7 @@ namespace GASCoreTags
 	UE_DEFINE_GAMEPLAY_TAG(State_LightSource_Lit, "State.LightSource.Lit");
 	UE_DEFINE_GAMEPLAY_TAG(State_AI_Combat, "State.AI.Combat");
 	UE_DEFINE_GAMEPLAY_TAG(State_AI_Routine, "State.AI.Routine");
+	UE_DEFINE_GAMEPLAY_TAG(State_AI_RespondingToTeam, "State.AI.RespondingToTeam");
 
 	// --- Data ---
 	UE_DEFINE_GAMEPLAY_TAG(Data_Magnitude_Force, "Data.Magnitude.Force");

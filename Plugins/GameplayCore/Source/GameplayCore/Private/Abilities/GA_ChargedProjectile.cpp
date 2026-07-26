@@ -3,12 +3,14 @@
 #include "Abilities/GA_ChargedProjectile.h"
 #include "Abilities/Tasks/AbilityTask_WaitInputRelease.h"
 #include "AbilitySystemComponent.h"
+#include "AIController.h"
 #include "GASCoreTags.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "GameFramework/Actor.h"
 #include "Components/EquipmentComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Actors/EquipmentBase.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 #include "Interfaces/ProjectileProvider.h"
 
 UGA_ChargedProjectile::UGA_ChargedProjectile()
@@ -96,6 +98,9 @@ void UGA_ChargedProjectile::OnMontageEventReceived_Implementation(FGameplayEvent
 	// Getting player
 	AActor* Avatar = GetAvatarActorFromActorInfo();
 	if (!IsValid(Avatar)) return;
+	
+	APawn* AvatarPawn = Cast<APawn>(Avatar);
+	if (!IsValid(AvatarPawn)) return;
 
 	// Finding EquipmentComponent.
 	// We could technically cache this in OnAvatarSet to avoid findcomponent time cost,
@@ -105,8 +110,7 @@ void UGA_ChargedProjectile::OnMontageEventReceived_Implementation(FGameplayEvent
 	if (!EquipComp) return;
 
 	AEquipmentBase* EquippedWeapon = EquipComp->GetCurrentItem();
-	if (!IsValid(EquippedWeapon)) return;
-	if (!EquippedWeapon->Implements<UProjectileProvider>()) return;
+	if (!IsValid(EquippedWeapon) || !EquippedWeapon->Implements<UProjectileProvider>()) return;
 
 	TSubclassOf<AActor> ProjectileToSpawn = IProjectileProvider::Execute_GetCurrentProjectileClass(EquippedWeapon);
 	if (!ProjectileToSpawn) return;
@@ -115,45 +119,73 @@ void UGA_ChargedProjectile::OnMontageEventReceived_Implementation(FGameplayEvent
 	FTransform SocketTransform = IProjectileProvider::Execute_GetProjectileSpawnTransform(EquippedWeapon);
 	SpawnLocation = SocketTransform.GetLocation();
 
-	APawn* AvatarPawn = Cast<APawn>(Avatar);
-
 	FRotator SpawnRotation;
 
-	if (AvatarPawn)
+	if (APlayerController* PC = Cast<APlayerController>(AvatarPawn->GetController()))
 	{
-		// If AI, use this rotation
-		SpawnRotation = AvatarPawn->GetBaseAimRotation();
+		// --- PLAYER LOGIC: Camera Line Trace ---
+		FVector CameraLoc;
+		FRotator CameraRot;
 
-		if (APlayerController* PC = Cast<APlayerController>(AvatarPawn->GetController()))
+		// Extract location and rotation from camera
+		PC->GetPlayerViewPoint(CameraLoc, CameraRot);
+
+		// Trace way out into the distance (e.g., 10,000 units = 100 meters)
+		FVector TraceEnd = CameraLoc + (CameraRot.Vector() * 10000.0f);
+
+		FHitResult HitResult;
+		FCollisionQueryParams QueryParams;
+		QueryParams.AddIgnoredActor(Avatar);
+
+		bool bHit = GetWorld()->LineTraceSingleByChannel(
+			HitResult,
+			CameraLoc,
+			TraceEnd,
+			ECC_Visibility, // Could make a new trace channel for aiming?
+			QueryParams
+		);
+
+		// If trace hit something, aim at the impact point. 
+		// If trace hit nothing, aim at the end of the trace
+		FVector TargetLocation = bHit ? HitResult.ImpactPoint : TraceEnd;
+
+		// Angling the projectile from the socket to the target
+		SpawnRotation = UKismetMathLibrary::FindLookAtRotation(SpawnLocation, TargetLocation);
+	}
+	// --- AI LOGIC: Predictive Aiming ---
+	else if (AAIController* AIController = Cast<AAIController>(AvatarPawn->GetController()))
+	{
+		const AActor* TargetActor = AIController->GetFocusActor();
+      
+		if (IsValid(TargetActor))
 		{
-			// --- PLAYER LOGIC: Camera Line Trace ---
-			FVector CameraLoc;
-			FRotator CameraRot;
+			// Extracting the projectiles speed
+			float ProjectileSpeed = 5000.0f; // Fallback speed
+			if (const AActor* ProjectileCDO = ProjectileToSpawn->GetDefaultObject<AActor>())
+			{
+				if (const UProjectileMovementComponent* MoveComp = ProjectileCDO->FindComponentByClass<UProjectileMovementComponent>())
+				{
+					ProjectileSpeed = MoveComp->InitialSpeed;
+				}
+			}
 
-			// Extract location and rotation from camera
-			PC->GetPlayerViewPoint(CameraLoc, CameraRot);
+			const FVector TargetLoc = TargetActor->GetActorLocation();
+			const FVector TargetVel = TargetActor->GetVelocity();
 
-			// Trace way out into the distance (e.g., 10,000 units = 100 meters)
-			FVector TraceEnd = CameraLoc + (CameraRot.Vector() * 10000.0f);
+			// Two-pass iterative prediction to find the interception point
+			float Distance = FVector::Dist(SpawnLocation, TargetLoc);
+			float TimeToImpact = Distance / FMath::Max(ProjectileSpeed, 1.0f);
+         
+			// First prediction pass
+			FVector PredictedLoc = TargetLoc + (TargetVel * TimeToImpact);
+         
+			// Second prediction pass (refines accuracy based on the new predicted distance)
+			Distance = FVector::Dist(SpawnLocation, PredictedLoc);
+			TimeToImpact = Distance / FMath::Max(ProjectileSpeed, 1.0f);
+			PredictedLoc = TargetLoc + (TargetVel * TimeToImpact);
 
-			FHitResult HitResult;
-			FCollisionQueryParams QueryParams;
-			QueryParams.AddIgnoredActor(Avatar);
-
-			bool bHit = GetWorld()->LineTraceSingleByChannel(
-				HitResult,
-				CameraLoc,
-				TraceEnd,
-				ECC_Visibility, // Could make a new trace channel for aiming?
-				QueryParams
-			);
-
-			// If trace hit something, aim at the impact point. 
-			// If trace hit nothing, aim at the end of the trace
-			FVector TargetLocation = bHit ? HitResult.ImpactPoint : TraceEnd;
-
-			// Angling the projectile from the socket to the target
-			SpawnRotation = UKismetMathLibrary::FindLookAtRotation(SpawnLocation, TargetLocation);
+			// Aim at the predicted future location
+			SpawnRotation = UKismetMathLibrary::FindLookAtRotation(SpawnLocation, PredictedLoc);
 		}
 	}
 

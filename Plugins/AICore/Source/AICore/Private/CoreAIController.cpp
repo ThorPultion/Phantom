@@ -49,6 +49,15 @@ void ACoreAIController::OnPossess(APawn* InPawn)
 	{
 		CorePerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ACoreAIController::OnTargetPerceptionUpdated);
 	}
+	
+	// --- Refresh cached Team ID in the Perception System ---
+	if (CorePerceptionComponent && GetWorld())
+	{
+		if (UAIPerceptionSystem* PerceptionSystem = UAIPerceptionSystem::GetCurrent(GetWorld()))
+		{
+			PerceptionSystem->UpdateListener(*CorePerceptionComponent);
+		}
+	}
 }
 
 void ACoreAIController::OnUnPossess()
@@ -74,8 +83,7 @@ void ACoreAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Sti
 	if (!IsValid(Actor) || !Actor->Implements<UPerceivable>()) return;
 	
 	// The sensed object will decide what state tag to apply
-	const FGameplayTag ReactionTag = IPerceivable::Execute_GetPerceptionTag(Actor, GetTeamAttitudeTowards(*Actor), Stimulus);
-	if (!ReactionTag.IsValid()) return;
+	FGameplayTag ReactionTag = IPerceivable::Execute_GetPerceptionTag(Actor, GetTeamAttitudeTowards(*Actor), Stimulus);
 	
 	const FAISenseID SenseID = Stimulus.Type;
 
@@ -93,8 +101,12 @@ void ACoreAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Sti
 	}
 	else if (SenseID == UAISense::GetSenseID<UAISense_Team>())
 	{
+		GEngine->AddOnScreenDebugMessage(-1, 10, FColor::Magenta, "Received team event");
+		ReactionTag = GASCoreTags::State_AI_RespondingToTeam;
 		HandleTeamSense(Actor, Stimulus);
 	}
+	
+	if (!ReactionTag.IsValid()) return;
 	
 	// Apply Escalation / De-escalation Rules
 	if (Stimulus.WasSuccessfullySensed())
@@ -133,7 +145,10 @@ void ACoreAIController::HandleDamageSense(AActor* Actor, const FAIStimulus& Stim
 
 void ACoreAIController::HandleTeamSense(AActor* Actor, const FAIStimulus& Stimulus) const
 {
-	if (!Stimulus.WasSuccessfullySensed()) return;
+	if (!Stimulus.WasSuccessfullySensed() || !AbilitySystemComponent) return;
+	
+	const float MaxDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetMaxDetectionAttribute());
+	ApplyDetectionImpulse(Actor, MaxDetection * DetectionData->SearchThresholdPercent);
 }
 
 void ACoreAIController::ApplyDetectionImpulse(AActor* InstigatorActor, const float DetectionAmount) const
@@ -369,6 +384,53 @@ void ACoreAIController::EvaluateBestTarget()
 	}
 }
 
+void ACoreAIController::TryBroadcastAllyAlert() const
+{
+	if (!AbilitySystemComponent || !IsValid(ControlledCharacter) || !GetWorld()) return;
+
+	// Must NOT be in Routine, and must NOT be responding to someone elses alert
+	const FGameplayTag CurrentState = CurrentTargetData.DesiredStateTag;
+	if (!CurrentState.IsValid() || 
+		CurrentState == GASCoreTags::State_AI_Routine || 
+		CurrentState == GASCoreTags::State_AI_RespondingToTeam) 
+	{
+		return;
+	}
+
+	// Checking that detection is above search threshold
+	const float CurrentDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetDetectionLevelAttribute());
+	if (CurrentDetection <= GetSearchThreshold())
+	{
+		return;
+	}
+
+	// Ensuring we have a valid location to send over
+	FVector AlertLocation = CurrentTargetData.LastKnownLocation;
+	if (AlertLocation.IsZero())
+	{
+		AlertLocation = IsValid(CurrentTargetData.TargetActor) ? 
+		   CurrentTargetData.TargetActor->GetActorLocation() : 
+		   ControlledCharacter->GetActorLocation();
+	}
+	
+	// Grabbing the global perception system from the world
+	if (UAIPerceptionSystem* PerceptionSystem = UAIPerceptionSystem::GetCurrent(GetWorld()))
+	{
+		// Constructing the event struct
+		const FAITeamStimulusEvent TeamEvent(
+		   ControlledCharacter,               // Broadcaster
+		   CurrentTargetData.TargetActor,     // Enemy (can be nullptr)
+		   AlertLocation,                        // Location
+		   DetectionData->TeamBroadcastRange     // Broadcast Range
+		);
+
+		// Pushing it into the Perception System
+		PerceptionSystem->OnEvent(TeamEvent);
+		
+		GEngine->AddOnScreenDebugMessage(-1, 10, FColor::Magenta, "Sending team event");
+	}
+}
+
 ETeamAttitude::Type ACoreAIController::GetTeamAttitudeTowards(const AActor& Other) const
 {
 	// If no team interface implemented, neutral
@@ -398,6 +460,13 @@ void ACoreAIController::OnDetectionLevelChanged(const FOnAttributeChangeData& Da
 {
 	if (!AbilitySystemComponent) return;
 
+	const float SearchThreshold = GetSearchThreshold();
+	// Broadcast ally alert if value raises past the search threshold
+	if (Data.OldValue <= SearchThreshold && Data.NewValue > SearchThreshold)
+	{
+		TryBroadcastAllyAlert();
+	}
+	
 	// If the meter is full
 	if (Data.NewValue >= AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetMaxDetectionAttribute()))
 	{
@@ -467,4 +536,15 @@ FVector ACoreAIController::GetFocalPointOnActor(const AActor* Actor) const
 	}
 
 	return FAISystem::InvalidLocation;
+}
+
+float ACoreAIController::GetSearchThreshold() const
+{
+	if (!AbilitySystemComponent || !DetectionData)
+	{
+		return 0.0f;
+	}
+
+	const float MaxDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetMaxDetectionAttribute());
+	return MaxDetection * DetectionData->SearchThresholdPercent;
 }
