@@ -42,15 +42,22 @@ void ACoreAIController::OnPossess(APawn* InPawn)
 		AbilitySystemComponent = ControlledCharacter->GetAbilitySystemComponent();
 	}
 
-	DetectionDelegateHandle = AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-		UAIAttributeSet::GetDetectionLevelAttribute()).AddUObject(this, &ACoreAIController::OnDetectionLevelChanged);
+	if (AbilitySystemComponent)
+	{
+		DetectionDelegateHandle = AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+	UAIAttributeSet::GetDetectionLevelAttribute()).AddUObject(this, &ACoreAIController::OnDetectionLevelChanged);
+	}
 	
 	if (CorePerceptionComponent)
 	{
 		CorePerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ACoreAIController::OnTargetPerceptionUpdated);
 	}
 	
-	// --- Refresh cached Team ID in the Perception System ---
+	// Refresh cached Team ID in the Perception System
+	// Necessary for Perception System because TeamID lives in character and thus doesnt exist immediately.
+	// Perception system takes the empty TeamID and does not refresh it until told so.
+	// Other way of dealing with this is having TeamID in controller, but
+	// logically I feel characters have teams, not controllers.
 	if (CorePerceptionComponent && GetWorld())
 	{
 		if (UAIPerceptionSystem* PerceptionSystem = UAIPerceptionSystem::GetCurrent(GetWorld()))
@@ -86,24 +93,15 @@ void ACoreAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Sti
 	FGameplayTag ReactionTag = IPerceivable::Execute_GetPerceptionTag(Actor, GetTeamAttitudeTowards(*Actor), Stimulus);
 	
 	const FAISenseID SenseID = Stimulus.Type;
-
-	if (SenseID == UAISense::GetSenseID<UAISense_Sight>())
+	// If we receive a Team stimulus
+	if (SenseID == UAISense::GetSenseID<UAISense_Team>())
 	{
-		HandleSightSense(Actor, Stimulus);
-	}
-	else if (SenseID == UAISense::GetSenseID<UAISense_Hearing>())
-	{
-		HandleHearingSense(Actor, Stimulus);
-	}
-	else if (SenseID == UAISense::GetSenseID<UAISense_Damage>())
-	{
-		HandleDamageSense(Actor, Stimulus);
-	}
-	else if (SenseID == UAISense::GetSenseID<UAISense_Team>())
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 10, FColor::Magenta, "Received team event");
-		ReactionTag = GASCoreTags::State_AI_RespondingToTeam;
-		HandleTeamSense(Actor, Stimulus);
+		// Asking our own character (so the AI itself) what its Team Assist tag is
+		if (IsValid(ControlledCharacter) && ControlledCharacter->ReactionData)
+		{
+			// Overriding earlier ReactionTag assignment
+			ReactionTag = ControlledCharacter->ReactionData->TeamAssistTag;
+		}
 	}
 	
 	if (!ReactionTag.IsValid()) return;
@@ -119,11 +117,67 @@ void ACoreAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Sti
 	}
 
 	EvaluateBestTarget();
+	
+	if (SenseID == UAISense::GetSenseID<UAISense_Sight>())
+	{
+		HandleSightSense(Actor, Stimulus);
+	}
+	else if (SenseID == UAISense::GetSenseID<UAISense_Hearing>())
+	{
+		HandleHearingSense(Actor, Stimulus);
+	}
+	else if (SenseID == UAISense::GetSenseID<UAISense_Damage>())
+	{
+		HandleDamageSense(Actor, Stimulus);
+	}
+	else if (SenseID == UAISense::GetSenseID<UAISense_Team>())
+	{
+		HandleTeamSense(Actor, Stimulus);
+	}
 }
 
-void ACoreAIController::HandleSightSense(AActor* Actor, const FAIStimulus& Stimulus) const
+void ACoreAIController::HandleSightSense(AActor* Actor, const FAIStimulus& Stimulus)
 {
 	if (!Stimulus.WasSuccessfullySensed()) return;
+    
+    // Check if the actor we are looking at is a friendly teammate
+    if (GetTeamAttitudeTowards(*Actor) == ETeamAttitude::Friendly)
+    {
+       // Check what tag this target gave us in KnownTargets
+       if (const FPerceivedData* TargetData = KnownTargets.FindByKey(Actor))
+       {
+          // If the teammate gave a tag that signifies they are engaging with something
+          if (TargetData->DesiredStateTag == ControlledCharacter->ReactionData->TeamAssistTag)
+          {
+             // Impulse due to noticing ally engaged
+             if (AbilitySystemComponent && DetectionData)
+             {
+                const float MaxDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetMaxDetectionAttribute());
+                ApplyDetectionImpulse(Actor, MaxDetection * DetectionData->SearchThresholdPercent);
+             }
+
+             // Extracting target info from ally
+             if (const AAIController* AllyController = Cast<AAIController>(Actor->GetInstigatorController()))
+             {
+                if (const ACoreAIController* CoreAllyController = Cast<ACoreAIController>(AllyController))
+                {
+                   AActor* AllyTargetActor = CoreAllyController->CurrentTargetData.TargetActor;
+                   const FVector ThreatLocation = CoreAllyController->CurrentTargetData.LastKnownLocation;
+                   
+                   if (IsValid(AllyTargetActor) && !ThreatLocation.IsZero())
+                   {
+                      // Pass the actual enemy actor and the allys tracked threat location into our own memory
+                      ProcessTargetSensed(
+                         AllyTargetActor, 
+                         ControlledCharacter->ReactionData->TeamAssistTag, 
+                         ThreatLocation
+                      );
+                   }
+                }
+             }
+          }
+       }
+    }
 }
 
 void ACoreAIController::HandleHearingSense(AActor* Actor, const FAIStimulus& Stimulus) const
@@ -384,53 +438,6 @@ void ACoreAIController::EvaluateBestTarget()
 	}
 }
 
-void ACoreAIController::TryBroadcastAllyAlert() const
-{
-	if (!AbilitySystemComponent || !IsValid(ControlledCharacter) || !GetWorld()) return;
-
-	// Must NOT be in Routine, and must NOT be responding to someone elses alert
-	const FGameplayTag CurrentState = CurrentTargetData.DesiredStateTag;
-	if (!CurrentState.IsValid() || 
-		CurrentState == GASCoreTags::State_AI_Routine || 
-		CurrentState == GASCoreTags::State_AI_RespondingToTeam) 
-	{
-		return;
-	}
-
-	// Checking that detection is above search threshold
-	const float CurrentDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetDetectionLevelAttribute());
-	if (CurrentDetection <= GetSearchThreshold())
-	{
-		return;
-	}
-
-	// Ensuring we have a valid location to send over
-	FVector AlertLocation = CurrentTargetData.LastKnownLocation;
-	if (AlertLocation.IsZero())
-	{
-		AlertLocation = IsValid(CurrentTargetData.TargetActor) ? 
-		   CurrentTargetData.TargetActor->GetActorLocation() : 
-		   ControlledCharacter->GetActorLocation();
-	}
-	
-	// Grabbing the global perception system from the world
-	if (UAIPerceptionSystem* PerceptionSystem = UAIPerceptionSystem::GetCurrent(GetWorld()))
-	{
-		// Constructing the event struct
-		const FAITeamStimulusEvent TeamEvent(
-		   ControlledCharacter,               // Broadcaster
-		   CurrentTargetData.TargetActor,     // Enemy (can be nullptr)
-		   AlertLocation,                        // Location
-		   DetectionData->TeamBroadcastRange     // Broadcast Range
-		);
-
-		// Pushing it into the Perception System
-		PerceptionSystem->OnEvent(TeamEvent);
-		
-		GEngine->AddOnScreenDebugMessage(-1, 10, FColor::Magenta, "Sending team event");
-	}
-}
-
 ETeamAttitude::Type ACoreAIController::GetTeamAttitudeTowards(const AActor& Other) const
 {
 	// If no team interface implemented, neutral
@@ -459,13 +466,6 @@ ETeamAttitude::Type ACoreAIController::GetTeamAttitudeTowards(const AActor& Othe
 void ACoreAIController::OnDetectionLevelChanged(const FOnAttributeChangeData& Data)
 {
 	if (!AbilitySystemComponent) return;
-
-	const float SearchThreshold = GetSearchThreshold();
-	// Broadcast ally alert if value raises past the search threshold
-	if (Data.OldValue <= SearchThreshold && Data.NewValue > SearchThreshold)
-	{
-		TryBroadcastAllyAlert();
-	}
 	
 	// If the meter is full
 	if (Data.NewValue >= AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetMaxDetectionAttribute()))

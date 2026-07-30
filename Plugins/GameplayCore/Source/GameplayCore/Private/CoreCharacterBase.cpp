@@ -10,6 +10,7 @@
 #include "GASCoreTags.h"
 #include "Data/GASInitData.h"
 #include "Perception/AIPerceptionTypes.h"
+#include "Perception/AISense_Team.h"
 
 // Sets default values
 ACoreCharacterBase::ACoreCharacterBase()
@@ -206,6 +207,28 @@ FGameplayTag ACoreCharacterBase::GetPerceptionTag_Implementation(ETeamAttitude::
 			return ReactionData->LostSightTag;
 		}
 	}
+	
+	if (ObserverAttitude == ETeamAttitude::Friendly)
+	{
+		// If we arent successfully sensed by our teammate, ignore
+		if (!Stimulus.WasSuccessfullySensed())
+		{
+			return FGameplayTag::EmptyTag;
+		}
+
+		// Check if we (the observed character) are currently in combat or active state
+		if (AbilitySystemComponent && ReactionData)
+		{
+			// If we are actively fighting or alerted, tell our teammates to assist us
+			if (AbilitySystemComponent->HasMatchingGameplayTag(GASCoreTags::State_AI_Combat) || 
+				AbilitySystemComponent->HasMatchingGameplayTag(GASCoreTags::State_AI_Suspicious) ||
+					AbilitySystemComponent->HasMatchingGameplayTag(GASCoreTags::State_AI_Searching))
+			{
+				return ReactionData->TeamAssistTag;
+			}
+		}
+	}
+	
 	return FGameplayTag::EmptyTag;
 }
 
