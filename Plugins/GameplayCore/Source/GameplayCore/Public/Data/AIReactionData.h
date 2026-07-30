@@ -27,4 +27,8 @@ public:
 	/** The tag to apply when the AI spots this target and it has the Dead tag */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Reactions")
 	FGameplayTag SensedDeadTag;
+	
+	/** The tag to apply when the AI receives a Team event from another AI */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Reactions")
+	FGameplayTag TeamAssistTag;
 };

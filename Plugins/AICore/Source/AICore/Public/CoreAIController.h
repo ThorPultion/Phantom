@@ -104,7 +104,7 @@ protected:
 	void OnDetectionLevelChanged(const FOnAttributeChangeData& Data);
 	FDelegateHandle DetectionDelegateHandle;
 	
-	void HandleSightSense(AActor* Actor, const FAIStimulus& Stimulus) const;
+	void HandleSightSense(AActor* Actor, const FAIStimulus& Stimulus);
 	void HandleHearingSense(AActor* Actor, const FAIStimulus& Stimulus) const;
 	void HandleDamageSense(AActor* Actor, const FAIStimulus& Stimulus) const;
 	void HandleTeamSense(AActor* Actor, const FAIStimulus& Stimulus) const;
@@ -125,8 +125,6 @@ protected:
 	
 	/** Removes targets from memory if they have no active perception AND no remaining detection level */
 	void PruneTargets();
-	
-	void TryBroadcastAllyAlert() const;
 	
 	float GetSearchThreshold() const;
 	

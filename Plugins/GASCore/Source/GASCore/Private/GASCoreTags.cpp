@@ -27,6 +27,8 @@ namespace GASCoreTags
 	UE_DEFINE_GAMEPLAY_TAG(State_AI_Combat, "State.AI.Combat");
 	UE_DEFINE_GAMEPLAY_TAG(State_AI_Routine, "State.AI.Routine");
 	UE_DEFINE_GAMEPLAY_TAG(State_AI_RespondingToTeam, "State.AI.RespondingToTeam");
+	UE_DEFINE_GAMEPLAY_TAG(State_AI_Suspicious, "State.AI.Suspicious");
+	UE_DEFINE_GAMEPLAY_TAG(State_AI_Searching, "State.AI.Searching");
 
 	// --- Data ---
 	UE_DEFINE_GAMEPLAY_TAG(Data_Magnitude_Force, "Data.Magnitude.Force");

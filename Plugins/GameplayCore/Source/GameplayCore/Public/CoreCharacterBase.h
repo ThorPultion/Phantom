@@ -102,6 +102,10 @@ public:
 	
 	/** Overriding default target location for AI SetFocus */
 	virtual FVector GetTargetLocation(AActor* RequestedBy = nullptr) const override;
+	
+	/** What reaction data this character gives to AI */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Perception")
+	TObjectPtr<UAIReactionData> ReactionData;
 
 protected:
 	/** The point at which SetFocus will look at */
@@ -111,8 +115,4 @@ protected:
 	/** Assign team in blueprints, 0 = Players, 1 = Guards, 2 = Monsters */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	FGenericTeamId TeamID;
-
-	/** What reaction data this character gives to AI */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Perception")
-	TObjectPtr<UAIReactionData> ReactionData;
 };
