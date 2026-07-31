@@ -89,8 +89,10 @@ void ACoreAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Sti
 {
 	if (!IsValid(Actor) || !Actor->Implements<UPerceivable>()) return;
 	
+	const ETeamAttitude::Type Attitude = GetTeamAttitudeTowards(*Actor);
+	
 	// The sensed object will decide what state tag to apply
-	FGameplayTag ReactionTag = IPerceivable::Execute_GetPerceptionTag(Actor, GetTeamAttitudeTowards(*Actor), Stimulus);
+	FGameplayTag ReactionTag = IPerceivable::Execute_GetPerceptionTag(Actor, Attitude, Stimulus);
 	
 	const FAISenseID SenseID = Stimulus.Type;
 	// If we receive a Team stimulus
@@ -106,17 +108,19 @@ void ACoreAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Sti
 	
 	if (!ReactionTag.IsValid()) return;
 	
-	// Apply Escalation / De-escalation Rules
-	if (Stimulus.WasSuccessfullySensed())
+	// Not processing friendly targets
+	if (Attitude != ETeamAttitude::Friendly)
 	{
-		ProcessTargetSensed(Actor, ReactionTag, Stimulus.StimulusLocation);
+		// Apply Escalation / De-escalation Rules
+		if (Stimulus.WasSuccessfullySensed())
+		{
+			ProcessTargetSensed(Actor, ReactionTag, Stimulus.StimulusLocation);
+		}
+		else
+		{
+			ProcessTargetLost(Actor, ReactionTag, Stimulus);
+		}
 	}
-	else
-	{
-		ProcessTargetLost(Actor, ReactionTag, Stimulus);
-	}
-
-	EvaluateBestTarget();
 	
 	if (SenseID == UAISense::GetSenseID<UAISense_Sight>())
 	{
@@ -134,50 +138,48 @@ void ACoreAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Sti
 	{
 		HandleTeamSense(Actor, Stimulus);
 	}
+	
+	EvaluateBestTarget();
 }
 
 void ACoreAIController::HandleSightSense(AActor* Actor, const FAIStimulus& Stimulus)
 {
 	if (!Stimulus.WasSuccessfullySensed()) return;
+	
+	if (GetTeamAttitudeTowards(*Actor) != ETeamAttitude::Friendly) return;
     
-    // Check if the actor we are looking at is a friendly teammate
-    if (GetTeamAttitudeTowards(*Actor) == ETeamAttitude::Friendly)
-    {
-       // Check what tag this target gave us in KnownTargets
-       if (const FPerceivedData* TargetData = KnownTargets.FindByKey(Actor))
-       {
-          // If the teammate gave a tag that signifies they are engaging with something
-          if (TargetData->DesiredStateTag == ControlledCharacter->ReactionData->TeamAssistTag)
-          {
-             // Impulse due to noticing ally engaged
-             if (AbilitySystemComponent && DetectionData)
-             {
-                const float MaxDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetMaxDetectionAttribute());
-                ApplyDetectionImpulse(Actor, MaxDetection * DetectionData->SearchThresholdPercent);
-             }
+	// Asking the ally directly what state they are in
+	const FGameplayTag AllyTag = IPerceivable::Execute_GetPerceptionTag(Actor, ETeamAttitude::Friendly, Stimulus);
 
-             // Extracting target info from ally
-             if (const AAIController* AllyController = Cast<AAIController>(Actor->GetInstigatorController()))
-             {
-                if (const ACoreAIController* CoreAllyController = Cast<ACoreAIController>(AllyController))
-                {
-                   AActor* AllyTargetActor = CoreAllyController->CurrentTargetData.TargetActor;
-                   const FVector ThreatLocation = CoreAllyController->CurrentTargetData.LastKnownLocation;
-                   
-                   if (IsValid(AllyTargetActor) && !ThreatLocation.IsZero())
-                   {
-                      // Pass the actual enemy actor and the allys tracked threat location into our own memory
-                      ProcessTargetSensed(
-                         AllyTargetActor, 
-                         ControlledCharacter->ReactionData->TeamAssistTag, 
-                         ThreatLocation
-                      );
-                   }
-                }
-             }
-          }
-       }
-    }
+	// Guarding against missing character data or the ally not broadcasting an assist state
+	if (!ControlledCharacter || !ControlledCharacter->ReactionData) return;
+	if (AllyTag != ControlledCharacter->ReactionData->TeamAssistTag) return;
+	
+	// Extracting target info from ally
+	const ACoreAIController* CoreAllyController = Cast<ACoreAIController>(Actor->GetInstigatorController());
+	if (!CoreAllyController) return;
+	
+	UAbilitySystemComponent* AllyASC = CoreAllyController->AbilitySystemComponent;
+    
+	if (AllyASC && AbilitySystemComponent)
+	{
+		const float AllyDetection = AllyASC->GetNumericAttribute(UAIAttributeSet::GetDetectionLevelAttribute());
+		const float MyDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetDetectionLevelAttribute());
+
+		// Only take their detection if its higher than ours
+		if (AllyDetection > MyDetection)
+		{
+			// Match detection with allys detection
+			ApplyDetectionImpulse(Actor, AllyDetection - MyDetection);
+		}
+	}
+	
+	AActor* AllyTargetActor = CoreAllyController->CurrentTargetData.TargetActor;
+	const FVector ThreatLocation = CoreAllyController->CurrentTargetData.LastKnownLocation;
+
+	// INJECTING THE THREAT:
+	// We bypass the ally entirely and log the actual enemy into our memory using the Assist tag
+	ProcessTargetSensed(AllyTargetActor, ControlledCharacter->ReactionData->TeamAssistTag, ThreatLocation);
 }
 
 void ACoreAIController::HandleHearingSense(AActor* Actor, const FAIStimulus& Stimulus) const
@@ -245,7 +247,7 @@ void ACoreAIController::ProcessTargetSensed(AActor* TargetActor, const FGameplay
 			ExistingTargetData->DesiredStateTag = ReactionTag;
 		}
 				
-		ExistingTargetData->LastKnownLocation = TargetActor->GetActorLocation();
+		ExistingTargetData->LastKnownLocation = StimulusLocation;
 	}
 	else
 	{
@@ -253,7 +255,7 @@ void ACoreAIController::ProcessTargetSensed(AActor* TargetActor, const FGameplay
 		FPerceivedData NewTargetData;
 		NewTargetData.TargetActor = TargetActor;
 		NewTargetData.DesiredStateTag = ReactionTag;
-		NewTargetData.LastKnownLocation = TargetActor->GetActorLocation();
+		NewTargetData.LastKnownLocation = StimulusLocation;
 				
 		KnownTargets.Add(NewTargetData);
 	}
