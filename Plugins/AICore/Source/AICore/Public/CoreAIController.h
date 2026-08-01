@@ -69,6 +69,10 @@ public:
 	// Overriding the default SetFocus focal point to use our overriden target location.
 	// The target defines its own focal point which SetFocus then stares at.
 	virtual FVector GetFocalPointOnActor(const AActor* Actor) const override;
+	
+	/** Perception event handling data for the Detection attribute. Detection dictates AI state */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Detection")
+	TObjectPtr<UAIDetectionData> DetectionData;
 
 protected:
 
@@ -118,10 +122,6 @@ protected:
 	
 	/** Applies an amount of detection level to the AI instantly */
 	void ApplyDetectionImpulse(AActor* InstigatorActor, const float DetectionAmount) const;
-	
-	/** Perception event handling data for the Detection attribute. Detection dictates AI state */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Detection")
-	TObjectPtr<UAIDetectionData> DetectionData;
 	
 	/** Removes targets from memory if they have no active perception AND no remaining detection level */
 	void PruneTargets();

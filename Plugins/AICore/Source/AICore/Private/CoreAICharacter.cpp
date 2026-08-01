@@ -7,10 +7,12 @@
 #include "CoreAttributeSet.h"
 #include "CoreAbilitySystemComponent.h"
 #include "AIAttributeSet.h"
+#include "AIDetectionData.h"
 #include "AIGASInitData.h"
 #include "GASCoreTags.h"
 #include "Components/CoreWidgetComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "Perception/AIPerceptionTypes.h"
 
 // Sets default values
 ACoreAICharacter::ACoreAICharacter()
@@ -113,4 +115,61 @@ void ACoreAICharacter::SetupAttributes()
 			}
 		}
 	}
+}
+
+FGameplayTag ACoreAICharacter::GetPerceptionTag_Implementation(ETeamAttitude::Type ObserverAttitude, const FAIStimulus& Stimulus)
+{
+	// If we are dead
+	if (AbilitySystemComponent && AbilitySystemComponent->HasMatchingGameplayTag(GASCoreTags::State_Dead))
+	{
+		return Stimulus.WasSuccessfullySensed() ? ReactionData->SensedDeadTag : FGameplayTag::EmptyTag;
+	}
+
+	if (ObserverAttitude == ETeamAttitude::Hostile)
+	{
+		if (Stimulus.WasSuccessfullySensed())
+		{
+			return ReactionData->SensedAliveTag;
+		}
+		else
+		{
+			return ReactionData->LostSightTag;
+		}
+	}
+	
+	if (ObserverAttitude == ETeamAttitude::Friendly)
+	{
+		// If we arent successfully sensed by our teammate, ignore
+		if (!Stimulus.WasSuccessfullySensed())
+		{
+			return FGameplayTag::EmptyTag;
+		}
+
+		// Check if we (the observed character) are currently in combat or active state
+		if (AbilitySystemComponent && ReactionData)
+		{
+			// If we are actively fighting or alerted, tell our teammates to assist us
+			if (AbilitySystemComponent->HasMatchingGameplayTag(GASCoreTags::State_AI_Combat) || 
+				AbilitySystemComponent->HasMatchingGameplayTag(GASCoreTags::State_AI_Searching))
+			{
+				return ReactionData->TeamAssistTag;
+			}
+			
+			// Conditional Assist (Suspicious + High Detection)
+			if (AbilitySystemComponent->HasMatchingGameplayTag(GASCoreTags::State_AI_Suspicious))
+			{
+				if (ACoreAIController* CoreAIController = Cast<ACoreAIController>(GetController()))
+				{
+					if (AIAttributeSet && 
+						AIAttributeSet->GetDetectionLevel() >= 
+						AIAttributeSet->GetMaxDetection() * CoreAIController->DetectionData->SearchThresholdPercent)
+					{
+						return ReactionData->TeamAssistTag;
+					}
+				}
+			}
+		}
+	}
+	
+	return FGameplayTag::EmptyTag;
 }

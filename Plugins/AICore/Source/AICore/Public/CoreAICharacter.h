@@ -37,6 +37,8 @@ public:
 	TObjectPtr<AActor> CurrentTargetActor;
 	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
+	FGameplayTag GetPerceptionTag_Implementation(ETeamAttitude::Type ObserverAttitude, const FAIStimulus& Stimulus) override;
 
 protected:
 

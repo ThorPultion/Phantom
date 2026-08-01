@@ -10,7 +10,6 @@
 #include "GASCoreTags.h"
 #include "Data/GASInitData.h"
 #include "Perception/AIPerceptionTypes.h"
-#include "Perception/AISense_Team.h"
 
 // Sets default values
 ACoreCharacterBase::ACoreCharacterBase()
@@ -221,8 +220,8 @@ FGameplayTag ACoreCharacterBase::GetPerceptionTag_Implementation(ETeamAttitude::
 		{
 			// If we are actively fighting or alerted, tell our teammates to assist us
 			if (AbilitySystemComponent->HasMatchingGameplayTag(GASCoreTags::State_AI_Combat) || 
-				AbilitySystemComponent->HasMatchingGameplayTag(GASCoreTags::State_AI_Suspicious) ||
-					AbilitySystemComponent->HasMatchingGameplayTag(GASCoreTags::State_AI_Searching))
+				AbilitySystemComponent->HasMatchingGameplayTag(GASCoreTags::State_AI_Searching) ||
+				AbilitySystemComponent->HasMatchingGameplayTag(GASCoreTags::State_AI_Suspicious))
 			{
 				return ReactionData->TeamAssistTag;
 			}
