@@ -137,6 +137,8 @@ FGameplayTag ACoreAICharacter::GetPerceptionTag_Implementation(ETeamAttitude::Ty
 		}
 	}
 	
+	// Currently the states detected for friendlies are only applied for AIs,
+	// so for example a friendly AI assisting a player is not yet supported.
 	if (ObserverAttitude == ETeamAttitude::Friendly)
 	{
 		// If we arent successfully sensed by our teammate, ignore
@@ -158,7 +160,7 @@ FGameplayTag ACoreAICharacter::GetPerceptionTag_Implementation(ETeamAttitude::Ty
 			// Conditional Assist (Suspicious + High Detection)
 			if (AbilitySystemComponent->HasMatchingGameplayTag(GASCoreTags::State_AI_Suspicious))
 			{
-				if (ACoreAIController* CoreAIController = Cast<ACoreAIController>(GetController()))
+				if (const ACoreAIController* CoreAIController = Cast<ACoreAIController>(GetController()))
 				{
 					if (AIAttributeSet && 
 						AIAttributeSet->GetDetectionLevel() >= 
