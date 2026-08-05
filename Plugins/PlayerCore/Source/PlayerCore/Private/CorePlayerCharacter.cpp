@@ -12,6 +12,7 @@
 #include "GASCoreTags.h"
 #include "Interfaces/Interactable.h"
 #include "CoreHUD.h"
+#include "LightAwarenessComponent.h"
 
 // Sets default values
 ACorePlayerCharacter::ACorePlayerCharacter()
@@ -41,6 +42,9 @@ ACorePlayerCharacter::ACorePlayerCharacter()
 	GetMesh()->SetCastHiddenShadow(true);
 
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+	GetCharacterMovement()->bCanWalkOffLedgesWhenCrouching = true;
+	
+	LightAwarenessComponent = CreateDefaultSubobject<ULightAwarenessComponent>(TEXT("LightAwarenessComponent"));
 }
 
 // Called when the game starts or when spawned
@@ -393,4 +397,31 @@ void ACorePlayerCharacter::PerformInteractionCheck()
 		FocusedInteractable = nullptr;
 		OnInteractionFocusChanged.Broadcast(false, FText::GetEmpty());
 	}
+}
+
+void ACorePlayerCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	// Components are done initializing, we can now bind to visibility calculation components delegate
+	if (LightAwarenessComponent)
+	{
+		LightAwarenessComponent->OnLightAwarenessComponentUpdated.AddDynamic(this, &ACorePlayerCharacter::OnLightLevelChanged);
+		float ClampedLevel = FMath::Clamp(CachedLightLevel * LightLevelModifier, 0.0f, 1.0f);
+		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Magenta, FString::Printf(TEXT("LightLevel: %f"), ClampedLevel));
+		CachedLightLevel = LightAwarenessComponent->GetCurrentLightLevel();
+	}
+}
+
+void ACorePlayerCharacter::OnLightLevelChanged(const float NewLightValue)
+{
+	float ClampedLevel = FMath::Clamp(CachedLightLevel * LightLevelModifier, 0.0f, 1.0f);
+	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Magenta, "Light level changed");
+	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Magenta, FString::Printf(TEXT("LightLevel: %f"), ClampedLevel));
+	CachedLightLevel = NewLightValue;
+}
+
+float ACorePlayerCharacter::GetVisibilityModifier_Implementation()
+{
+	return FMath::Clamp(CachedLightLevel * LightLevelModifier, 0.0f, 1.0f);
 }

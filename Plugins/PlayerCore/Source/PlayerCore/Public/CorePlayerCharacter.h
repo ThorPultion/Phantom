@@ -12,6 +12,7 @@ class UInputAction;
 struct FInputActionValue;
 class USpringArmComponent;
 class UCameraComponent;
+class ULightAwarenessComponent;
 
 // Broadcasting when the player looks at or looks away from an interactable
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInteractionFocusChanged, bool, bIsLookingAtItem, const FText&, PromptText);
@@ -45,7 +46,16 @@ public:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	
+	virtual float GetVisibilityModifier_Implementation() override;
+	
+	virtual void PostInitializeComponents() override;
+	
 protected:
+	
+	float CachedLightLevel = 1.0f;
+	
+	UFUNCTION()
+	void OnLightLevelChanged(const float NewLightValue);
 
 	/** Initiate Gameplay Ability System */
 	virtual void InitAbilitySystem() override;
@@ -125,6 +135,13 @@ protected:
 
 	// Ammo cycling through GameplayEvent to GA
 	void Input_CycleAmmo(const FInputActionValue& Value);
+	
+	// Component for calculating how much of player is visible
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stealth")
+	TObjectPtr<ULightAwarenessComponent> LightAwarenessComponent;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stealth")
+	float LightLevelModifier = 20.0f;
 
 public:	
 	// Called every frame

@@ -43,6 +43,8 @@ public:
 
 	/** Virtual public getter so child classes can provide a 1P mesh if they have one */ 
 	virtual USkeletalMeshComponent* GetFirstPersonMesh() const { return nullptr; }
+	
+	virtual float GetVisibilityModifier_Implementation() override;
 
 protected:
 	// Pointers are set by child classes, so the base class can just use them
