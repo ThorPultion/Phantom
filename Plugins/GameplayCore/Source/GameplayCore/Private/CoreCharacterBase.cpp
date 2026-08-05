@@ -199,7 +199,10 @@ FGameplayTag ACoreCharacterBase::GetPerceptionTag_Implementation(ETeamAttitude::
 	{
 		if (Stimulus.WasSuccessfullySensed())
 		{
-			return ReactionData->SensedAliveTag;
+			if (Execute_GetVisibilityModifier(this) > 0.1f)
+			{
+				return ReactionData->SensedAliveTag;
+			}
 		}
 		else
 		{
@@ -241,4 +244,9 @@ FVector ACoreCharacterBase::GetTargetLocation(AActor* RequestedBy) const
     
 	// Fallback
 	return Super::GetTargetLocation(RequestedBy);
+}
+
+float ACoreCharacterBase::GetVisibilityModifier_Implementation()
+{
+	return 1.0f;
 }

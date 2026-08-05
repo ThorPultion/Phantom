@@ -27,6 +27,11 @@ class GAMEPLAYCORE_API IPerceivable
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
+	/** How the observer should react to the perceivable */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Perception")
 	FGameplayTag GetPerceptionTag(ETeamAttitude::Type ObserverAttitude, const FAIStimulus& Stimulus);
+	
+	/** How visible this perceivable is */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Perception")
+	float GetVisibilityModifier();
 };

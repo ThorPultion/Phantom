@@ -1,16 +1,17 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// Light Awareness System. Cem Akkaya https://www.cemakkaya.com
 
+using System.IO;
 using UnrealBuildTool;
 
-public class PlayerCore : ModuleRules
+public class LightAwareness : ModuleRules
 {
-	public PlayerCore(ReadOnlyTargetRules Target) : base(Target)
+	public LightAwareness(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
 		PublicIncludePaths.AddRange(
 			new string[] {
-				// ... add public include paths required here ...
+				Path.Combine(PluginDirectory,"Content"),
 			}
 			);
 				
@@ -26,15 +27,12 @@ public class PlayerCore : ModuleRules
 			new string[]
 			{
 				"Core",
-				"EnhancedInput",
-				"GASCore",
-				"GameplayCore",
-				"GameplayAbilities",
-                "GameplayTags",
-                "UMG",
-                "AIModule",
-                "LightAwareness"
-				// ... add other public dependencies that you statically link with here ...
+				"CoreUObject",
+				"Engine",
+				"RenderCore", 
+				"Renderer",
+				"RHI",
+				"Projects"
 			}
 			);
 			
@@ -42,11 +40,8 @@ public class PlayerCore : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"CoreUObject",
-				"Engine",
 				"Slate",
 				"SlateCore",
-				// ... add private dependencies that you statically link with here ...	
 			}
 			);
 		
