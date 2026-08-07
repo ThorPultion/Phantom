@@ -139,6 +139,18 @@ void ULightAwarenessComponent::GetRenderingState()
 	{
 		SetComponentState(ELightAwarenessState::Active);
 	}
+	
+	// Hacky fix to add actors that get added later such as weapons to hidden actor list.
+	// May need to rework later into just happening on equipment swap,
+	// but I prefer keeping LightAwareness code separate from the rest of the project as much as possible for now.
+	TArray<AActor*> AttachedActors;
+	GetOwner()->GetAttachedActors(AttachedActors);
+    
+	for (AActor* AttachedWeaponOrItem : AttachedActors)
+	{
+		sceneCaptureComponentTop->HiddenActors.AddUnique(AttachedWeaponOrItem);
+		sceneCaptureComponentBottom->HiddenActors.AddUnique(AttachedWeaponOrItem);
+	}
 }
 
 void ULightAwarenessComponent::SetupComponentPeripherals()
@@ -388,6 +400,18 @@ void ULightAwarenessComponent::SetupSceneCaptureSettings(USceneCaptureComponent2
 	// Clamp min/max to 1 so its stable
 	PP.bOverride_AutoExposureMaxBrightness = false;
 	PP.AutoExposureMinBrightness = 1.0f;
+	
+	// Force Film Grain to 0
+	PP.bOverride_FilmGrainIntensity = true;
+	PP.FilmGrainIntensity = 0.0f;
+
+	// Force Vignette to 0 (sometimes vignette adds noise)
+	PP.bOverride_VignetteIntensity = true;
+	PP.VignetteIntensity = 0.0f;
+
+	// Force Fringe (Chromatic Aberration) to 0
+	PP.bOverride_SceneFringeIntensity = true;
+	PP.SceneFringeIntensity = 0.0f;
 	
 	// Enable Lumen For global illumination effects and reflections
 	// Exposure is auto, however, we have setting for material intensity, rather than making exposure manual use material intensity as workaround.

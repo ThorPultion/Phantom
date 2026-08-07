@@ -12,6 +12,7 @@
 #include "GASCoreTags.h"
 #include "Interfaces/Interactable.h"
 #include "CoreHUD.h"
+#include "LevelLightingSubsystem.h"
 #include "LightAwarenessComponent.h"
 
 // Sets default values
@@ -328,6 +329,15 @@ void ACorePlayerCharacter::OnStartCrouch(float HalfHeightAdjust, float ScaledHal
 		// LOOSE GAMEPLAY TAGS DONT REPLICATE, BUT OnStartCrouch and OnEndCrouch RUN ON CLIENT AND SERVER!
 		ASC->AddLooseGameplayTag(GASCoreTags::State_Movement_Crouched);
 	}
+	
+	// Forcing light calculation
+	if (LightAwarenessComponent)
+	{
+		LightAwarenessComponent->ProcessLight();
+	}
+    
+	// Updating for listeners like UI
+	OnPlayerVisibilityChanged.Broadcast(Execute_GetVisibilityModifier(this));
 }
 
 void ACorePlayerCharacter::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
@@ -339,6 +349,15 @@ void ACorePlayerCharacter::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfH
 		// Remove the state tag
 		ASC->RemoveLooseGameplayTag(GASCoreTags::State_Movement_Crouched);
 	}
+	
+	// Forcing light calculation
+	if (LightAwarenessComponent)
+	{
+		LightAwarenessComponent->ProcessLight();
+	}
+    
+	// Updating for listeners like UI
+	OnPlayerVisibilityChanged.Broadcast(Execute_GetVisibilityModifier(this));
 }
 
 // Called every frame
@@ -407,21 +426,63 @@ void ACorePlayerCharacter::PostInitializeComponents()
 	if (LightAwarenessComponent)
 	{
 		LightAwarenessComponent->OnLightAwarenessComponentUpdated.AddDynamic(this, &ACorePlayerCharacter::OnLightLevelChanged);
-		float ClampedLevel = FMath::Clamp(CachedLightLevel * LightLevelModifier, 0.0f, 1.0f);
-		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Magenta, FString::Printf(TEXT("LightLevel: %f"), ClampedLevel));
+
+		
 		CachedLightLevel = LightAwarenessComponent->GetCurrentLightLevel();
 	}
 }
 
 void ACorePlayerCharacter::OnLightLevelChanged(const float NewLightValue)
 {
-	float ClampedLevel = FMath::Clamp(CachedLightLevel * LightLevelModifier, 0.0f, 1.0f);
-	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Magenta, "Light level changed");
-	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Magenta, FString::Printf(TEXT("LightLevel: %f"), ClampedLevel));
 	CachedLightLevel = NewLightValue;
+	
+	const float ClampedLevel = Execute_GetVisibilityModifier(this);
+	
+	// Broadcasting the clamped visibility value to systems such as UI
+	OnPlayerVisibilityChanged.Broadcast(ClampedLevel);
 }
 
 float ACorePlayerCharacter::GetVisibilityModifier_Implementation()
 {
-	return FMath::Clamp(CachedLightLevel * LightLevelModifier, 0.0f, 1.0f);
+	// Grabbing light level provided by calculation and multiplying by level specific modifier
+	float LevelBrightness;
+	
+	// Getting the brightness from dedicated subsystem
+	if (const ULevelLightingSubsystem* LightingSub = GetWorld()->GetSubsystem<ULevelLightingSubsystem>())
+	{
+		// The subsystems brightness multiplier is set per level through level BP
+		LevelBrightness = LightingSub->LevelBrightnessMultiplier;
+	}
+	else
+	{
+		// Fallback
+		LevelBrightness = 1.0f;
+	}
+	
+	float Visibility = CachedLightLevel * LevelBrightness;
+	
+	if (bIsCrouched)
+	{
+		Visibility *= CrouchVisibilityModifier;
+	}
+	
+	GEngine->AddOnScreenDebugMessage(
+		-1, 5, FColor::Magenta, 
+		FString::Printf(TEXT("Clamped visibility = %f"), FMath::Clamp(Visibility , 0.0f, 1.0f)));
+	
+	return FMath::Clamp(Visibility , 0.0f, 1.0f);
+}
+
+bool ACorePlayerCharacter::CanJumpInternal_Implementation() const
+{
+	// Check if the movement component allows jumping in its current state (e.g. not swimming/flying)
+	const bool bCanJump = GetCharacterMovement() && GetCharacterMovement()->IsJumpAllowed();
+
+	// No air or multi jumping
+	if (bCanJump && JumpCurrentCount == 0)
+	{
+		return true;
+	}
+
+	return false;
 }
