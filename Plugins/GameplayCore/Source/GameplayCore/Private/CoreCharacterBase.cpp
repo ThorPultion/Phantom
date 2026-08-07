@@ -197,15 +197,15 @@ FGameplayTag ACoreCharacterBase::GetPerceptionTag_Implementation(ETeamAttitude::
 
 	if (ObserverAttitude == ETeamAttitude::Hostile)
 	{
-		if (Stimulus.WasSuccessfullySensed())
+		// The AI must sense the player and the player must be visible enough
+		if (Stimulus.WasSuccessfullySensed() && 
+			Execute_GetVisibilityModifier(this) > Execute_GetInvisibleThreshold(this))
 		{
-			if (Execute_GetVisibilityModifier(this) > 0.1f)
-			{
-				return ReactionData->SensedAliveTag;
-			}
+			return ReactionData->SensedAliveTag;
 		}
 		else
 		{
+			// Triggers if player walks behind a wall or if they step into the dark
 			return ReactionData->LostSightTag;
 		}
 	}
@@ -249,4 +249,47 @@ FVector ACoreCharacterBase::GetTargetLocation(AActor* RequestedBy) const
 float ACoreCharacterBase::GetVisibilityModifier_Implementation()
 {
 	return 1.0f;
+}
+
+UAISense_Sight::EVisibilityResult ACoreCharacterBase::CanBeSeenFrom(const FCanBeSeenFromContext& Context, FVector& OutSeenLocation, int32& OutNumberOfLoSChecksPerformed, int32& OutNumberOfAsyncLosCheckRequested, float& OutSightStrength, int32* UserData, const FOnPendingVisibilityQueryProcessedDelegate* Delegate)
+{
+	// ------Our light/dark based stealth check STARTS-------
+	const float CurrentVisibility = IPerceivable::Execute_GetVisibilityModifier(this);
+	const float StealthThreshold = IPerceivable::Execute_GetInvisibleThreshold(this);
+
+	if (CurrentVisibility <= StealthThreshold)
+	{
+		// Player is too dark to be seen
+		OutSightStrength = 0.0f;
+		return UAISense_Sight::EVisibilityResult::NotVisible; 
+	}
+	// ------Our light/dark based stealth check ENDS-------
+
+	// IMPLEMENTING A SOFT EQUIVALENT OF AISense_Sight DEFAULT CHECKER
+	// We must do this, because implementing this interface intercepts the default check of sight sense
+	FHitResult HitResult;
+	const FVector TargetLocation = GetActorLocation();
+	
+	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AILineOfSight), true, Context.IgnoreActor);
+	QueryParams.AddIgnoredActor(this);
+	
+	const bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult,
+		Context.ObserverLocation,
+		TargetLocation,
+		ECC_Visibility, QueryParams);
+    
+	OutNumberOfLoSChecksPerformed++;
+	OutNumberOfAsyncLosCheckRequested = 0; // We are doing a synchronous trace
+
+	// If we hit nothing or ourselves, we are physically visible
+	if (!bHit || HitResult.GetActor() == this)
+	{
+		OutSeenLocation = TargetLocation;
+		OutSightStrength = 1.0f;
+		return UAISense_Sight::EVisibilityResult::Visible;
+	}
+
+	// We hit a wall
+	OutSightStrength = 0.0f;
+	return UAISense_Sight::EVisibilityResult::NotVisible;
 }

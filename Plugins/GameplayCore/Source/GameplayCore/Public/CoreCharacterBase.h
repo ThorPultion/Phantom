@@ -8,6 +8,8 @@
 #include "Interfaces/Perceivable.h"
 #include "GenericTeamAgentInterface.h"
 #include "Data/AIReactionData.h"
+#include "Perception/AISense_Sight.h"
+#include "Perception/AISightTargetInterface.h"
 #include "CoreCharacterBase.generated.h"
 
 class UAbilitySystemComponent;
@@ -21,7 +23,7 @@ struct FGameplayTag;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAbilitySystemInitialized, UAbilitySystemComponent*, ASC);
 UCLASS(Abstract)
-class GAMEPLAYCORE_API ACoreCharacterBase : public ACharacter, public IAbilitySystemInterface, public IGenericTeamAgentInterface, public IPerceivable
+class GAMEPLAYCORE_API ACoreCharacterBase : public ACharacter, public IAbilitySystemInterface, public IGenericTeamAgentInterface, public IPerceivable, public IAISightTargetInterface
 {
 	GENERATED_BODY()
 
@@ -44,7 +46,20 @@ public:
 	/** Virtual public getter so child classes can provide a 1P mesh if they have one */ 
 	virtual USkeletalMeshComponent* GetFirstPersonMesh() const { return nullptr; }
 	
+	/** To be overriden by child classes. Returns how lit the character is */
 	virtual float GetVisibilityModifier_Implementation() override;
+	
+	virtual float GetInvisibleThreshold_Implementation() override { return 0.15f; }
+	
+	/** IAISightTargetInterface override. This is how perception system checks if this is still visible to observer */
+virtual UAISense_Sight::EVisibilityResult CanBeSeenFrom(
+    const FCanBeSeenFromContext& Context,
+    FVector& OutSeenLocation,
+    int32& OutNumberOfLoSChecksPerformed,
+    int32& OutNumberOfAsyncLosCheckRequested,
+    float& OutSightStrength,
+    int32* UserData = nullptr,
+    const FOnPendingVisibilityQueryProcessedDelegate* Delegate = nullptr) override;
 
 protected:
 	// Pointers are set by child classes, so the base class can just use them

@@ -14,8 +14,10 @@ class USpringArmComponent;
 class UCameraComponent;
 class ULightAwarenessComponent;
 
-// Broadcasting when the player looks at or looks away from an interactable
+/** Broadcasting when the player looks at or looks away from an interactable */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInteractionFocusChanged, bool, bIsLookingAtItem, const FText&, PromptText);
+/** Broadcasting when players level of being lit changes. Sends clamped visibility value (0 to 1) */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerVisibilityChanged, float, VisibilityLevel);
 
 UCLASS()
 class PLAYERCORE_API ACorePlayerCharacter : public ACoreCharacterBase
@@ -42,15 +44,31 @@ public:
 	/** Broadcasts when the player looks at or looks away from an interactable */
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FOnInteractionFocusChanged OnInteractionFocusChanged;
+	
+	/** Broadcasts when players level of being lit changes */
+	UPROPERTY(BlueprintAssignable, Category = "Stealth")
+	FOnPlayerVisibilityChanged OnPlayerVisibilityChanged;
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	
+	// Getter for how lit the player is to observers
 	virtual float GetVisibilityModifier_Implementation() override;
+	
+	// Getter for the threshold at which this player is invisible to observers
+	virtual float GetInvisibleThreshold_Implementation() override { return InvisibleThreshold; }
 	
 	virtual void PostInitializeComponents() override;
 	
+	virtual void OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
+
+	virtual void OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;;
+	
 protected:
+	
+	/** Below what visibility level the player is invisible to AI. Lower number = darker visibility requirement */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stealth")
+	float InvisibleThreshold = 0.15f;
 	
 	float CachedLightLevel = 1.0f;
 	
@@ -97,10 +115,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Camera")
 	float DefaultCameraDistance = 0.0f;
 
-	virtual void OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
-
-	virtual void OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> FirstPersonMesh;
 
@@ -140,8 +154,12 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stealth")
 	TObjectPtr<ULightAwarenessComponent> LightAwarenessComponent;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stealth")
-	float LightLevelModifier = 20.0f;
+	/** Multiplier applied to visibility when the player is crouching */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stealth")
+    float CrouchVisibilityModifier = 0.5f;
+
+	// Overriding to allow crouch jumping
+	virtual bool CanJumpInternal_Implementation() const override;
 
 public:	
 	// Called every frame

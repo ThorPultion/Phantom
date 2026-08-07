@@ -111,8 +111,8 @@ void ACoreAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Sti
 	// Not processing friendly targets
 	if (Attitude != ETeamAttitude::Friendly)
 	{
-		// Apply Escalation / De-escalation Rules
-		if (Stimulus.WasSuccessfullySensed())
+		// Applying Escalation / De-escalation Rules
+		if (Stimulus.WasSuccessfullySensed() && ReactionTag != ControlledCharacter->ReactionData->LostSightTag)
 		{
 			ProcessTargetSensed(Actor, ReactionTag, Stimulus.StimulusLocation);
 		}
@@ -265,40 +265,32 @@ void ACoreAIController::ProcessTargetLost(AActor* TargetActor, const FGameplayTa
 {
 	FPerceivedData* ExistingTargetData = KnownTargets.FindByKey(TargetActor);
 	if (!ExistingTargetData) return;
-
-	// MULTI-SENSE CHECK: Only evaluate a downgrade if we have completely lost ALL active senses on this target.
-	// IMPORTANT!:
-	// This essentially checks WasSuccessfullySensed() for each sense.
-	// Continuous senses such as Sight return false if player is not visible, even if MaxAge has not run out.
-	// Event based senses such as Hearing and Damage return true until MaxAge runs out.
-	if (!CorePerceptionComponent->HasAnyCurrentStimulus(*TargetActor))
+	
+	ExistingTargetData->LastKnownLocation = Stimulus.StimulusLocation;
+            
+	// Threshold check
+	if (AbilitySystemComponent)
 	{
-		ExistingTargetData->LastKnownLocation = Stimulus.StimulusLocation;
-                
-		// Threshold check
-		if (AbilitySystemComponent)
-		{
-			const float CurrentDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetDetectionLevelAttribute());
-			const float MaxDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetMaxDetectionAttribute());
-              
-			const float SearchThreshold = MaxDetection * DetectionData->SearchThresholdPercent;
+		const float CurrentDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetDetectionLevelAttribute());
+		const float MaxDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetMaxDetectionAttribute());
+          
+		const float SearchThreshold = MaxDetection * DetectionData->SearchThresholdPercent;
 
-			// If detection level is higher than our designated threshold when losing sight,
-			// apply the searching tag
-			if (CurrentDetection >= SearchThreshold)
-			{
-				ExistingTargetData->DesiredStateTag = ReactionTag;
-			}
-			else
-			{
-				// The AIs detection level is too low to apply searching tag
-				ExistingTargetData->DesiredStateTag = GASCoreTags::State_AI_Routine;
-			}
-		}
-		else
+		// If detection level is higher than our designated threshold when losing sight,
+		// apply the searching tag
+		if (CurrentDetection >= SearchThreshold)
 		{
 			ExistingTargetData->DesiredStateTag = ReactionTag;
 		}
+		else
+		{
+			// The AIs detection level is too low to apply searching tag
+			ExistingTargetData->DesiredStateTag = GASCoreTags::State_AI_Routine;
+		}
+	}
+	else
+	{
+		ExistingTargetData->DesiredStateTag = ReactionTag;
 	}
 	
 	PruneTargets();
@@ -504,7 +496,8 @@ void ACoreAIController::UpdateTargetState(AActor* Target, FGameplayTag NewStateT
 		}
 		
 		ExistingTargetData->DesiredStateTag = NewStateTag;
-		// Re-evaluate best target
+		
+		// Re-evaluating best target
 		EvaluateBestTarget();
 	}
 }

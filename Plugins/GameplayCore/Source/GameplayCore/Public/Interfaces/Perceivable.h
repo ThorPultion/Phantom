@@ -34,4 +34,8 @@ public:
 	/** How visible this perceivable is */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Perception")
 	float GetVisibilityModifier();
+	
+	/** The level of visibility (from 0.0-1.0, lower = darker) at which this perceivable is invisible to observers */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Perception")
+	float GetInvisibleThreshold();
 };
