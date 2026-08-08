@@ -4,6 +4,7 @@
 #include "CorePlayerState.h"
 #include "CoreAbilitySystemComponent.h"
 #include "CoreAttributeSet.h"
+#include "Net/UnrealNetwork.h"
 
 ACorePlayerState::ACorePlayerState()
 {
@@ -24,4 +25,26 @@ ACorePlayerState::ACorePlayerState()
 UAbilitySystemComponent* ACorePlayerState::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
+}
+
+void ACorePlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ACorePlayerState, GatheredGold);
+}
+
+void ACorePlayerState::AddGold(const float Amount)
+{
+	if (HasAuthority())
+	{
+		GatheredGold += Amount;
+		
+		OnGoldChangedDelegate.Broadcast(GatheredGold);
+	}
+}
+
+void ACorePlayerState::OnRep_GatheredGold(float OldGold) const
+{
+	OnGoldChangedDelegate.Broadcast(GatheredGold);
 }

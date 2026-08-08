@@ -13,6 +13,7 @@ class UCoreAttributeSet;
 /**
  * 
  */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, float, NewGoldAmount);
 UCLASS()
 class PLAYERCORE_API ACorePlayerState : public APlayerState, public IAbilitySystemInterface
 {
@@ -25,6 +26,13 @@ public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	UCoreAttributeSet* GetAttributeSet() const { return AttributeSet; }
+	
+	void AddGold(const float Amount);
+	
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
+	UPROPERTY(BlueprintAssignable, Category = "Collectibles")
+	FOnGoldChanged OnGoldChangedDelegate;
 
 protected:
 
@@ -33,4 +41,10 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
 	TObjectPtr<UCoreAttributeSet> AttributeSet;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collectibles", ReplicatedUsing = OnRep_GatheredGold)
+	float GatheredGold;
+	
+	UFUNCTION()
+	void OnRep_GatheredGold(float OldGold) const;
 };

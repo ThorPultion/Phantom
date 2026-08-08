@@ -398,8 +398,10 @@ void ULightAwarenessComponent::SetupSceneCaptureSettings(USceneCaptureComponent2
 	PP.AutoExposureMethod = EAutoExposureMethod::AEM_MAX;
 
 	// Clamp min/max to 1 so its stable
-	PP.bOverride_AutoExposureMaxBrightness = false;
+	PP.bOverride_AutoExposureMinBrightness = true;
 	PP.AutoExposureMinBrightness = 1.0f;
+	PP.bOverride_AutoExposureMaxBrightness = true;
+	PP.AutoExposureMaxBrightness = 1.0f;
 	
 	// Force Film Grain to 0
 	PP.bOverride_FilmGrainIntensity = true;
