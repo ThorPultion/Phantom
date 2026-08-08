@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "CoreCharacterBase.h"
+#include "Interfaces/ValuableCollector.h"
 #include "CorePlayerCharacter.generated.h"
 
 class UInputMappingContext;
@@ -20,7 +21,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInteractionFocusChanged, bool, b
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerVisibilityChanged, float, VisibilityLevel);
 
 UCLASS()
-class PLAYERCORE_API ACorePlayerCharacter : public ACoreCharacterBase
+class PLAYERCORE_API ACorePlayerCharacter : public ACoreCharacterBase, public IValuableCollector
 {
 	GENERATED_BODY()
 
@@ -62,7 +63,9 @@ public:
 	
 	virtual void OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
 
-	virtual void OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;;
+	virtual void OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
+	
+	virtual void AddValuable_Implementation(float GoldAmount) override;
 	
 protected:
 	

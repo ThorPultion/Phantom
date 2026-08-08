@@ -466,9 +466,10 @@ float ACorePlayerCharacter::GetVisibilityModifier_Implementation()
 		Visibility *= CrouchVisibilityModifier;
 	}
 	
-	GEngine->AddOnScreenDebugMessage(
+	/*GEngine->AddOnScreenDebugMessage(
 		-1, 5, FColor::Magenta, 
-		FString::Printf(TEXT("Clamped visibility = %f"), FMath::Clamp(Visibility , 0.0f, 1.0f)));
+		FString::Printf(TEXT("Clamped visibility = %f"), 
+			FMath::Clamp(Visibility , 0.0f, 1.0f)));*/
 	
 	return FMath::Clamp(Visibility , 0.0f, 1.0f);
 }
@@ -485,4 +486,17 @@ bool ACorePlayerCharacter::CanJumpInternal_Implementation() const
 	}
 
 	return false;
+}
+
+
+void ACorePlayerCharacter::AddValuable_Implementation(float GoldAmount)
+{
+	// The server is the only one who should modify replicated score/gold
+	if (!HasAuthority()) return;
+	
+	if (ACorePlayerState* PS = GetPlayerState<ACorePlayerState>())
+	{
+		// Telling the Player State to store the value
+		PS->AddGold(GoldAmount);
+	}
 }
