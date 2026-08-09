@@ -22,5 +22,5 @@ protected:
 	TObjectPtr<UTextBlock> InteractText;
 
 	UFUNCTION()
-	void UpdateInteractText(bool bIsLookingAtItem, const FText& PromptText);
+	void UpdateInteractText(const bool bIsLookingAtItem, const FText& PromptText);
 };
