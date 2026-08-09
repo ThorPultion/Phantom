@@ -22,7 +22,7 @@ void UInteractWidget::NativeConstruct()
 	}
 }
 
-void UInteractWidget::UpdateInteractText(bool bIsLookingAtItem, const FText& PromptText)
+void UInteractWidget::UpdateInteractText(const bool bIsLookingAtItem, const FText& PromptText)
 {
 	if (!InteractText) return;
 
