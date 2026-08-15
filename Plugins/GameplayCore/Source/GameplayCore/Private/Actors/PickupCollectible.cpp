@@ -4,6 +4,11 @@
 #include "Actors/PickupCollectible.h"
 #include "Data/CollectibleDefinition.h"
 
+APickupCollectible::APickupCollectible()
+{
+	PickupMesh->SetCollisionResponseToAllChannels(ECR_Block);
+}
+
 void APickupCollectible::Interact_Implementation(AActor* Interactor)
 {
 	if (!HasAuthority()) return;
