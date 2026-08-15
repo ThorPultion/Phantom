@@ -39,6 +39,9 @@ public:
 	//FGameplayTag StationActionTag;
 
 protected:
+	
+	virtual void BeginPlay() override;
+	
 	/** Points the direction the AI should look if we care about doing that */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UArrowComponent> FacingDirection;

@@ -9,23 +9,16 @@ void UAIPatrolSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
 	Super::OnWorldBeginPlay(InWorld);
 
-	// Emptying for safety in editor
+	// Emptying on map loads
 	AllPatrolPoints.Empty();
+}
 
-	// Finding all patrol points in the level
-	TArray<AActor*> FoundActors;
-	UGameplayStatics::GetAllActorsOfClass(&InWorld, APatrolPoint::StaticClass(), FoundActors);
-
-	// Reserving memory to avoid reallocations during the loop (Performance best practice)
-	AllPatrolPoints.Reserve(FoundActors.Num());
-
-	// Casting them and adding them to our typed array
-	for (AActor* Actor : FoundActors)
+void UAIPatrolSubsystem::RegisterPatrolPoint(APatrolPoint* Point)
+{
+	// Make sure the point is valid and we havent already added it
+	if (IsValid(Point) && !AllPatrolPoints.Contains(Point))
 	{
-		if (APatrolPoint* Point = Cast<APatrolPoint>(Actor))
-		{
-			AllPatrolPoints.Add(Point);
-		}
+		AllPatrolPoints.Add(Point);
 	}
 }
 

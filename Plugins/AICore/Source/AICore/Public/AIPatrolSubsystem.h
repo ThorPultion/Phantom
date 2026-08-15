@@ -26,6 +26,10 @@ public:
 	/** Get all patrol points from the level */
 	UFUNCTION(BlueprintCallable, Category = "Patrol")
 	const TArray<APatrolPoint*>& GetAllPatrolPoints() const { return AllPatrolPoints; }
+	
+	/** Add patrol point to subsystem */
+	UFUNCTION(BlueprintCallable, Category = "Patrol")
+	void RegisterPatrolPoint(APatrolPoint* Point);
 
 private:
 	/** All patrol points from the level cached */
