@@ -2,6 +2,8 @@
 
 
 #include "PatrolPoint.h"
+
+#include "AIPatrolSubsystem.h"
 #include "Components/ArrowComponent.h"
 
 // Sets default values
@@ -19,6 +21,20 @@ APatrolPoint::APatrolPoint()
 	// Making arrow more visible
 	FacingDirection->ArrowColor = FColor::Orange;
 	FacingDirection->ArrowSize = 1.5f;
+}
+
+void APatrolPoint::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// Registering patrol point to subsystem
+	if (const UWorld* World = GetWorld())
+	{
+		if (UAIPatrolSubsystem* PatrolSubsystem = World->GetSubsystem<UAIPatrolSubsystem>())
+		{
+			PatrolSubsystem->RegisterPatrolPoint(this);
+		}
+	}
 }
 
 void APatrolPoint::Claim(AActor* Claimer)
