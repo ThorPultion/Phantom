@@ -14,4 +14,7 @@ class PLAYERCORE_API ACorePlayerController : public APlayerController
 {
 	GENERATED_BODY()
 	
+public:
+	ACorePlayerController();
+	
 };

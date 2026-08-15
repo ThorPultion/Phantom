@@ -14,15 +14,21 @@
 #include "CoreHUD.h"
 #include "LevelLightingSubsystem.h"
 #include "LightAwarenessComponent.h"
+#include "Components/CapsuleComponent.h"
 
 // Sets default values
 ACorePlayerCharacter::ACorePlayerCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	
+	// Slightly bigger capsule than normal due to current animations
+	GetCapsuleComponent()->SetCapsuleRadius(44.0f);
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
+	// Camera location tweaking to avoid clipping walls but still remain ahead the first person mesh
+	CameraBoom->SetRelativeLocation(FVector(17.f, 0.f, 65.f));
 	CameraBoom->TargetArmLength = DefaultCameraDistance; // Distance from character
 	// IMPORTANT! This connects Look input to the camera boom
 	CameraBoom->bUsePawnControlRotation = true;

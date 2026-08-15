@@ -2,4 +2,9 @@
 
 
 #include "CorePlayerController.h"
+#include "CorePlayerCameraManager.h"
 
+ACorePlayerController::ACorePlayerController()
+{
+	PlayerCameraManagerClass = ACorePlayerCameraManager::StaticClass();
+}

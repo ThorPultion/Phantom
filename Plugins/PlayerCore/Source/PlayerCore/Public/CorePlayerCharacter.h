@@ -116,14 +116,14 @@ protected:
 	TObjectPtr<UCameraComponent> Camera;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Camera")
-	float DefaultCameraDistance = 0.0f;
+	float DefaultCameraDistance = -15.f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> FirstPersonMesh;
 
 	/** How far the players interaction can reach */
 	UPROPERTY(EditDefaultsOnly, Category = "Interaction")
-	float InteractTraceDistance = 500.0f;
+	float InteractTraceDistance = 500.f;
 
 	// A pointer to hold whatever object we are currently looking at
 	UPROPERTY()
