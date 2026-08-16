@@ -33,6 +33,10 @@
 		{
 			"Name": "EnhancedInput",
 			"Enabled": true
+		},
+		{
+			"Name": "LightAwareness",
+			"Enabled": true
 		}
 	]
 }

@@ -5,6 +5,7 @@
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Data/ItemDefinition.h"
+#include "Net/UnrealNetwork.h"
 
 APickupBase::APickupBase()
 {
@@ -23,13 +24,36 @@ APickupBase::APickupBase()
     PickupMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
     PickupMesh->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
     PickupMesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+    
+    SetReplicates(true);
 }
 
 void APickupBase::OnConstruction(const FTransform& Transform)
 {
     Super::OnConstruction(Transform);
 
-    // Blueprint variables are loaded, we can safely check the Data Asset
+    // Blueprint variables are loaded, we can safely check definition Data Asset
+    OnRep_ItemData();
+}
+
+void APickupBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(APickupBase, ItemData);
+}
+
+void APickupBase::ChangeItem(UItemDefinition* InItemData)
+{
+    ItemData = InItemData;
+    
+    if (HasAuthority())
+    {
+        OnRep_ItemData();
+    }
+}
+
+void APickupBase::OnRep_ItemData()
+{
     if (ItemData && ItemData->PickupMesh)
     {
         // Assign the visual mesh

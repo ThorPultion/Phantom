@@ -14,6 +14,7 @@ class GAMEPLAYCORE_API APickupCollectible : public APickupBase
 {
 	GENERATED_BODY()
 	
+public:
 	APickupCollectible();
 	
 	virtual void Interact_Implementation(AActor* Interactor) override;

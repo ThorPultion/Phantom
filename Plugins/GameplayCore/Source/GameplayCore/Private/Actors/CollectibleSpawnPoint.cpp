@@ -1,16 +1,16 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "PatrolPoint.h"
-
-#include "AIPatrolSubsystem.h"
+#include "Actors/CollectibleSpawnPoint.h"
+#include "CollectibleSpawnSubsystem.h"
 #include "Components/ArrowComponent.h"
 
 // Sets default values
-APatrolPoint::APatrolPoint()
+ACollectibleSpawnPoint::ACollectibleSpawnPoint()
 {
+ 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
-	
+
 	// Editor only indicators for level placements
 #if WITH_EDITORONLY_DATA
 	EditorIndicator = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("EditorIndicator"));
@@ -26,31 +26,18 @@ APatrolPoint::APatrolPoint()
 #endif
 }
 
-void APatrolPoint::PostInitializeComponents()
+void ACollectibleSpawnPoint::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 	
-	// Registering patrol point to subsystem
+	if (!HasAuthority()) return;
+	
 	if (const UWorld* World = GetWorld())
 	{
-		if (UAIPatrolSubsystem* PatrolSubsystem = World->GetSubsystem<UAIPatrolSubsystem>())
+		// Subsystem handles spawning the collectible
+		if (UCollectibleSpawnSubsystem* CollectibleSpawnSubsystem = World->GetSubsystem<UCollectibleSpawnSubsystem>())
 		{
-			PatrolSubsystem->RegisterPatrolPoint(this);
+			CollectibleSpawnSubsystem->RegisterCollectibleSpawnPoint(this, bIsRare);
 		}
 	}
-}
-
-void APatrolPoint::Claim(AActor* Claimer)
-{
-	if (!bIsClaimed)
-	{
-		bIsClaimed = true;
-		CurrentClaimer = Claimer;
-	}
-}
-
-void APatrolPoint::Release()
-{
-	bIsClaimed = false;
-	CurrentClaimer = nullptr;
 }

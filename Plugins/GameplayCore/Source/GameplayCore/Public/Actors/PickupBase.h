@@ -24,14 +24,23 @@ public:
 	// Interactable interface functions
 	virtual void Interact_Implementation(AActor* Interactor) override;
 	virtual FText GetInteractText_Implementation() override;
+	
+	//** Changes item according to definition data (for example, bow->diamond or diamond->coin) */
+	UFUNCTION(BlueprintCallable, Category = "Pickups")
+	void ChangeItem(UItemDefinition* InItemData);
+	
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
+	virtual void OnConstruction(const FTransform& Transform) override;
 
 protected:
-
-    virtual void OnConstruction(const FTransform& Transform) override;
+	
+	UFUNCTION()
+	virtual void OnRep_ItemData();
 
     /** The objects definition */
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Data")
-    TObjectPtr<UItemDefinition> ItemData;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_ItemData, Category = "Item Data")
+	TObjectPtr<UItemDefinition> ItemData;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     TObjectPtr<USceneComponent> RootComp;
