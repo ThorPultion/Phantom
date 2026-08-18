@@ -12,6 +12,7 @@
 #include "GASCoreTags.h"
 #include "Interfaces/Interactable.h"
 #include "CoreHUD.h"
+#include "CorePlayerCameraManager.h"
 #include "LevelLightingSubsystem.h"
 #include "LightAwarenessComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -494,7 +495,6 @@ bool ACorePlayerCharacter::CanJumpInternal_Implementation() const
 	return false;
 }
 
-
 void ACorePlayerCharacter::AddValuable_Implementation(float GoldAmount)
 {
 	// The server is the only one who should modify replicated score/gold
@@ -504,5 +504,47 @@ void ACorePlayerCharacter::AddValuable_Implementation(float GoldAmount)
 	{
 		// Telling the Player State to store the value
 		PS->AddGold(GoldAmount);
+	}
+}
+
+void ACorePlayerCharacter::OnDeadTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
+{
+	Super::OnDeadTagChanged(CallbackTag, NewCount);
+	
+	const bool bIsDead = NewCount > 0;
+	
+	if (IsLocallyControlled())
+	{
+		ToggleRagdollCamera(bIsDead);
+		
+		if (bIsDead)
+		{
+			// Preventing capsule rotation from input, caused visual bugs
+			bUseControllerRotationYaw = false;
+		}
+		else
+		{
+			// Restoring rotation in the case of revive
+			bUseControllerRotationYaw = true;
+		}
+	}
+}
+
+
+void ACorePlayerCharacter::ToggleRagdollCamera(const bool bIsDead) const
+{
+	const APlayerController* PC = GetController<APlayerController>();
+	if (!PC) return;
+ 
+	ACorePlayerCameraManager* CameraManager = Cast<ACorePlayerCameraManager>(PC->PlayerCameraManager);
+	if (!CameraManager) return;
+ 
+	if (bIsDead)
+	{
+		CameraManager->StartTrackingComponent(GetMesh()); 
+	}
+	else
+	{
+		CameraManager->StopTrackingComponent();
 	}
 }
