@@ -163,6 +163,12 @@ protected:
 
 	// Overriding to allow crouch jumping
 	virtual bool CanJumpInternal_Implementation() const override;
+	
+	// Death implementation
+	virtual void OnDeadTagChanged(const FGameplayTag CallbackTag, int32 NewCount) override;
+	
+	// Ragdoll following camera
+	void ToggleRagdollCamera(const bool bIsDead) const;
 
 public:	
 	// Called every frame

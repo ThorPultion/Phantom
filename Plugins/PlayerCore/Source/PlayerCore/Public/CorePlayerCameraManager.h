@@ -17,4 +17,24 @@ class PLAYERCORE_API ACorePlayerCameraManager : public APlayerCameraManager
 public:
 	ACorePlayerCameraManager();
 	
+	UFUNCTION(BlueprintCallable, Category = "Camera Tracking")
+	void StartTrackingComponent(USceneComponent* TargetComponent, const FName SocketName = NAME_None);
+	
+	void StopTrackingComponent();
+	
+protected:
+	virtual void UpdateViewTarget(FTViewTarget& OutVT, float DeltaTime) override;
+	
+private:
+	
+	UPROPERTY()
+	TObjectPtr<USceneComponent> TrackingComponent;
+	
+	FName TrackingSocketName;
+	
+	FVector LockedCameraLocation;
+	
+	FQuat TrackingQuat;
+	
+	void TrackTargetComponent(FTViewTarget& OutVT, float DeltaTime);
 };

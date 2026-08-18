@@ -164,6 +164,14 @@ void ACoreCharacterBase::BindAbilitySystemDelegates()
 		AimingTagDelegateHandle = AbilitySystemComponent->RegisterGameplayTagEvent(
 			GASCoreTags::State_Weapon_Priming,
 			EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ACoreCharacterBase::OnAimingTagChanged);
+		
+		AbilitySystemComponent->RegisterGameplayTagEvent(
+			GASCoreTags::State_Dead, 
+			EGameplayTagEventType::NewOrRemoved).Remove(DeadTagDelegateHandle);
+		
+		DeadTagDelegateHandle = AbilitySystemComponent->RegisterGameplayTagEvent(
+			GASCoreTags::State_Dead, 
+			EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ACoreCharacterBase::OnDeadTagChanged);
 	}
 }
 
@@ -292,4 +300,9 @@ UAISense_Sight::EVisibilityResult ACoreCharacterBase::CanBeSeenFrom(const FCanBe
 	// We hit a wall
 	OutSightStrength = 0.0f;
 	return UAISense_Sight::EVisibilityResult::NotVisible;
+}
+
+void ACoreCharacterBase::OnDeadTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
+{
+	// This runs when the character dies
 }

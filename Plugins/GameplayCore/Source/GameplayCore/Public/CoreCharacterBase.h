@@ -105,6 +105,18 @@ protected:
 	FDelegateHandle AimingTagDelegateHandle;
 
 	void OnAimingTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
+	
+	FDelegateHandle DeadTagDelegateHandle;
+	
+	virtual void OnDeadTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
+	
+	/** The point at which SetFocus will look at */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI")
+	FName SetFocusTargetSocket = "set_focus_socket";
+	
+	/** Assign team in blueprints, 0 = Players, 1 = Guards, 2 = Monsters */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	FGenericTeamId TeamID;
 
 public:
 	/** What team this character is on */
@@ -123,13 +135,5 @@ public:
 	/** What reaction data this character gives to AI */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Perception")
 	TObjectPtr<UAIReactionData> ReactionData;
-
-protected:
-	/** The point at which SetFocus will look at */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI")
-	FName SetFocusTargetSocket = "set_focus_socket";
 	
-	/** Assign team in blueprints, 0 = Players, 1 = Guards, 2 = Monsters */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-	FGenericTeamId TeamID;
 };
