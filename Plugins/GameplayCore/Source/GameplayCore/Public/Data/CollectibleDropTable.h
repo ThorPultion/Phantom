@@ -7,6 +7,7 @@
 #include "CollectibleDropTable.generated.h"
 
 class UCollectibleDefinition;
+class APickupCollectible;
 
 /**
  * 
@@ -20,4 +21,8 @@ public:
 	/** The table of collectibles */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Collectibles")
 	TArray<TObjectPtr<UCollectibleDefinition>> CollectibleDefinitions;
+	
+	/** Collectible class (rare or regular pickup?) */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Spawning")
+	TSubclassOf<APickupCollectible> CollectibleClassToSpawn;
 };
