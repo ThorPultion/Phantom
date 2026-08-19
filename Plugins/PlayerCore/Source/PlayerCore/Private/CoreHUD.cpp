@@ -31,17 +31,12 @@ void ACoreHUD::InitUI()
 	}
 }
 
-void ACoreHUD::DestroyUI()
+void ACoreHUD::DestroyHUD()
 {
+	// Only destroying gameplay HUD
 	if (IsValid(HUDWidget))
 	{
 		HUDWidget->RemoveFromParent();
 		HUDWidget = nullptr;
 	}
-	
-	if (IsValid(MenuWidget))
-    {
-    	MenuWidget->RemoveFromParent();
-		MenuWidget = nullptr;
-    }
 }

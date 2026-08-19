@@ -20,7 +20,8 @@ public:
 	// The Character will call this when GAS is ready
 	void InitUI();
 	
-	void DestroyUI();
+	UFUNCTION(BlueprintCallable, Category = "HUD")
+	void DestroyHUD();
 
 protected:
 

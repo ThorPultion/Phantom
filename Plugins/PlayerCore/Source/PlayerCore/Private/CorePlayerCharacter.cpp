@@ -519,7 +519,7 @@ void ACorePlayerCharacter::OnDeadTagChanged(const FGameplayTag CallbackTag, int3
 			
 			if (ACoreHUD* HUD = GetHUD())
 			{
-				HUD->DestroyUI();
+				HUD->DestroyHUD();
 			}
 		}
 		else
