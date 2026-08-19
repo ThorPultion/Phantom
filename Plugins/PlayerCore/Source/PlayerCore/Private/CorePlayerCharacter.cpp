@@ -106,7 +106,7 @@ void ACorePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	if (const APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
 		// Get the Local Player Subsystem for Enhanced Input
 		if (UEnhancedInputLocalPlayerSubsystem* InputSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
@@ -162,13 +162,10 @@ void ACorePlayerCharacter::TryInitializeLocalPlayer()
 			CoreIC->BindAbilityActions(InputConfigDataAsset, this, &ThisClass::Input_AbilityInputTagPressed, &ThisClass::Input_AbilityInputTagReleased);
 		}
 
-		// 2. INITIALIZE HUD
-		if (APlayerController* PC = Cast<APlayerController>(GetController()))
+		// 2. INITIALIZE UI
+		if (ACoreHUD* HUD = GetHUD())
 		{
-			if (ACoreHUD* HUD = Cast<ACoreHUD>(PC->GetHUD()))
-			{
-				HUD->InitHUD();
-			}
+			HUD->InitUI();
 		}
 
 		// Lock the latch so we dont init twice
@@ -521,6 +518,11 @@ void ACorePlayerCharacter::OnDeadTagChanged(const FGameplayTag CallbackTag, int3
 		{
 			// Preventing capsule rotation from input, caused visual bugs
 			bUseControllerRotationYaw = false;
+			
+			if (ACoreHUD* HUD = GetHUD())
+			{
+				HUD->DestroyUI();
+			}
 		}
 		else
 		{
@@ -547,4 +549,13 @@ void ACorePlayerCharacter::ToggleRagdollCamera(const bool bIsDead) const
 	{
 		CameraManager->StopTrackingComponent();
 	}
+}
+
+ACoreHUD* ACorePlayerCharacter::GetHUD() const
+{
+	if (const APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		return Cast<ACoreHUD>(PC->GetHUD());
+	}
+	return nullptr;
 }

@@ -14,6 +14,7 @@ struct FInputActionValue;
 class USpringArmComponent;
 class UCameraComponent;
 class ULightAwarenessComponent;
+class ACoreHUD;
 
 /** Broadcasting when the player looks at or looks away from an interactable */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInteractionFocusChanged, bool, bIsLookingAtItem, const FText&, PromptText);
@@ -169,6 +170,8 @@ protected:
 	
 	// Ragdoll following camera
 	void ToggleRagdollCamera(const bool bIsDead) const;
+	
+    ACoreHUD* GetHUD() const;
 
 public:	
 	// Called every frame
