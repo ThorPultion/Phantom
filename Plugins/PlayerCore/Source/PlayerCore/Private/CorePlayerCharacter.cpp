@@ -506,8 +506,6 @@ void ACorePlayerCharacter::AddValuable_Implementation(float GoldAmount)
 
 void ACorePlayerCharacter::OnDeadTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
 {
-	Super::OnDeadTagChanged(CallbackTag, NewCount);
-	
 	const bool bIsDead = NewCount > 0;
 	
 	if (IsLocallyControlled())
@@ -530,6 +528,8 @@ void ACorePlayerCharacter::OnDeadTagChanged(const FGameplayTag CallbackTag, int3
 			bUseControllerRotationYaw = true;
 		}
 	}
+	
+	Super::OnDeadTagChanged(CallbackTag, NewCount);
 }
 
 

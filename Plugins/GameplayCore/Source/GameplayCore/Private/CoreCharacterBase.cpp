@@ -10,6 +10,7 @@
 #include "GASCoreTags.h"
 #include "Data/GASInitData.h"
 #include "Perception/AIPerceptionTypes.h"
+#include "Components/CapsuleComponent.h"
 
 // Sets default values
 ACoreCharacterBase::ACoreCharacterBase()
@@ -304,5 +305,29 @@ UAISense_Sight::EVisibilityResult ACoreCharacterBase::CanBeSeenFrom(const FCanBe
 
 void ACoreCharacterBase::OnDeadTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
 {
-	// This runs when the character dies
+	const bool bIsDead = NewCount > 0;
+	
+	// Generic death cleanup for all characters
+	if (bIsDead)
+	{
+		if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+		{
+			MoveComp->SetMovementMode(MOVE_None);
+		}
+		
+		SetReplicateMovement(false);
+		
+		if (UCapsuleComponent* Capsule = GetCapsuleComponent())
+		{
+			Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+		
+		if (HasAuthority())
+		{
+			if (AController* CurrentController = GetController())
+			{
+				CurrentController->UnPossess();
+			}
+		}
+	}
 }

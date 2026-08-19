@@ -3,10 +3,7 @@
 
 #include "Cues/GC_DeathRagdoll.h"
 #include "GameFramework/Character.h"
-#include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "GASCoreTags.h"
 #include "CoreCharacterBase.h"
 
 bool UGC_DeathRagdoll::OnExecute_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const
@@ -15,18 +12,6 @@ bool UGC_DeathRagdoll::OnExecute_Implementation(AActor* MyTarget, const FGamepla
 	if (!AvatarCharacter)
 	{
 		return false;
-	}
-
-	// Groundwork for ragdolling character
-	if (UCharacterMovementComponent* MoveComp = AvatarCharacter->GetCharacterMovement())
-	{
-		MoveComp->SetMovementMode(MOVE_None);
-		AvatarCharacter->SetReplicateMovement(false);
-	}
-
-	if (UCapsuleComponent* Capsule = AvatarCharacter->GetCapsuleComponent())
-	{
-		Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 
 	USkeletalMeshComponent* Mesh = AvatarCharacter->GetMesh();
