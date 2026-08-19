@@ -20,6 +20,12 @@ void AArrowProjectile::OnProjectileHit(UPrimitiveComponent* HitComponent, AActor
 {
 	// Let the base class handle damage (GAS) and visual effects
 	Super::OnProjectileHit(HitComponent, OtherActor, OtherComp, NormalImpulse, Hit);
+	
+	// Preventing Attach loop and just letting them collide normally instead
+	if (OtherActor && OtherActor->IsA<AArrowProjectile>())
+	{
+		return;
+	}
 
 	// Stop the physics simulation immediately
 	if (ProjectileMovement)
