@@ -55,11 +55,13 @@ void UCollectibleSpawnSubsystem::SpawnCollectible(
 {
 	if (!IsValid(SpawnPoint) || !InDropTable) return;
 	
-	if (InDropTable->CollectibleDefinitions.IsEmpty()) return;
+	if (InDropTable->CollectibleDefinitions.IsEmpty() || !InDropTable->CollectibleClassToSpawn) return;
 	
 	const FTransform SpawnTransform = SpawnPoint->GetActorTransform();
+	
+	// Spawning collectible based on the class defined by drop table
 	APickupCollectible* SpawnedCollectible = 
-		GetWorld()->SpawnActorDeferred<APickupCollectible>(APickupCollectible::StaticClass(), SpawnTransform);
+		GetWorld()->SpawnActorDeferred<APickupCollectible>(InDropTable->CollectibleClassToSpawn, SpawnTransform);
 	
 	const int RandomIndex = FMath::RandRange(0, InDropTable->CollectibleDefinitions.Num() - 1);
 	// Changing the collectible to a random one from table
