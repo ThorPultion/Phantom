@@ -45,7 +45,7 @@ void ACorePlayerCameraManager::TrackTargetComponent(FTViewTarget& OutVT, const f
 	const FVector DirectionToTarget = (LookAtTargetLocation - OutVT.POV.Location).GetSafeNormal();
 	const FQuat TargetLookAtQuat = FRotationMatrix::MakeFromX(DirectionToTarget).ToQuat();
 	
-	const float Alpha = FMath::Clamp(DeltaTime * 5.0f, 0.f, 1.f);
+	const float Alpha = FMath::Clamp(DeltaTime * TrackingSpeed, 0.f, 1.f);
 	TrackingQuat = FQuat::Slerp(TrackingQuat, TargetLookAtQuat, Alpha);
 
 	// Applying rotation

@@ -25,6 +25,9 @@ public:
 protected:
 	virtual void UpdateViewTarget(FTViewTarget& OutVT, float DeltaTime) override;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "Camera Tracking")
+	float TrackingSpeed = 5.f;
+	
 private:
 	
 	UPROPERTY()
