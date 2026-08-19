@@ -4,17 +4,44 @@
 #include "CoreHUD.h"
 #include "CoreUserWidget.h"
 
-void ACoreHUD::InitHUD()
+void ACoreHUD::InitUI()
 {
-	// Only spawn if we have a class and havent spawned it yet
-	if (MasterHUDClass && MasterHUDWidget == nullptr)
+	// Gameplay HUD init
+	// Only spawning if we have a class and havent spawned it yet
+	if (HUDClass && HUDWidget == nullptr)
 	{
-		// Create the widget and store the reference
-		MasterHUDWidget = CreateWidget<UCoreUserWidget>(GetWorld(), MasterHUDClass);
+		// Creating the widget and storing a reference
+		HUDWidget = CreateWidget<UCoreUserWidget>(GetWorld(), HUDClass);
 
-		if (MasterHUDWidget)
+		if (HUDWidget)
 		{
-			MasterHUDWidget->AddToViewport();
+			HUDWidget->AddToViewport();
 		}
 	}
+	
+	// Menu UI init
+	if (MenuClass && MenuWidget == nullptr)
+	{
+		MenuWidget = CreateWidget<UCoreUserWidget>(GetWorld(), MenuClass);
+
+		if (MenuWidget)
+		{
+			MenuWidget->AddToViewport();
+		}
+	}
+}
+
+void ACoreHUD::DestroyUI()
+{
+	if (IsValid(HUDWidget))
+	{
+		HUDWidget->RemoveFromParent();
+		HUDWidget = nullptr;
+	}
+	
+	if (IsValid(MenuWidget))
+    {
+    	MenuWidget->RemoveFromParent();
+		MenuWidget = nullptr;
+    }
 }

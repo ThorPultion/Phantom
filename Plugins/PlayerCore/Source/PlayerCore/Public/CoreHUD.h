@@ -18,16 +18,25 @@ class PLAYERCORE_API ACoreHUD : public AHUD
 
 public:
 	// The Character will call this when GAS is ready
-	void InitHUD();
+	void InitUI();
+	
+	void DestroyUI();
 
 protected:
 
-	// The class we will select in the Blueprint Editor (e.g. WBP_MasterHUD)
+	/** Widget containing the entire gameplay HUD */
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<UCoreUserWidget> MasterHUDClass;
+	TSubclassOf<UCoreUserWidget> HUDClass;
+
+	/** Widget containing the entire menu UI */
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UCoreUserWidget> MenuClass;
 
 private:
-	// A pointer to the actual widget once it is created
 	UPROPERTY()
-	TObjectPtr<UCoreUserWidget> MasterHUDWidget;
+	TObjectPtr<UCoreUserWidget> HUDWidget;
+	
+	UPROPERTY()
+	TObjectPtr<UCoreUserWidget> MenuWidget;
+	
 };
