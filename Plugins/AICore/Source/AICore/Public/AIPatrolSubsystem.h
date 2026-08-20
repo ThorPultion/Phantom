@@ -17,9 +17,6 @@ class AICORE_API UAIPatrolSubsystem : public UWorldSubsystem
 	GENERATED_BODY()
 	
 public:
-	// Called when the world begins play
-	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
-
 	// Called when the world is torn down
 	virtual void Deinitialize() override;
 
@@ -34,5 +31,5 @@ public:
 private:
 	/** All patrol points from the level cached */
 	UPROPERTY(Transient)
-	TArray<TObjectPtr<APatrolPoint>> AllPatrolPoints;
+	TArray<APatrolPoint*> AllPatrolPoints;
 };
