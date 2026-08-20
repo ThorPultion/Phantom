@@ -114,9 +114,9 @@ void UGA_ChargedProjectile::OnMontageEventReceived_Implementation(FGameplayEvent
 
 	TSubclassOf<AActor> ProjectileToSpawn = IProjectileProvider::Execute_GetCurrentProjectileClass(EquippedWeapon);
 	if (!ProjectileToSpawn) return;
-
-	FVector SpawnLocation = Avatar->GetActorLocation();
+	
 	FTransform SocketTransform = IProjectileProvider::Execute_GetProjectileSpawnTransform(EquippedWeapon);
+	FVector SpawnLocation = Avatar->GetActorLocation();
 	SpawnLocation = SocketTransform.GetLocation();
 
 	FRotator SpawnRotation;
@@ -188,6 +188,35 @@ void UGA_ChargedProjectile::OnMontageEventReceived_Implementation(FGameplayEvent
 			SpawnRotation = UKismetMathLibrary::FindLookAtRotation(SpawnLocation, PredictedLoc);
 		}
 	}
+	
+	// --- MUZZLE OBSTRUCTION CHECK ---
+	// Prevent shooting through walls by checking if the socket is clipped inside geometry
+	FVector SocketLocation = SocketTransform.GetLocation();
+	FVector PlayerCenter = Avatar->GetActorLocation();
+	FHitResult ObstructionHit;
+	FCollisionQueryParams ObstructionParams;
+	ObstructionParams.AddIgnoredActor(Avatar);
+
+	// Trace from the center of the player (safe) to the bow socket (potentially inside a wall)
+	if (GetWorld()->LineTraceSingleByChannel(
+		ObstructionHit, 
+		PlayerCenter,
+		SocketLocation, 
+		ECC_Visibility, 
+		ObstructionParams))
+	{
+		// The bow is inside a wall. 
+		// Move the spawn point to the surface of the wall, pulled back a bit
+		SpawnLocation = ObstructionHit.ImpactPoint + (ObstructionHit.ImpactNormal * 5.f);
+		
+		// Changing spawn rotation to be where the player feels like theyre aiming.
+		// Avoids the arrow being rotated weirdly when stuck to the wall we are shooting at
+		if (AController* Controller = AvatarPawn->GetController())
+		{
+			SpawnRotation = Controller->GetControlRotation();
+		}
+	}
+	// --- MUZZLE OBSTRUCTION CHECK ENDS ---
 
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = Avatar;

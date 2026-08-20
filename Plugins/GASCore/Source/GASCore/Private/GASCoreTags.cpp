@@ -5,6 +5,7 @@ namespace GASCoreTags
 	// --- Events ---
 	UE_DEFINE_GAMEPLAY_TAG(Event_Death, "Event.Death");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Movement_Knockback, "Event.Movement.Knockback");
+	UE_DEFINE_GAMEPLAY_TAG(Event_Movement_Blink, "Event.Movement.Blink");
 
 	// --- Movement States ---
 	UE_DEFINE_GAMEPLAY_TAG(State_Movement_Crouched, "State.Movement.Crouched");

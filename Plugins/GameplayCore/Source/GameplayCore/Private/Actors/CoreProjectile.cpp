@@ -96,10 +96,12 @@ void ACoreProjectile::UnIgnoreOwner()
 	}
 }
 
-void ACoreProjectile::OnProjectileHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+void ACoreProjectile::OnProjectileHit(UPrimitiveComponent* HitComponent,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	// Let Blueprints handle the sparks/sounds locally
-	OnImpact(Hit);
+	OnVisualImpact(Hit);
 
 	CollisionComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
@@ -107,6 +109,8 @@ void ACoreProjectile::OnProjectileHit(UPrimitiveComponent* HitComponent, AActor*
 
 	// Only the server should deal damage or apply Gameplay Effects
 	if (!HasAuthority() || !OtherActor) return;
+	
+	OnAuthoritativeImpact(Hit);
 
 	IAbilitySystemInterface* TargetInterface = Cast<IAbilitySystemInterface>(OtherActor);
 	if (!TargetInterface) return;

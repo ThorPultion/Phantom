@@ -21,11 +21,11 @@ class GAMEPLAYCORE_API ACoreProjectile : public AActor
 public:	
 	// Sets default values for this actor's properties
 	ACoreProjectile();
-
-protected:
-
+	
 	// On blueprint construction
 	virtual void OnConstruction(const FTransform& Transform) override;
+
+protected:
 
 	/** Main collision shape */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -47,13 +47,17 @@ protected:
 	 * Must be a UFUNCTION to bind to the collision components delegate!
 	 */
 	UFUNCTION()
-	virtual void OnProjectileHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+	virtual void OnProjectileHit(UPrimitiveComponent* HitComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
-	/** * Blueprint hook for visual effects on impact.
-	 * Allows designers to spawn explosion particles or sounds without touching C++.
-	 */
+	/** Blueprint hook for gameplay effects on impact */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Projectile")
-	void OnImpact(const FHitResult& Hit);
+	void OnAuthoritativeImpact(const FHitResult& Hit);
+	
+	/** Blueprint hook for visual effects on impact */
+	UFUNCTION(BlueprintImplementableEvent, Category = "Projectile")
+	void OnVisualImpact(const FHitResult& Hit);
 
 	/** Projectiles defining particle effect */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
