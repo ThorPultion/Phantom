@@ -5,14 +5,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "PatrolPoint.h"
 
-void UAIPatrolSubsystem::OnWorldBeginPlay(UWorld& InWorld)
-{
-	Super::OnWorldBeginPlay(InWorld);
-
-	// Emptying on map loads
-	AllPatrolPoints.Empty();
-}
-
 void UAIPatrolSubsystem::RegisterPatrolPoint(APatrolPoint* Point)
 {
 	// Make sure the point is valid and we havent already added it
