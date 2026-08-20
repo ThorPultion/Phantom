@@ -16,7 +16,9 @@ AArrowProjectile::AArrowProjectile()
 	}
 }
 
-void AArrowProjectile::OnProjectileHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+void AArrowProjectile::OnProjectileHit(UPrimitiveComponent* HitComponent,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	// Let the base class handle damage (GAS) and visual effects
 	Super::OnProjectileHit(HitComponent, OtherActor, OtherComp, NormalImpulse, Hit);
