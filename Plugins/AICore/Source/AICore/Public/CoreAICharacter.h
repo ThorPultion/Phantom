@@ -55,6 +55,6 @@ protected:
 protected:
 	FDelegateHandle CombatTagDelegateHandle;
 
-	void OnDeadTagChanged(const FGameplayTag CallbackTag, const int32 NewCount) const;
+	virtual void OnDeadTagChanged(const FGameplayTag CallbackTag, int32 NewCount) override;
 	
 };

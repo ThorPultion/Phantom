@@ -83,8 +83,10 @@ void ACoreAICharacter::InitAbilitySystem()
 		EGameplayTagEventType::AnyCountChange).AddUObject(this, &ACoreAICharacter::OnDeadTagChanged);
 }
 
-void ACoreAICharacter::OnDeadTagChanged(const FGameplayTag CallbackTag, const int32 NewCount) const
+void ACoreAICharacter::OnDeadTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
 {
+	Super::OnDeadTagChanged(CallbackTag, NewCount);
+	
 	if (NewCount > 0)
 	{
 		DetectionWidgetComponent->DestroyComponent();
