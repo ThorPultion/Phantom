@@ -76,8 +76,16 @@ protected:
 	
 	float CachedLightLevel = 1.0f;
 	
+	// NEW: Tracks the final calculated visibility to prevent UI spam. 
+	// Initialized to -1.0f to guarantee the very first update broadcasts.
+	UPROPERTY()
+	float LastBroadcastedVisibility = -1.0f;
+	
 	UFUNCTION()
 	void OnLightLevelChanged(const float NewLightValue);
+	
+	UFUNCTION()
+	void UpdateAndBroadcastVisibility();
 
 	/** Initiate Gameplay Ability System */
 	virtual void InitAbilitySystem() override;

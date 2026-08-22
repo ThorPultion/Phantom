@@ -202,9 +202,8 @@ void ACoreAIController::HandleDamageSense(AActor* Actor, const FAIStimulus& Stim
 void ACoreAIController::HandleTeamSense(AActor* Actor, const FAIStimulus& Stimulus) const
 {
 	if (!Stimulus.WasSuccessfullySensed() || !AbilitySystemComponent) return;
-	
-	const float MaxDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetMaxDetectionAttribute());
-	ApplyDetectionImpulse(Actor, MaxDetection * DetectionData->SearchThresholdPercent);
+
+	ApplyDetectionImpulse(Actor, GetSearchThreshold());
 }
 
 void ACoreAIController::ApplyDetectionImpulse(AActor* InstigatorActor, const float DetectionAmount) const
@@ -272,13 +271,10 @@ void ACoreAIController::ProcessTargetLost(AActor* TargetActor, const FGameplayTa
 	if (AbilitySystemComponent)
 	{
 		const float CurrentDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetDetectionLevelAttribute());
-		const float MaxDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetMaxDetectionAttribute());
-          
-		const float SearchThreshold = MaxDetection * DetectionData->SearchThresholdPercent;
 
 		// If detection level is higher than our designated threshold when losing sight,
 		// apply the searching tag
-		if (CurrentDetection >= SearchThreshold)
+		if (CurrentDetection >= GetSearchThreshold())
 		{
 			ExistingTargetData->DesiredStateTag = ReactionTag;
 		}

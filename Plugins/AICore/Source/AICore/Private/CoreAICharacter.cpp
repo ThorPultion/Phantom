@@ -13,6 +13,7 @@
 #include "Components/CoreWidgetComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Perception/AIPerceptionTypes.h"
+#include "BrainComponent.h"
 
 // Sets default values
 ACoreAICharacter::ACoreAICharacter()
@@ -35,6 +36,8 @@ ACoreAICharacter::ACoreAICharacter()
 	DetectionWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen); // Screen space makes it always face the player
 	DetectionWidgetComponent->SetDrawAtDesiredSize(true);
 	DetectionWidgetComponent->SetRelativeLocation(FVector(0.f, 0.f, 100.f));
+
+	GetMesh()->SetVisibleInRayTracing(false);
 }
 
 void ACoreAICharacter::PossessedBy(AController* NewController)
@@ -85,12 +88,22 @@ void ACoreAICharacter::InitAbilitySystem()
 
 void ACoreAICharacter::OnDeadTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
 {
-	Super::OnDeadTagChanged(CallbackTag, NewCount);
+	// Stopping StateTree before unpossessing the character in base class
+	if (const ACoreAIController* CoreAIController = Cast<ACoreAIController>(GetController()))
+	{
+		// UBrainComponent is the base class for BehaviorTrees and StateTrees in AIControllers
+		if (UBrainComponent* BrainComp = CoreAIController->GetBrainComponent())
+		{
+			BrainComp->StopLogic(TEXT("AI Died"));
+		}
+	}
 	
 	if (NewCount > 0)
 	{
 		DetectionWidgetComponent->DestroyComponent();
 	}
+	
+	Super::OnDeadTagChanged(CallbackTag, NewCount);
 }
 
 void ACoreAICharacter::SetupAttributes()
@@ -101,7 +114,7 @@ void ACoreAICharacter::SetupAttributes()
 	if (!HasAuthority() || !AbilitySystemComponent) return;
 
 	// Initializing AI specific stats
-	if (UAIGASInitData* AIData = Cast<UAIGASInitData>(GASInitData))
+	if (const UAIGASInitData* AIData = Cast<UAIGASInitData>(GASInitData))
 	{
 		if (AIData->AIInitializationEffect)
 		{
@@ -165,8 +178,7 @@ FGameplayTag ACoreAICharacter::GetPerceptionTag_Implementation(ETeamAttitude::Ty
 				if (const ACoreAIController* CoreAIController = Cast<ACoreAIController>(GetController()))
 				{
 					if (AIAttributeSet && 
-						AIAttributeSet->GetDetectionLevel() >= 
-						AIAttributeSet->GetMaxDetection() * CoreAIController->DetectionData->SearchThresholdPercent)
+						AIAttributeSet->GetDetectionLevel() >= CoreAIController->GetSearchThreshold())
 					{
 						return ReactionData->TeamAssistTag;
 					}

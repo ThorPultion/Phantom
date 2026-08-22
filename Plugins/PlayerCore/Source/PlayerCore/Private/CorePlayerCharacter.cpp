@@ -341,7 +341,7 @@ void ACorePlayerCharacter::OnStartCrouch(float HalfHeightAdjust, float ScaledHal
 	}
     
 	// Updating for listeners like UI
-	OnPlayerVisibilityChanged.Broadcast(Execute_GetVisibilityModifier(this));
+	UpdateAndBroadcastVisibility();
 }
 
 void ACorePlayerCharacter::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
@@ -361,7 +361,7 @@ void ACorePlayerCharacter::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfH
 	}
     
 	// Updating for listeners like UI
-	OnPlayerVisibilityChanged.Broadcast(Execute_GetVisibilityModifier(this));
+	UpdateAndBroadcastVisibility();
 }
 
 // Called every frame
@@ -440,10 +440,20 @@ void ACorePlayerCharacter::OnLightLevelChanged(const float NewLightValue)
 {
 	CachedLightLevel = NewLightValue;
 	
-	const float ClampedLevel = Execute_GetVisibilityModifier(this);
-	
 	// Broadcasting the clamped visibility value to systems such as UI
-	OnPlayerVisibilityChanged.Broadcast(ClampedLevel);
+	UpdateAndBroadcastVisibility();
+}
+
+void ACorePlayerCharacter::UpdateAndBroadcastVisibility()
+{
+	const float ClampedVisibility = Execute_GetVisibilityModifier(this);
+
+	// Only broadcast if the float has actually changed beyond a tiny tolerance
+	if (!FMath::IsNearlyEqual(LastBroadcastedVisibility, ClampedVisibility, 0.001f))
+	{
+		LastBroadcastedVisibility = ClampedVisibility;
+		OnPlayerVisibilityChanged.Broadcast(LastBroadcastedVisibility);
+	}
 }
 
 float ACorePlayerCharacter::GetVisibilityModifier_Implementation()
