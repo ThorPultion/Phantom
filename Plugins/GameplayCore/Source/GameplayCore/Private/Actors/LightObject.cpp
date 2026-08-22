@@ -13,6 +13,8 @@ ALightObject::ALightObject()
 
 	PointLightComponent = CreateDefaultSubobject<UPointLightComponent>(TEXT("PointLight"));
 	PointLightComponent->SetupAttachment(RootComponent);
+	
+	PointLightComponent->SetMobility(EComponentMobility::Stationary);
 
 	ParticleComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("ParticleSystem"));
 	ParticleComponent->SetupAttachment(RootComponent);

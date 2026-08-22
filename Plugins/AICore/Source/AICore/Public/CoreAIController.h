@@ -73,6 +73,12 @@ public:
 	/** Perception event handling data for the Detection attribute. Detection dictates AI state */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Detection")
 	TObjectPtr<UAIDetectionData> DetectionData;
+	
+	/** Returns the detection magnitude that the AI needs in order to go into search state.
+	 * Used in multiple scenarios such as applying assist tag and detection level impulses
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Detection")
+	float GetSearchThreshold() const;
 
 protected:
 
@@ -125,8 +131,6 @@ protected:
 	
 	/** Removes targets from memory if they have no active perception AND no remaining detection level */
 	void PruneTargets();
-	
-	float GetSearchThreshold() const;
 	
 private:
 	bool bIsEvaluatingTargets = false;
