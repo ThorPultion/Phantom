@@ -168,7 +168,7 @@ protected:
 	
 	/** Multiplier applied to visibility when the player is crouching */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stealth")
-    float CrouchVisibilityModifier = 0.5f;
+    float CrouchVisibilityModifier = 0.3f;
 
 	// Overriding to allow crouch jumping
 	virtual bool CanJumpInternal_Implementation() const override;

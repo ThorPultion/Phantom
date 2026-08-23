@@ -480,11 +480,6 @@ float ACorePlayerCharacter::GetVisibilityModifier_Implementation()
 		Visibility *= CrouchVisibilityModifier;
 	}
 	
-	/*GEngine->AddOnScreenDebugMessage(
-		-1, 5, FColor::Magenta, 
-		FString::Printf(TEXT("Clamped visibility = %f"), 
-			FMath::Clamp(Visibility , 0.0f, 1.0f)));*/
-	
 	return FMath::Clamp(Visibility , 0.0f, 1.0f);
 }
 
