@@ -42,7 +42,7 @@ void ACoreAIController::OnPossess(APawn* InPawn)
 		AbilitySystemComponent = ControlledCharacter->GetAbilitySystemComponent();
 	}
 
-	if (AbilitySystemComponent)
+	if (IsValid(AbilitySystemComponent))
 	{
 		DetectionDelegateHandle = AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 	UAIAttributeSet::GetDetectionLevelAttribute()).AddUObject(this, &ACoreAIController::OnDetectionLevelChanged);
@@ -72,7 +72,7 @@ void ACoreAIController::OnUnPossess()
 	Super::OnUnPossess();
 
 	// Clean up when the AI dies or changes bodies
-	if (AbilitySystemComponent)
+	if (IsValid(AbilitySystemComponent))
 	{
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 			UAIAttributeSet::GetDetectionLevelAttribute()).Remove(DetectionDelegateHandle);
@@ -161,7 +161,7 @@ void ACoreAIController::HandleSightSense(AActor* Actor, const FAIStimulus& Stimu
 	
 	UAbilitySystemComponent* AllyASC = CoreAllyController->AbilitySystemComponent;
     
-	if (AllyASC && AbilitySystemComponent)
+	if (AllyASC && IsValid(AbilitySystemComponent))
 	{
 		const float AllyDetection = AllyASC->GetNumericAttribute(UAIAttributeSet::GetDetectionLevelAttribute());
 		const float MyDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetDetectionLevelAttribute());
@@ -193,7 +193,7 @@ void ACoreAIController::HandleHearingSense(AActor* Actor, const FAIStimulus& Sti
 
 void ACoreAIController::HandleDamageSense(AActor* Actor, const FAIStimulus& Stimulus) const
 {
-	if (!Stimulus.WasSuccessfullySensed() || !AbilitySystemComponent) return;
+	if (!Stimulus.WasSuccessfullySensed() || !IsValid(AbilitySystemComponent)) return;
 	
 	const float MaxDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetMaxDetectionAttribute());
 	ApplyDetectionImpulse(Actor, MaxDetection);
@@ -201,14 +201,14 @@ void ACoreAIController::HandleDamageSense(AActor* Actor, const FAIStimulus& Stim
 
 void ACoreAIController::HandleTeamSense(AActor* Actor, const FAIStimulus& Stimulus) const
 {
-	if (!Stimulus.WasSuccessfullySensed() || !AbilitySystemComponent) return;
+	if (!Stimulus.WasSuccessfullySensed() || !IsValid(AbilitySystemComponent)) return;
 
 	ApplyDetectionImpulse(Actor, GetSearchThreshold());
 }
 
 void ACoreAIController::ApplyDetectionImpulse(AActor* InstigatorActor, const float DetectionAmount) const
 {
-	if (!AbilitySystemComponent || !IsValid(InstigatorActor) || DetectionAmount <= 0.f || !DetectionData)
+	if (!IsValid(AbilitySystemComponent) || !IsValid(InstigatorActor) || DetectionAmount <= 0.f || !DetectionData)
 	{
 		return;
 	}
@@ -268,7 +268,7 @@ void ACoreAIController::ProcessTargetLost(AActor* TargetActor, const FGameplayTa
 	ExistingTargetData->LastKnownLocation = Stimulus.StimulusLocation;
             
 	// Threshold check
-	if (AbilitySystemComponent)
+	if (IsValid(AbilitySystemComponent))
 	{
 		const float CurrentDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetDetectionLevelAttribute());
 
@@ -305,7 +305,7 @@ void ACoreAIController::PruneTargets()
 		// We only check the detection when dealing with our currently focused target.
 		// We default to false for non-current targets
 		bool bHasActiveDetection = false;
-		if (AbilitySystemComponent && CurrentTargetData.TargetActor == Data.TargetActor)
+		if (IsValid(AbilitySystemComponent) && CurrentTargetData.TargetActor == Data.TargetActor)
 		{
 		   const float CurrentDetection = AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetDetectionLevelAttribute());
 		   bHasActiveDetection = (CurrentDetection > 0.f);
@@ -395,7 +395,7 @@ void ACoreAIController::EvaluateBestTarget()
 		// Update data
 		CurrentTargetData = BestTargetData;
 
-		if (AbilitySystemComponent)
+		if (IsValid(AbilitySystemComponent))
 		{
 			if (OldTag.IsValid())
 			{
@@ -455,7 +455,7 @@ ETeamAttitude::Type ACoreAIController::GetTeamAttitudeTowards(const AActor& Othe
 
 void ACoreAIController::OnDetectionLevelChanged(const FOnAttributeChangeData& Data)
 {
-	if (!AbilitySystemComponent) return;
+	if (!IsValid(AbilitySystemComponent)) return;
 	
 	// If the meter is full
 	if (Data.NewValue >= AbilitySystemComponent->GetNumericAttribute(UAIAttributeSet::GetMaxDetectionAttribute()))
@@ -531,7 +531,7 @@ FVector ACoreAIController::GetFocalPointOnActor(const AActor* Actor) const
 
 float ACoreAIController::GetSearchThreshold() const
 {
-	if (!AbilitySystemComponent || !DetectionData)
+	if (!IsValid(AbilitySystemComponent) || !DetectionData)
 	{
 		return 0.0f;
 	}

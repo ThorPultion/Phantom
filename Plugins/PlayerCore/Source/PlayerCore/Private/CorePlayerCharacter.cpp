@@ -83,14 +83,14 @@ void ACorePlayerCharacter::OnRep_PlayerState()
 void ACorePlayerCharacter::InitAbilitySystem()
 {
 	ACorePlayerState* PS = GetPlayerState<ACorePlayerState>();
-	if (PS)
+	if (IsValid(PS))
 	{
 		// Assigning AbilitySystemComponent and AttributeSet for base class
 		AbilitySystemComponent = PS->GetAbilitySystemComponent();
 
 		AttributeSet = PS->GetAttributeSet();
 
-		if (AbilitySystemComponent)
+		if (IsValid(AbilitySystemComponent))
 		{
 			// Connects the GAS framework: Owner is PlayerState, Avatar is this physical body
 			AbilitySystemComponent->InitAbilityActorInfo(PS, this);
@@ -105,8 +105,10 @@ void ACorePlayerCharacter::InitAbilitySystem()
 void ACorePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	
+	const APlayerController* PC = Cast<APlayerController>(GetController());
 
-	if (const APlayerController* PC = Cast<APlayerController>(GetController()))
+	if (IsValid(PC))
 	{
 		// Get the Local Player Subsystem for Enhanced Input
 		if (UEnhancedInputLocalPlayerSubsystem* InputSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
@@ -153,7 +155,7 @@ void ACorePlayerCharacter::TryInitializeLocalPlayer()
 
 	// We can only bind if BOTH the ASC and the InputComponent are ready
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	if (ASC && InputComponent)
+	if (IsValid(ASC) && IsValid(InputComponent))
 	{
 		// 1. BIND INPUT
 		UCoreInputComponent* CoreIC = Cast<UCoreInputComponent>(InputComponent);
@@ -176,7 +178,7 @@ void ACorePlayerCharacter::TryInitializeLocalPlayer()
 void ACorePlayerCharacter::Input_AbilityInputTagPressed(FGameplayTag InputTag)
 {
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	if (!ASC) return;
+	if (!IsValid(ASC)) return;
 
 	for (FGameplayAbilitySpec& Spec : ASC->GetActivatableAbilities())
 	{
@@ -197,7 +199,7 @@ void ACorePlayerCharacter::Input_AbilityInputTagPressed(FGameplayTag InputTag)
 void ACorePlayerCharacter::Input_AbilityInputTagReleased(FGameplayTag InputTag)
 {
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	if (!ASC) return;
+	if (!IsValid(ASC)) return;
 
 	// Loops through active specs to tell them the button was released (for abilities that wait for release)
 	for (FGameplayAbilitySpec& Spec : ASC->GetActivatableAbilities())
@@ -249,7 +251,7 @@ void ACorePlayerCharacter::Move(const FInputActionValue& Value)
 	// Extract the 2D Axis (WASD or Left Stick)
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
-	if (Controller != nullptr)
+	if (IsValid(Controller))
 	{
 		// Find out which way is "forward" based on where the camera is looking
 		const FRotator Rotation = Controller->GetControlRotation();
@@ -270,7 +272,7 @@ void ACorePlayerCharacter::Look(const FInputActionValue& Value)
 	// Extract the 2D Axis (Mouse Delta or Right Stick)
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
-	if (Controller != nullptr)
+	if (IsValid(Controller))
 	{
 		// Add yaw and pitch to the controller
 		AddControllerYawInput(LookAxisVector.X);
@@ -280,12 +282,15 @@ void ACorePlayerCharacter::Look(const FInputActionValue& Value)
 
 void ACorePlayerCharacter::Input_Interact(const FInputActionValue& Value)
 {
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	const AActor* Interactable = FocusedInteractable.Get();
+	
 	// Only proceed if our looked at interactable actor is still valid
-	if (IsValid(FocusedInteractable) && AbilitySystemComponent)
+	if (IsValid(Interactable) && IsValid(ASC))
 	{
 		FGameplayEventData Payload;
 		Payload.Instigator = this;
-		Payload.Target = FocusedInteractable;
+		Payload.Target = Interactable;
 
 		// Triggering Input GA with Gameplay Event
 		AbilitySystemComponent->HandleGameplayEvent(GASCoreTags::Input_Interact, &Payload);
@@ -294,7 +299,8 @@ void ACorePlayerCharacter::Input_Interact(const FInputActionValue& Value)
 
 void ACorePlayerCharacter::Input_SelectAmmo(const FInputActionValue& Value)
 {
-	if (!AbilitySystemComponent) return;
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	if (!IsValid(ASC)) return;
 
 	// Float value set up in Mapping Context Modifiers
 	float IMCScalar = Value.Get<float>();
@@ -311,7 +317,8 @@ void ACorePlayerCharacter::Input_SelectAmmo(const FInputActionValue& Value)
 
 void ACorePlayerCharacter::Input_CycleAmmo(const FInputActionValue& Value)
 {
-	if (!AbilitySystemComponent) return;
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	if (!IsValid(ASC)) return;
 
 	// Will be 1.0 or -1.0, set up in Mappin Context Modifiers
 	float ScrollDirection = Value.Get<float>();
@@ -327,7 +334,8 @@ void ACorePlayerCharacter::OnStartCrouch(float HalfHeightAdjust, float ScaledHal
 {
 	Super::OnStartCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
 
-	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	if (IsValid(ASC))
 	{
 		// Apply the state tag to the character
 		// LOOSE GAMEPLAY TAGS DONT REPLICATE, BUT OnStartCrouch and OnEndCrouch RUN ON CLIENT AND SERVER!
@@ -335,7 +343,7 @@ void ACorePlayerCharacter::OnStartCrouch(float HalfHeightAdjust, float ScaledHal
 	}
 	
 	// Forcing light calculation
-	if (LightAwarenessComponent)
+	if (IsValid(LightAwarenessComponent))
 	{
 		LightAwarenessComponent->ProcessLight();
 	}
@@ -348,14 +356,15 @@ void ACorePlayerCharacter::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfH
 {
 	Super::OnEndCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
 
-	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	if (IsValid(ASC))
 	{
 		// Remove the state tag
 		ASC->RemoveLooseGameplayTag(GASCoreTags::State_Movement_Crouched);
 	}
 	
 	// Forcing light calculation
-	if (LightAwarenessComponent)
+	if (IsValid(LightAwarenessComponent))
 	{
 		LightAwarenessComponent->ProcessLight();
 	}
@@ -400,12 +409,12 @@ void ACorePlayerCharacter::PerformInteractionCheck()
 		if (HitActor->Implements<UInteractable>())
 		{
 			// If HitActor is not already our focus
-			if (HitActor != FocusedInteractable)
+			if (HitActor != FocusedInteractable.Get())
 			{
 				FocusedInteractable = HitActor;
 
 				// Grab text from interactable
-				FText PromptText = IInteractable::Execute_GetInteractText(FocusedInteractable);
+				FText PromptText = IInteractable::Execute_GetInteractText(FocusedInteractable.Get());
 				OnInteractionFocusChanged.Broadcast(true, PromptText);
 			}
 
@@ -415,7 +424,7 @@ void ACorePlayerCharacter::PerformInteractionCheck()
 	}
 
 	// If we missed, hit something thats not an actor or something that doesnt implement UInteractable
-	if (FocusedInteractable)
+	if (!FocusedInteractable.IsExplicitlyNull())
 	{
 		FocusedInteractable = nullptr;
 		OnInteractionFocusChanged.Broadcast(false, FText::GetEmpty());
@@ -541,10 +550,10 @@ void ACorePlayerCharacter::OnDeadTagChanged(const FGameplayTag CallbackTag, int3
 void ACorePlayerCharacter::ToggleRagdollCamera(const bool bIsDead) const
 {
 	const APlayerController* PC = GetController<APlayerController>();
-	if (!PC) return;
+	if (!IsValid(PC)) return;
  
 	ACorePlayerCameraManager* CameraManager = Cast<ACorePlayerCameraManager>(PC->PlayerCameraManager);
-	if (!CameraManager) return;
+	if (!IsValid(CameraManager)) return;
  
 	if (bIsDead)
 	{
@@ -558,7 +567,9 @@ void ACorePlayerCharacter::ToggleRagdollCamera(const bool bIsDead) const
 
 ACoreHUD* ACorePlayerCharacter::GetHUD() const
 {
-	if (const APlayerController* PC = Cast<APlayerController>(GetController()))
+	const APlayerController* PC = Cast<APlayerController>(GetController());
+	
+	if (IsValid(PC))
 	{
 		return Cast<ACoreHUD>(PC->GetHUD());
 	}

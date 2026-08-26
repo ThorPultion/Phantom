@@ -136,7 +136,7 @@ protected:
 
 	// A pointer to hold whatever object we are currently looking at
 	UPROPERTY()
-	TObjectPtr<AActor> FocusedInteractable;
+	TWeakObjectPtr<AActor> FocusedInteractable;
 
 	// Fires continuously to check what the interaction line trace hits
 	void PerformInteractionCheck();

@@ -16,7 +16,7 @@ void UStatusWidget::NativeConstruct()
 
 	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OwningPawn);
 	
-	if (!ASC) return;
+	if (!IsValid(ASC)) return;
 	
 	ASC->GetGameplayAttributeValueChangeDelegate(UCoreAttributeSet::GetHealthAttribute()).AddUObject(
 		this, &UStatusWidget::HandleHealthChanged);
