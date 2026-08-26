@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
-#include "GameplayAbilitySpec.h"
 #include "GameplayTagContainer.h"
 #include "CoreAbilitySet.generated.h"
 

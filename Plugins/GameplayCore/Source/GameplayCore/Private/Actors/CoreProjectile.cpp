@@ -130,7 +130,7 @@ void ACoreProjectile::OnProjectileHit(UPrimitiveComponent* HitComponent,
 	EffectContext.AddHitResult(Hit);
 	EffectContext.AddInstigator(FiringPawn, this);
 
-	if (ProjectileData->ImpactDamageEffect && ProjectileData)
+	if (ProjectileData && ProjectileData->ImpactDamageEffect)
 	{
 		FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(ProjectileData->ImpactDamageEffect, 1.0f, EffectContext);
 		if (SpecHandle.IsValid())
