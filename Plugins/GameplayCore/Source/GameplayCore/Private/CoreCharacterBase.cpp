@@ -31,7 +31,7 @@ void ACoreCharacterBase::GrantStartingAbilities()
 {
     UCoreAbilitySystemComponent* ASC = Cast<UCoreAbilitySystemComponent>(GetAbilitySystemComponent());
 
-    if (!HasAuthority() || !ASC || !GASInitData || !GASInitData->StartingAbilities) return;
+    if (!HasAuthority() || !IsValid(ASC) || !GASInitData || !GASInitData->StartingAbilities) return;
 
 	ASC->GrantAbilitySetAsync(GASInitData->StartingAbilities);
 }
@@ -79,7 +79,7 @@ void ACoreCharacterBase::GrantStartingEquipment()
 {
 	const UCoreAbilitySystemComponent* ASC = Cast<UCoreAbilitySystemComponent>(GetAbilitySystemComponent());
 
-	if (!HasAuthority() || !ASC || !EquipmentComponent || EquipmentComponent->StartingEquipment.IsEmpty()) return;
+	if (!HasAuthority() || !IsValid(ASC) || !EquipmentComponent || EquipmentComponent->StartingEquipment.IsEmpty()) return;
 
 	for (UEquipmentDefinition* StartingItem : EquipmentComponent->StartingEquipment)
 	{

@@ -111,7 +111,7 @@ void ACoreAICharacter::SetupAttributes()
 	// Base class initializes basic attributes
 	Super::SetupAttributes();
 
-	if (!HasAuthority() || !AbilitySystemComponent) return;
+	if (!HasAuthority() || !IsValid(AbilitySystemComponent)) return;
 
 	// Initializing AI specific stats
 	if (const UAIGASInitData* AIData = Cast<UAIGASInitData>(GASInitData))
@@ -135,7 +135,7 @@ void ACoreAICharacter::SetupAttributes()
 FGameplayTag ACoreAICharacter::GetPerceptionTag_Implementation(ETeamAttitude::Type ObserverAttitude, const FAIStimulus& Stimulus)
 {
 	// If we are dead
-	if (AbilitySystemComponent && AbilitySystemComponent->HasMatchingGameplayTag(GASCoreTags::State_Dead))
+	if (IsValid(AbilitySystemComponent) && AbilitySystemComponent->HasMatchingGameplayTag(GASCoreTags::State_Dead))
 	{
 		return Stimulus.WasSuccessfullySensed() ? ReactionData->SensedDeadTag : FGameplayTag::EmptyTag;
 	}
@@ -163,7 +163,7 @@ FGameplayTag ACoreAICharacter::GetPerceptionTag_Implementation(ETeamAttitude::Ty
 		}
 
 		// Check if we (the observed character) are currently in combat or active state
-		if (AbilitySystemComponent && ReactionData)
+		if (IsValid(AbilitySystemComponent) && ReactionData)
 		{
 			// If we are actively fighting or alerted, tell our teammates to assist us
 			if (AbilitySystemComponent->HasMatchingGameplayTag(GASCoreTags::State_AI_Combat) || 

@@ -39,7 +39,7 @@ void ACoreGASObject::PostInitializeComponents()
 	Super::PostInitializeComponents();
 
 	// For standard non-player actors, the OwnerActor and AvatarActor are the exact same object
-	if (AbilitySystemComponent)
+	if (IsValid(AbilitySystemComponent))
 	{
 		AbilitySystemComponent->InitAbilityActorInfo(this, this);
 
