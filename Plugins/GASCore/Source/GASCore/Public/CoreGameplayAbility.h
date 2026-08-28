@@ -19,9 +19,22 @@ public:
 
 	/** UI icon */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
-	TObjectPtr<class UTexture2D> AbilityIcon;
+	TObjectPtr<UTexture2D> AbilityIcon;
+	
+	virtual bool CheckCost(const FGameplayAbilitySpecHandle Handle,
+		const FGameplayAbilityActorInfo* ActorInfo,
+		OUT FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
+
+	virtual void ApplyCost(const FGameplayAbilitySpecHandle Handle,
+		const FGameplayAbilityActorInfo* ActorInfo,
+		const FGameplayAbilityActivationInfo ActivationInfo) const override;
 	
 protected:
+	
+	/** All attribute costs that should be checked and applied */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cost")
+	TMap<FGameplayTag, FScalableFloat> CostData;
+	
 	/** Play montage, nothing else */
 	UFUNCTION(BlueprintCallable, Category = "Animation")
 	void PlayAbilityMontage(UAnimMontage* MontageToPlay);
