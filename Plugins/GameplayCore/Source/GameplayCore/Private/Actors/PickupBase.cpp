@@ -25,7 +25,7 @@ APickupBase::APickupBase()
     PickupMesh->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
     PickupMesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
     
-    SetReplicates(true);
+    bReplicates = true;
 }
 
 void APickupBase::OnConstruction(const FTransform& Transform)
