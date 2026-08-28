@@ -22,9 +22,6 @@ class GASCORE_API UCoreAttributeSet : public UAttributeSet
 public:
 	UCoreAttributeSet();
 
-	// Required for network replication
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
 	// Clamps values before they change (e.g., preventing Health from exceeding MaxHealth)
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 

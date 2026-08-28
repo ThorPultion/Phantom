@@ -29,8 +29,6 @@ public:
 	
 	void AddGold(const float Amount);
 	
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
 	UPROPERTY(BlueprintAssignable, Category = "Collectibles")
 	FOnGoldChanged OnGoldChangedDelegate;
 

@@ -36,8 +36,6 @@ public:
 	UPROPERTY(VisibleAnywhere, Replicated, Transient, BlueprintReadOnly, Category = "Targeting")
 	TObjectPtr<AActor> CurrentTargetActor;
 	
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
 	virtual FGameplayTag GetPerceptionTag_Implementation(ETeamAttitude::Type ObserverAttitude, const FAIStimulus& Stimulus) override;
 
 protected:
