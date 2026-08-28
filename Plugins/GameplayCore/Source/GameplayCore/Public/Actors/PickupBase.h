@@ -29,8 +29,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Pickups")
 	void ChangeItem(UItemDefinition* InItemData);
 	
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
 	virtual void OnConstruction(const FTransform& Transform) override;
 
 protected:

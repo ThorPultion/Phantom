@@ -88,9 +88,6 @@ protected:
 	UFUNCTION()
 	void OnRep_CurrentSlotIndex();
 
-	// Required for network replication
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
 	// Max number of carriable equipment
 	UPROPERTY(EditDefaultsOnly, Category = "Equipment")
 	int32 MaxLoadoutSlots = 2;
