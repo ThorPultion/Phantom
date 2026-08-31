@@ -17,6 +17,8 @@ class PHANTOM_API APhantomGameMode : public AGameMode
 	GENERATED_BODY()
 	
 public:
+	APhantomGameMode();
+	
 	virtual void StartPlay() override;
 	
 	/** The collectibles that should be spawned around the map */
