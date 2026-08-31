@@ -161,6 +161,7 @@ void UGA_ChargedProjectile::OnMontageEventReceived_Implementation(FGameplayEvent
 		{
 			// Extracting the projectiles speed
 			float ProjectileSpeed = 5000.0f; // Fallback speed
+			// This method of fetching speed is slow, should probably rework
 			if (const AActor* ProjectileCDO = ProjectileToSpawn->GetDefaultObject<AActor>())
 			{
 				if (const UProjectileMovementComponent* MoveComp = ProjectileCDO->FindComponentByClass<UProjectileMovementComponent>())

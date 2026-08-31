@@ -4,6 +4,11 @@
 #include "PhantomGameMode.h"
 #include "CollectibleSpawnSubsystem.h"
 
+APhantomGameMode::APhantomGameMode()
+{
+	bUseSeamlessTravel = true;
+}
+
 void APhantomGameMode::StartPlay()
 {
 	Super::StartPlay();
