@@ -5,6 +5,7 @@
 #include "StateTreeExecutionContext.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
 #include "AIController.h"
+#include "AIPatrolSubsystem.h"
 #include "PatrolPoint.h"
 
 EStateTreeRunStatus FStateTreeTask_ClaimPatrolPoint::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
@@ -51,6 +52,8 @@ EStateTreeRunStatus FStateTreeTask_ClaimPatrolPoint::EnterState(FStateTreeExecut
 
             TArray<AActor*> CandidateActors;
             Result->GetAllAsActors(CandidateActors);
+            
+            if (CandidateActors.IsEmpty()) { Bridge->bWasSuccessful = false, Bridge->bIsFinished = true; return;}
 
             for (AActor* Actor : CandidateActors)
             {
