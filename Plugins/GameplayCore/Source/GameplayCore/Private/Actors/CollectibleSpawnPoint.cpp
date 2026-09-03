@@ -10,11 +10,16 @@ ACollectibleSpawnPoint::ACollectibleSpawnPoint()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
+	
+	// The object needs a root for transform data.
+	// Without this, in packaged builds the object will go to world origin.
+	USceneComponent* SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
+	SetRootComponent(SceneRoot);
 
 	// Editor only indicators for level placements
 #if WITH_EDITORONLY_DATA
 	EditorIndicator = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("EditorIndicator"));
-	SetRootComponent(EditorIndicator);
+	EditorIndicator->SetupAttachment(RootComponent);
 	EditorIndicator->SetHiddenInGame(true);
 	
 	FacingDirection = CreateDefaultSubobject<UArrowComponent>(TEXT("FacingDirection"));

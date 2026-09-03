@@ -20,7 +20,7 @@ public:
 	
 	/** Returns true if the patrol point is occupied */
 	UFUNCTION(BlueprintPure, Category = "Patrol")
-	bool IsClaimed() const { return bIsClaimed; }
+	bool IsClaimed() const { return bIsClaimed && IsValid(CurrentClaimer); }
 	
 	/** Claim patrol point so other AI cannot use it */
 	UFUNCTION(BlueprintCallable, Category = "Patrol")
