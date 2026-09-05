@@ -1,0 +1,24 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "NetworkCore",
+	"Description": "Base Online Subsystem session and lobby implementation.",
+	"Category": "Reusable",
+	"CreatedBy": "Jeremias Kullberg",
+	"CreatedByURL": "https://thorpultion.itch.io/",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "NetworkCore",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
