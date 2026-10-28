@@ -3,6 +3,7 @@
 
 #include "Data/CollectibleDefinition.h"
 #include "AbilitySystemComponent.h"
+#include "Components/EquipmentComponent.h"
 #include "Interfaces/ValuableCollector.h"
 
 void UCollectibleDefinition::CollectCollectible(AActor* Interactor) const
@@ -21,7 +22,7 @@ void UCollectibleDefinition::CollectCollectible(AActor* Interactor) const
 			}
 			break;
 		}
-	case ECollectibleBehavior::Ability:
+	case ECollectibleBehavior::Effect:
 		{
 			if (UAbilitySystemComponent* ASC = Interactor->FindComponentByClass<UAbilitySystemComponent>())
 			{

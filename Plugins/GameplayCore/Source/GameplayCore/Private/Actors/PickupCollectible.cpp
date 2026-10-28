@@ -6,7 +6,7 @@
 
 APickupCollectible::APickupCollectible()
 {
-	PickupMesh->SetCollisionResponseToAllChannels(ECR_Block);
+	PickupCollider->SetCollisionResponseToAllChannels(ECR_Block);
 }
 
 void APickupCollectible::Interact_Implementation(AActor* Interactor)

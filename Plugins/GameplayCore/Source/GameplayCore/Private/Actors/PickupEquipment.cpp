@@ -24,8 +24,6 @@ void APickupEquipment::Interact_Implementation(AActor* Interactor)
                 EquipmentComponent->AddItemToLoadout(EquipmentDefinition);
 
                 Destroy();
-
-                return;
             }
         }
     }

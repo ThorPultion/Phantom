@@ -6,6 +6,8 @@
 #include "UObject/Interface.h"
 #include "AmmoCycler.generated.h"
 
+class UAmmoData;
+
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
 class UAmmoCycler : public UInterface
@@ -28,4 +30,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Ammo")
 	void SetAmmoIndex(int32 AmmoIndex);
+	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Ammo")
+	void UpdateAvailableAmmo(const TArray<UAmmoData*>& AvailableAmmo);
 };

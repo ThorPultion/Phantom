@@ -245,7 +245,10 @@ void UGA_ChargedProjectile::EndAbility(const FGameplayAbilitySpecHandle Handle, 
 	// Cleaning up charging GE
 	if (ActiveEffectHandle.IsValid())
 	{
-		GetAbilitySystemComponentFromActorInfo()->RemoveActiveGameplayEffect(ActiveEffectHandle);
+		if (HasAuthority(&ActivationInfo))
+		{
+			GetAbilitySystemComponentFromActorInfo()->RemoveActiveGameplayEffect(ActiveEffectHandle);
+		}
 		ActiveEffectHandle.Invalidate();
 	}
 

@@ -10,7 +10,6 @@
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
 #include "GameplayEffect.h"
-#include "GASCoreTags.h"
 
 ACoreProjectile::ACoreProjectile()
 {
@@ -54,12 +53,12 @@ void ACoreProjectile::OnConstruction(const FTransform& Transform)
 	if (!ProjectileData) return;
 
 	// Updating meshcomponent to use our meshasset
-	if (ProjectileMesh)
+	if (IsValid(ProjectileMesh))
 	{
 		ProjectileMesh->SetStaticMesh(ProjectileData->AmmoMesh);
 	}
 
-	if (ParticleSystem)
+	if (IsValid(ParticleSystem))
 	{
 		ParticleSystem->SetAsset(ProjectileData->AmmoParticleSystem);
 	}
