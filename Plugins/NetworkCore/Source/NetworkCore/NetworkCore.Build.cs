@@ -38,7 +38,7 @@ public class NetworkCore : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-				"OnlineSubSystem",
+				"OnlineSubsystem",
 				"OnlineSubsystemUtils",
 				// ... add private dependencies that you statically link with here ...	
 			}
