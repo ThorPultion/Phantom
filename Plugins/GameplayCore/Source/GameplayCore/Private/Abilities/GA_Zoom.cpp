@@ -78,9 +78,12 @@ void UGA_Zoom::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGamepl
 	// Cleaning up zoom GE
 	if (ActiveEffectHandle.IsValid())
 	{
-		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+		if (HasAuthority(&ActivationInfo))
 		{
-			ASC->RemoveActiveGameplayEffect(ActiveEffectHandle);
+			if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+			{
+				ASC->RemoveActiveGameplayEffect(ActiveEffectHandle);
+			}
 		}
 		ActiveEffectHandle.Invalidate();
 	}

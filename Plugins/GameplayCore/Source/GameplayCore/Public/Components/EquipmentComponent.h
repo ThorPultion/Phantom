@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "EquipmentComponent.generated.h"
 
+class UAmmoData;
 class UEquipmentDefinition;
 class UCoreAbilitySystemComponent;
 class AEquipmentBase;
@@ -53,8 +54,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Ammo")
 	void SetItemAmmoIndex(int32 AmmoIndex);
-
-public:
+	
 	/** Gets the physical equipment actor currently spawned in the world */
 	UFUNCTION(BlueprintPure, Category = "Equipment")
 	AEquipmentBase* GetCurrentItem() const { return CurrentItem; }
@@ -62,8 +62,21 @@ public:
 	/** Default loadout of equipment */
 	UPROPERTY(EditDefaultsOnly, Category = "Equipment")
 	TArray<TObjectPtr<UEquipmentDefinition>> StartingEquipment;
-
+	
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Ammo")
+	void AddAmmo(UAmmoData* AmmoToAdd);
+	
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Equipment")
+	void Server_AddAmmo(UAmmoData* AmmoToAdd);
+	
 protected:
+	
+	/** The types of ammo that we have available.
+	* Ammo using equipment use this to know what ammo we should have when they are spawned.
+	*/
+	UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadOnly, Category = "Ammo")
+	TArray<TObjectPtr<UAmmoData>> AvailableAmmo;
+	
 	// The physically spawned weapon actor
 	// Replicating weapon swap to local player for first person visual matching
 	UPROPERTY(ReplicatedUsing = OnRep_CurrentItem)

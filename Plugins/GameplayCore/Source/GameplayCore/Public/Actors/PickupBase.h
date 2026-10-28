@@ -44,6 +44,9 @@ protected:
     TObjectPtr<USceneComponent> RootComp;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-    TObjectPtr<UStaticMeshComponent> PickupMesh;
+    TObjectPtr<UStaticMeshComponent> PickupCollider;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UStaticMeshComponent> VisualMesh;
+	
 };

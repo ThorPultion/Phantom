@@ -11,7 +11,7 @@ UENUM(BlueprintType)
 enum class ECollectibleBehavior : uint8
 {
 	Valuable    UMETA(DisplayName = "Add Valuable"),
-	Ability     UMETA(DisplayName = "Grant Gameplay Ability System Effect")
+	Effect     UMETA(DisplayName = "Grant Gameplay Ability System Effect")
 };
 
 /**

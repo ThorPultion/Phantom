@@ -29,6 +29,7 @@ void UEquipmentComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
     DOREPLIFETIME(UEquipmentComponent, Loadout);
     DOREPLIFETIME(UEquipmentComponent, CurrentSlotIndex);
     DOREPLIFETIME(UEquipmentComponent, CurrentItem);
+    DOREPLIFETIME(UEquipmentComponent, AvailableAmmo);
 }
 
 void UEquipmentComponent::EquipItem(UEquipmentDefinition* EquipmentDefinition, int32 SlotIndex)
@@ -47,12 +48,18 @@ void UEquipmentComponent::EquipItem(UEquipmentDefinition* EquipmentDefinition, i
     // Update active slot tracker
     CurrentSlotIndex = SlotIndex;
 
-    // Spawning weapon actor
+    // Spawning item actor
     FActorSpawnParameters SpawnParams;
     SpawnParams.Owner = OwningActor;
     SpawnParams.Instigator = OwningCharacter;
 
     CurrentItem = GetWorld()->SpawnActor<AEquipmentBase>(EquipmentDefinition->EquipmentActorClass, SpawnParams);
+    
+    // Dictating what ammo is available to ammo based items
+    if (CurrentItem->Implements<UAmmoCycler>())
+    {
+        IAmmoCycler::Execute_UpdateAvailableAmmo(CurrentItem, AvailableAmmo);
+    }
 
     // Attaching weapon BP
     CurrentItem->AttachToComponent(
@@ -101,8 +108,8 @@ void UEquipmentComponent::UnequipItem()
         }
     }
 
-    // Destroy physical weapon actor
-    if (CurrentItem)
+    // Destroy physical item actor
+    if (IsValid(CurrentItem))
     {
         CurrentItem->Destroy();
         CurrentItem = nullptr;
@@ -136,7 +143,7 @@ void UEquipmentComponent::AddItemToLoadout(UEquipmentDefinition* NewItem)
     }
     else
     {
-        // Optionally Swap the current weapon for the one on the ground
+        // Optionally Swap the current item for the one on the ground
     }
 }
 
@@ -186,13 +193,13 @@ UCoreAbilitySystemComponent* UEquipmentComponent::GetOwnerASC() const
 
 void UEquipmentComponent::OnRep_CurrentSlotIndex()
 {
-    // The server changed our weapon slot.
-    // This is where you would update the UI or play a weapon-swap sound on the client!
+    // The server changed our item slot.
+    // This is where you would update the UI or play a item-swap sound on the client!
 }
 
 void UEquipmentComponent::OnRep_CurrentItem(AEquipmentBase* OldItem)
 {
-    if (!CurrentItem) return;
+    if (!IsValid(CurrentItem)) return;
 
     ACoreCharacterBase* OwningCharacter = Cast<ACoreCharacterBase>(GetOwner());
     if (!IsValid(OwningCharacter)) return;
@@ -200,7 +207,7 @@ void UEquipmentComponent::OnRep_CurrentItem(AEquipmentBase* OldItem)
     // Only the local player needs first person mesh setup
     if (OwningCharacter->IsLocallyControlled())
     {
-        // Local player client attaches first person mesh OnRep of weapon change
+        // Local player client attaches first person mesh OnRep of item change
         if (CurrentItem->FirstPersonMesh && OwningCharacter->GetFirstPersonMesh())
         {
             CurrentItem->FirstPersonMesh->AttachToComponent(
@@ -213,7 +220,7 @@ void UEquipmentComponent::OnRep_CurrentItem(AEquipmentBase* OldItem)
 
 void UEquipmentComponent::CycleActiveItemAmmo(int32 Direction)
 {
-    if (CurrentItem && CurrentItem->Implements<UAmmoCycler>())
+    if (IsValid(CurrentItem) && CurrentItem->Implements<UAmmoCycler>())
     {
         IAmmoCycler::Execute_CycleAmmo(CurrentItem, Direction);
     }
@@ -221,8 +228,26 @@ void UEquipmentComponent::CycleActiveItemAmmo(int32 Direction)
 
 void UEquipmentComponent::SetItemAmmoIndex(int32 AmmoIndex)
 {
-    if (CurrentItem && CurrentItem->Implements<UAmmoCycler>())
+    if (IsValid(CurrentItem) && CurrentItem->Implements<UAmmoCycler>())
     {
         IAmmoCycler::Execute_SetAmmoIndex(CurrentItem, AmmoIndex);
     }
+}
+
+void UEquipmentComponent::AddAmmo(UAmmoData* AmmoToAdd)
+{
+    if (!GetOwner()->HasAuthority()) return;
+    
+    AvailableAmmo.Add(AmmoToAdd);
+    
+    // Dictating what ammo is available to ammo based items
+    if (IsValid(CurrentItem) && CurrentItem->Implements<UAmmoCycler>())
+    {
+        IAmmoCycler::Execute_UpdateAvailableAmmo(CurrentItem, AvailableAmmo);
+    }
+}
+
+void UEquipmentComponent::Server_AddAmmo_Implementation(UAmmoData* AmmoToAdd)
+{
+    AddAmmo(AmmoToAdd);
 }

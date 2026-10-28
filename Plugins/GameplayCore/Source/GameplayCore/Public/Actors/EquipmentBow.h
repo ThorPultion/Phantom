@@ -34,6 +34,7 @@ public:
 	// AmmoCycler Interface
 	virtual void CycleAmmo_Implementation(int32 Direction) override;
 	virtual void SetAmmoIndex_Implementation(int32 SpecificIndex) override;
+	virtual void UpdateAvailableAmmo_Implementation(const TArray<UAmmoData*>& AvailableAmmo) override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -55,7 +56,7 @@ protected:
 	TObjectPtr<UNiagaraComponent> ThirdPersonParticleSystem;
 
 	/** The types of arrows this bow can fire. Order matters for cycling! */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ammo")
+	UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadOnly, Category = "Ammo")
 	TArray<TObjectPtr<UAmmoData>> AvailableArrows;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Socket")
@@ -63,7 +64,7 @@ protected:
 
 	/** RepNotify so other clients know to update their visuals */
 	UPROPERTY(ReplicatedUsing = OnRep_CurrentArrowIndex)
-	int32 CurrentArrowIndex;
+	int32 CurrentArrowIndex = -1;
 
 	/** Called on clients when the server updates the arrow index */
 	UFUNCTION()

@@ -2,7 +2,6 @@
 
 
 #include "Actors/PickupBase.h"
-#include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Data/ItemDefinition.h"
 #include "Net/UnrealNetwork.h"
@@ -15,15 +14,20 @@ APickupBase::APickupBase()
     RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp"));
     SetRootComponent(RootComp);
 
-    PickupMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PickupMesh"));
-    PickupMesh->SetupAttachment(RootComp);
+    PickupCollider = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PickupCollider"));
+    PickupCollider->SetupAttachment(RootComp);
 
     // Blocking only visibility and static objects
     // For interaction linetrace by player
-    PickupMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-    PickupMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
-    PickupMesh->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-    PickupMesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+    PickupCollider->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    PickupCollider->SetCollisionResponseToAllChannels(ECR_Ignore);
+    PickupCollider->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+    PickupCollider->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+    
+    PickupCollider->SetVisibility(false);
+    
+    VisualMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualMesh"));
+    VisualMesh->SetupAttachment(RootComp);
     
     bReplicates = true;
 }
@@ -56,13 +60,15 @@ void APickupBase::OnRep_ItemData()
 {
     if (ItemData && ItemData->PickupMesh)
     {
-        // Assign the visual mesh
-        PickupMesh->SetStaticMesh(ItemData->PickupMesh);
+        // Assigning the visual mesh and the scaled up collider
+        VisualMesh->SetStaticMesh(ItemData->PickupMesh);
+        PickupCollider->SetStaticMesh(ItemData->PickupMesh);
     }
     else
     {
         // Clear the mesh if Data Asset is removed in editor
-        PickupMesh->SetStaticMesh(nullptr);
+        VisualMesh->SetStaticMesh(nullptr);
+        PickupCollider->SetStaticMesh(nullptr);
     }
 }
 

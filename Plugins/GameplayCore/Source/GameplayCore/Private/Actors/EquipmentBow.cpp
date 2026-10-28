@@ -10,8 +10,6 @@
 
 AEquipmentBow::AEquipmentBow()
 {
-	CurrentArrowIndex = 0;
-
 	// Visual dummy arrow. 
 	// In Blueprint, we will attach this to your FirstPerson/ThirdPerson bowstring socket
 	FirstPersonLoadedArrowMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("FirstPersonLoadedArrowMesh"));
@@ -52,6 +50,7 @@ void AEquipmentBow::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AEquipmentBow, CurrentArrowIndex);
+	DOREPLIFETIME(AEquipmentBow, AvailableArrows);
 }
 
 TSubclassOf<AActor> AEquipmentBow::GetCurrentProjectileClass_Implementation() const
@@ -128,6 +127,14 @@ void AEquipmentBow::SetAmmoIndex_Implementation(int32 SpecificIndex)
 	// and update the visuals locally if the server is also a playing host.
 	CurrentArrowIndex = SpecificIndex;
 	OnArrowVisualsChanged(CurrentArrowIndex);
+}
+
+void AEquipmentBow::UpdateAvailableAmmo_Implementation(const TArray<UAmmoData*>& AvailableAmmo)
+{
+	AvailableArrows = AvailableAmmo;
+	
+	// Updating our equipped arrow to the one just added
+	Execute_SetAmmoIndex(this, AvailableArrows.Num() - 1);
 }
 
 void AEquipmentBow::OnRep_CurrentArrowIndex()
