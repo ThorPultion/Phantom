@@ -26,7 +26,6 @@ public:
 protected:
 	// Editor only indicators for level placements
 #if WITH_EDITORONLY_DATA
-	/** Points the direction the AI should look if we care about doing that */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UArrowComponent> FacingDirection;
 	

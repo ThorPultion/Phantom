@@ -7,7 +7,7 @@
 #include "CollectibleSpawnSubsystem.generated.h"
 
 class ACollectibleSpawnPoint;
-class UCollectibleDropTable;
+class UItemDropTable;
 /**
  * 
  */
@@ -23,7 +23,7 @@ public:
 	
 	/** Give the subsystem tables of collectibles, necessary to do before spawning! */
 	UFUNCTION(BlueprintCallable, Category = "Collectibles")
-	void InitializeCollectibleTables(UCollectibleDropTable* InDropTable, UCollectibleDropTable* InRareDropTable);
+	void InitializeCollectibleTables(UItemDropTable* InDropTable, UItemDropTable* InRareDropTable);
 	
 	/** Populate the level with collectibles */
 	UFUNCTION(BlueprintCallable, Category = "Collectibles")
@@ -37,10 +37,10 @@ private:
 	TArray<TObjectPtr<ACollectibleSpawnPoint>> RareSpawnPoints;
 
 	UPROPERTY()
-	TObjectPtr<UCollectibleDropTable> DropTable;
+	TObjectPtr<UItemDropTable> DropTable;
 
 	UPROPERTY()
-	TObjectPtr<UCollectibleDropTable> RareDropTable;
+	TObjectPtr<UItemDropTable> RareDropTable;
 	
-	void SpawnCollectible(const ACollectibleSpawnPoint* SpawnPoint, UCollectibleDropTable* InDropTable) const;
+	void SpawnCollectible(const ACollectibleSpawnPoint* SpawnPoint, UItemDropTable* InDropTable) const;
 };
