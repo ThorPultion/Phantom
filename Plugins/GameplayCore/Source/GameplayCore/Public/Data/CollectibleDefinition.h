@@ -35,7 +35,7 @@ public:
 
 	/** Gameplay effect thats applied on pickup */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Collectible Logic",
-		meta = (EditCondition = "BehaviorType == ECollectibleBehavior::Ability", EditConditionHides))
+		meta = (EditCondition = "BehaviorType == ECollectibleBehavior::Effect", EditConditionHides))
 	TSubclassOf<class UGameplayEffect> EffectToApply;
 	
 	void CollectCollectible(AActor* Interactor) const;

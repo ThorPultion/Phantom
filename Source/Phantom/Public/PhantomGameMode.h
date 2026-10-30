@@ -6,7 +6,7 @@
 #include "GameFramework/GameMode.h"
 #include "PhantomGameMode.generated.h"
 
-class UCollectibleDropTable;
+class UItemDropTable;
 
 /**
  * 
@@ -23,12 +23,22 @@ public:
 	
 	/** The collectibles that should be spawned around the map */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Collectible Spawning")
-	TObjectPtr<UCollectibleDropTable> CollectibleDropTable;
+	TObjectPtr<UItemDropTable> CollectibleDropTable;
 	
 	/** The rare collectibles that should be spawned around the map */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Collectible Spawning")
-	TObjectPtr<UCollectibleDropTable> RareCollectibleDropTable;
+	TObjectPtr<UItemDropTable> RareCollectibleDropTable;
+	
+	/** The equipment that should be spawned around the map */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Equipment Spawning")
+	TObjectPtr<UItemDropTable> EquipmentDropTable;
+	
+	/** The ammo that should be spawned around the map */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ammo Spawning")
+	TObjectPtr<UItemDropTable> AmmoDropTable;
 	
 private:
-	void InitCollectibles() const;
+	void InitCollectiblePickups() const;
+	void InitEquipmentPickups() const;
+	void InitAmmoPickups() const;
 };

@@ -2,7 +2,9 @@
 
 
 #include "PhantomGameMode.h"
+#include "AmmoSpawnSubsystem.h"
 #include "CollectibleSpawnSubsystem.h"
+#include "EquipmentSpawnSubsystem.h"
 
 APhantomGameMode::APhantomGameMode()
 {
@@ -13,14 +15,18 @@ void APhantomGameMode::StartPlay()
 {
 	Super::StartPlay();
 	
-	InitCollectibles();
+	InitCollectiblePickups();
+	InitEquipmentPickups();
+	InitAmmoPickups();
 }
 
-void APhantomGameMode::InitCollectibles() const
+void APhantomGameMode::InitCollectiblePickups() const
 {
 	UCollectibleSpawnSubsystem* CollectibleSpawnSubsystem = GetWorld()->GetSubsystem<UCollectibleSpawnSubsystem>();
 	
 	if (!CollectibleSpawnSubsystem) return;
+	
+	if (!CollectibleDropTable) return;
 	
 	// Give the collectible spawner collectibles to populate the level with
 	CollectibleSpawnSubsystem->InitializeCollectibleTables(
@@ -28,4 +34,34 @@ void APhantomGameMode::InitCollectibles() const
 	
 	// Spawn collectibles
 	CollectibleSpawnSubsystem->SpawnCollectibles();
+}
+
+void APhantomGameMode::InitEquipmentPickups() const
+{
+	UEquipmentSpawnSubsystem* EquipmentSpawnSubsystem = GetWorld()->GetSubsystem<UEquipmentSpawnSubsystem>();
+	
+	if (!EquipmentSpawnSubsystem) return;
+	
+	if (!EquipmentDropTable) return;
+	
+	// Give the spawner equipment to populate the level with
+	EquipmentSpawnSubsystem->InitializeEquipmentTable(EquipmentDropTable);
+	
+	// Spawn
+	EquipmentSpawnSubsystem->SpawnEquipments();
+}
+
+void APhantomGameMode::InitAmmoPickups() const
+{
+	UAmmoSpawnSubsystem* AmmoSpawnSubsystem = GetWorld()->GetSubsystem<UAmmoSpawnSubsystem>();
+	
+	if (!AmmoSpawnSubsystem) return;
+	
+	if (!AmmoDropTable) return;
+	
+	// Give the spawner ammo to populate the level with
+	AmmoSpawnSubsystem->InitializeAmmoTable(AmmoDropTable);
+	
+	// Spawn
+	AmmoSpawnSubsystem->SpawnAmmos();
 }
