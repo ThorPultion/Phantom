@@ -487,9 +487,13 @@ float ACorePlayerCharacter::GetVisibilityModifier_Implementation()
 	if (bIsCrouched)
 	{
 		Visibility *= CrouchVisibilityModifier;
+		return FMath::Clamp(Visibility , 0.0f, 1.0f);
 	}
 	
-	return FMath::Clamp(Visibility , 0.0f, 1.0f);
+	// If the player is not crouched, clamp the minimum to be above the threshold at which
+	// players are visible to AI.
+	// This guarantees that the player is considered visible to AI if the player is not crouched.
+	return FMath::Clamp(Visibility , Execute_GetInvisibleThreshold(this) + 0.1f, 1.0f);
 }
 
 bool ACorePlayerCharacter::CanJumpInternal_Implementation() const
