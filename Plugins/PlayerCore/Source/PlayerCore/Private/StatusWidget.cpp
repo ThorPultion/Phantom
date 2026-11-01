@@ -18,6 +18,7 @@ void UStatusWidget::NativeConstruct()
 	
 	if (!IsValid(ASC)) return;
 	
+	// Health attribute
 	ASC->GetGameplayAttributeValueChangeDelegate(UCoreAttributeSet::GetHealthAttribute()).AddUObject(
 		this, &UStatusWidget::HandleHealthChanged);
 	ASC->GetGameplayAttributeValueChangeDelegate(UCoreAttributeSet::GetMaxHealthAttribute()).AddUObject(
@@ -25,8 +26,19 @@ void UStatusWidget::NativeConstruct()
 			
 	CurrentHealth = ASC->GetNumericAttribute(UCoreAttributeSet::GetHealthAttribute());
 	MaxHealth = ASC->GetNumericAttribute(UCoreAttributeSet::GetMaxHealthAttribute());
-			
+	
 	RecalculateHealthPercent();
+	
+	// Energy attribute
+	ASC->GetGameplayAttributeValueChangeDelegate(UCoreAttributeSet::GetEnergyAttribute()).AddUObject(
+	this, &UStatusWidget::HandleEnergyChanged);
+	ASC->GetGameplayAttributeValueChangeDelegate(UCoreAttributeSet::GetMaxEnergyAttribute()).AddUObject(
+		this, &UStatusWidget::HandleMaxEnergyChanged);
+			
+	CurrentEnergy = ASC->GetNumericAttribute(UCoreAttributeSet::GetHealthAttribute());
+	MaxEnergy = ASC->GetNumericAttribute(UCoreAttributeSet::GetMaxHealthAttribute());
+	
+	RecalculateEnergyPercent();
 }
 
 void UStatusWidget::HandleMaxHealthChanged(const FOnAttributeChangeData& Data)
@@ -51,4 +63,28 @@ void UStatusWidget::RecalculateHealthPercent()
 
 	// UI update
 	OnHealthUpdated(HealthPercent);
+}
+
+void UStatusWidget::HandleMaxEnergyChanged(const FOnAttributeChangeData& Data)
+{
+	// Updating max health to get accurate health percent for UI
+	MaxEnergy = Data.NewValue;
+	
+	RecalculateEnergyPercent();
+}
+
+void UStatusWidget::HandleEnergyChanged(const FOnAttributeChangeData& Data)
+{
+	CurrentEnergy = Data.NewValue;
+	
+	RecalculateEnergyPercent();
+}
+
+void UStatusWidget::RecalculateEnergyPercent()
+{
+	// Avoiding divide by zero
+	const float EnergyPercent = (MaxEnergy > 0.f) ? (CurrentEnergy / MaxEnergy) : 0.f;
+
+	// UI update
+	OnEnergyUpdated(EnergyPercent);
 }

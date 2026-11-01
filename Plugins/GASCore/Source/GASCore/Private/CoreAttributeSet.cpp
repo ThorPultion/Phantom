@@ -72,6 +72,20 @@ void UCoreAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 	else if (Data.EvaluatedData.Attribute == GetEnergyAttribute())
 	{
 		SetEnergy(FMath::Clamp(GetEnergy(), 0.f, GetMaxEnergy()));
+		
+		// If lost energy
+		if (Data.EvaluatedData.Magnitude < 0.f)
+		{
+			// Applying energy regeneration block
+			UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent();
+			if (!ASC) return;
+
+			FGameplayEventData Payload;
+			Payload.EventTag = GASCoreTags::Event_Block_Energy_Regen;
+			Payload.Target = GetOwningActor();
+    
+			ASC->HandleGameplayEvent(Payload.EventTag, &Payload);
+		}
 	}
 }
 
