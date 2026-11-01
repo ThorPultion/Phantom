@@ -21,9 +21,16 @@ public:
 	/** Update UI based on new health percent */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Events")
 	void OnHealthUpdated(const float NewHealthPercent);
-	
+		
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes")
 	float MaxHealth;
+	
+	/** Update UI based on new energy percent */
+	UFUNCTION(BlueprintImplementableEvent, Category = "Events")
+	void OnEnergyUpdated(const float NewEnergyPercent);
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes")
+	float MaxEnergy;
 	
 private:
 	float CurrentHealth = 0.f;
@@ -34,4 +41,12 @@ private:
 	void HandleMaxHealthChanged(const FOnAttributeChangeData& Data);
 	
 	void RecalculateHealthPercent();
+	
+	float CurrentEnergy = 0.f;
+	
+	void HandleEnergyChanged(const FOnAttributeChangeData& Data);
+	
+	void HandleMaxEnergyChanged(const FOnAttributeChangeData& Data);
+	
+	void RecalculateEnergyPercent();
 };
